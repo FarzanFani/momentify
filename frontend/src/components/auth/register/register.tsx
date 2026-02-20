@@ -1,41 +1,78 @@
 "use client";
 
-import { useState } from "react";
 import { Button, Container, Typography, Box } from "@mui/material";
-import axiosInstance from "@/api/axiosInstance";
 import * as styles from "@/components/auth/login/styles";
 import Link from "next/link";
 import InputField from "@/components/common/input/InputField";
 import PasswordField from "@/components/common/password/PasswordField";
+import { useRegister } from "@/hooks/useRegister";
+import { useRouter } from "next/navigation";
+import { useSnackbar } from "@/contexts/SnackbarContext";
+import { useForm, Controller } from "react-hook-form";
+
+interface RegisterForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password: string;
+  confirmPassword: string;
+}
 
 export default function Register() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("customer");
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+  const { mutate, isPending } = useRegister();
 
-  const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterForm>({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
-    try {
-      const response = await axiosInstance.post("/api/accounts/register/", {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password,
-        role,
-        phone_number: phoneNumber,
-      });
-      alert("Register successful!");
-    } catch (err: any) {
-      alert(err);
-    }
+  const password = watch("password");
+
+  const onSubmit = (data: RegisterForm) => {
+    console.log(data);
+
+    mutate(
+      {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        email: data.email,
+        password: data.password,
+        role: "CUSTOMER",
+        phone_number: data.phoneNumber,
+      },
+      {
+        onSuccess: () => {
+          showSnackbar("Registration successful!", "success");
+          router.push("/login");
+        },
+        onError: (err) => {
+          const apiErrors = err.response?.data?.errors;
+          if (apiErrors) {
+            const message = Object.values(apiErrors).flat().join("\n");
+            showSnackbar(message, "error");
+          } else {
+            showSnackbar(
+              err.response?.data?.message || "Registration failed",
+              "error",
+            );
+          }
+        },
+      },
+    );
   };
 
   return (
@@ -57,47 +94,125 @@ export default function Register() {
             </Typography>
           </Box>
 
-          <InputField
-            value={firstName}
-            onChange={setFirstName}
-            label="First Name"
-            placeholder="Enter your first name"
+          <Controller
+            name="firstName"
+            control={control}
+            rules={{ required: "First name is required" }}
+            render={({ field }) => (
+              <InputField
+                value={field.value}
+                onChange={field.onChange}
+                label="First Name"
+                placeholder="Enter your first name"
+                error={!!errors.firstName}
+                helperText={errors.firstName?.message}
+              />
+            )}
           />
-          <InputField
-            value={lastName}
-            onChange={setLastName}
-            label="Last Name"
-            placeholder="Enter your last name"
+
+          <Controller
+            name="lastName"
+            control={control}
+            rules={{ required: "Last name is required" }}
+            render={({ field }) => (
+              <InputField
+                value={field.value}
+                onChange={field.onChange}
+                label="Last Name"
+                placeholder="Enter your last name"
+                error={!!errors.lastName}
+                helperText={errors.lastName?.message}
+              />
+            )}
           />
-          <InputField
-            value={email}
-            onChange={setEmail}
-            label="Email"
-            placeholder="Enter your email"
-            type="email"
+
+          <Controller
+            name="email"
+            control={control}
+            rules={{
+              required: "Email is required",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Enter a valid email address",
+              },
+            }}
+            render={({ field }) => (
+              <InputField
+                value={field.value}
+                onChange={field.onChange}
+                label="Email"
+                placeholder="Enter your email"
+                type="email"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+            )}
           />
-          <InputField
-            value={phoneNumber}
-            onChange={setPhoneNumber}
-            label="Phone Number"
-            placeholder="Enter your phone number"
-            type="tel"
+
+          <Controller
+            name="phoneNumber"
+            control={control}
+            render={({ field }) => (
+              <InputField
+                value={field.value}
+                onChange={field.onChange}
+                label="Phone Number"
+                placeholder="Enter your phone number"
+                type="tel"
+                error={!!errors.phoneNumber}
+                helperText={errors.phoneNumber?.message}
+              />
+            )}
           />
-          <PasswordField value={password} onChange={setPassword} />
-          <PasswordField
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            label="Confirm Password"
-            placeholder="Confirm your password"
+
+          <Controller
+            name="password"
+            control={control}
+            rules={{
+              required: "Password is required",
+              minLength: {
+                value: 8,
+                message: "Password must be at least 8 characters",
+              },
+            }}
+            render={({ field }) => (
+              <PasswordField
+                value={field.value}
+                onChange={field.onChange}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="confirmPassword"
+            control={control}
+            rules={{
+              required: "Please confirm your password",
+              validate: (value) =>
+                value === password || "Passwords do not match",
+            }}
+            render={({ field }) => (
+              <PasswordField
+                value={field.value}
+                onChange={field.onChange}
+                label="Confirm Password"
+                placeholder="Confirm your password"
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
+              />
+            )}
           />
 
           <Button
             variant="contained"
-            onClick={handleRegister}
             color="primary"
+            disabled={isPending}
             sx={styles.registerButton}
+            onClick={handleSubmit(onSubmit)}
           >
-            Register
+            {isPending ? "Registering..." : "Register"}
           </Button>
 
           <Link href="/login">

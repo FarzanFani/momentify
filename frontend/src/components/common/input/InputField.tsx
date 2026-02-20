@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Typography, OutlinedInput } from "@mui/material";
+import { Box, Typography, OutlinedInput, FormHelperText } from "@mui/material";
 import "./style.css";
 
 interface InputFieldProps {
@@ -9,6 +9,8 @@ interface InputFieldProps {
   label: string;
   placeholder?: string;
   type?: string;
+  error?: boolean;
+  helperText?: string;
 }
 
 export default function InputField({
@@ -17,6 +19,8 @@ export default function InputField({
   label,
   placeholder,
   type = "text",
+  error = false,
+  helperText,
 }: InputFieldProps) {
   return (
     <Box className="input-field-wrapper">
@@ -31,7 +35,11 @@ export default function InputField({
         fullWidth
         className="input-field"
         type={type}
+        error={error}
       />
+      {helperText && (
+        <FormHelperText error={error}>{helperText}</FormHelperText>
+      )}
     </Box>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, OutlinedInput, IconButton, InputAdornment } from "@mui/material";
+import { Box, Typography, OutlinedInput, IconButton, InputAdornment, FormHelperText } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import "./style.css";
 
@@ -10,6 +10,8 @@ interface PasswordFieldProps {
   onChange: (value: string) => void;
   label?: string;
   placeholder?: string;
+  error?: boolean;
+  helperText?: string;
 }
 
 export default function PasswordField({
@@ -17,6 +19,8 @@ export default function PasswordField({
   onChange,
   label = "Password",
   placeholder = "Enter your password",
+  error = false,
+  helperText,
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -38,6 +42,7 @@ export default function PasswordField({
         fullWidth
         className="password-field"
         type={showPassword ? "text" : "password"}
+        error={error}
         endAdornment={
           <InputAdornment position="end">
             <IconButton
@@ -51,6 +56,9 @@ export default function PasswordField({
           </InputAdornment>
         }
       />
+      {helperText && (
+        <FormHelperText error={error}>{helperText}</FormHelperText>
+      )}
     </Box>
   );
 }
