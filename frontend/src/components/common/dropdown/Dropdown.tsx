@@ -9,6 +9,7 @@ interface DropdownProps {
   options: DropdownOptionItem[] | string[];
   onChange: (value: string) => void;
   fullWidth?: boolean;
+  height?: number;
 }
 export default function SelectDropdown({
   label,
@@ -16,6 +17,7 @@ export default function SelectDropdown({
   options,
   onChange,
   fullWidth = true,
+  height = 45,
 }: DropdownProps) {
   const normalizedOptions: DropdownOptionItem[] = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option,
@@ -41,7 +43,7 @@ export default function SelectDropdown({
         )}
         sx={{
           width: fullWidth ? "100%" : "300px",
-          height: "45px",
+          height,
         }}
       >
         {normalizedOptions.map((option) => {

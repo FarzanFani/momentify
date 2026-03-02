@@ -11,6 +11,7 @@ import { setUser } from "@/store/authSlice";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/hooks/useLogin";
 import { useForm, Controller } from "react-hook-form";
+import { extractApiError } from "@/utils/extractApiError";
 
 interface LoginForm {
   email: string;
@@ -55,8 +56,7 @@ export default function Login() {
         }
       },
       onError: (err) => {
-        const message = err.response?.data?.message || "Login failed";
-        showSnackbar(message, "error");
+        showSnackbar(extractApiError(err, "Login failed"), "error");
       },
     });
   };

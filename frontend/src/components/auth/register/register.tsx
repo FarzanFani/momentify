@@ -9,6 +9,7 @@ import { useRegister } from "@/hooks/useRegister";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { useForm, Controller } from "react-hook-form";
+import { extractApiError } from "@/utils/extractApiError";
 
 interface RegisterForm {
   firstName: string;
@@ -43,8 +44,6 @@ export default function Register() {
   const password = watch("password");
 
   const onSubmit = (data: RegisterForm) => {
-    console.log(data);
-
     mutate(
       {
         first_name: data.firstName,
@@ -60,16 +59,7 @@ export default function Register() {
           router.push("/login");
         },
         onError: (err) => {
-          const apiErrors = err.response?.data?.errors;
-          if (apiErrors) {
-            const message = Object.values(apiErrors).flat().join("\n");
-            showSnackbar(message, "error");
-          } else {
-            showSnackbar(
-              err.response?.data?.message || "Registration failed",
-              "error",
-            );
-          }
+          showSnackbar(extractApiError(err, "Registration failed"), "error");
         },
       },
     );

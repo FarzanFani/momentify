@@ -8,9 +8,10 @@ import { Box, Button, Switch, Typography } from "@mui/material";
 import Filter from "@/components/common/filter/Filter";
 import { FilterOptions, TableColumn, TableRowDataType } from "@/types/general";
 import { PersonAdd } from "@mui/icons-material";
-import TableCompontnt from "@/components/common/table/Table";
+import TableComponent from "@/components/common/table/Table";
 import { UserList, UsersParams } from "@/services/admin/user";
 import { useSnackbar } from "@/contexts/SnackbarContext";
+import { extractApiError } from "@/utils/extractApiError";
 import AddModal from "./addUserModal/AddModal";
 
 export default function User() {
@@ -140,10 +141,7 @@ export default function User() {
                 user.id === id ? { ...user, [field]: !value } : user,
               ) || [],
           );
-          showSnackbar(
-            error.response?.data?.message || "User update failed",
-            "error",
-          );
+          showSnackbar(extractApiError(error, "User update failed"), "error");
         },
         onSuccess: () => {
           showSnackbar("User update successfully", "success");
@@ -251,7 +249,7 @@ export default function User() {
         </Button>
       </Box>
       <Box mt={4}>
-        <TableCompontnt
+        <TableComponent
           columns={columns}
           data={TableData}
           isLoading={isLoading}

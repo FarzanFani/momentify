@@ -11,6 +11,9 @@ interface InputFieldProps {
   type?: string;
   error?: boolean;
   helperText?: string;
+  multiline?: boolean;
+  rows?: number;
+  fullWidth?: boolean;
 }
 
 export default function InputField({
@@ -21,6 +24,9 @@ export default function InputField({
   type = "text",
   error = false,
   helperText,
+  fullWidth = true,
+  multiline = false,
+  rows = 3,
 }: InputFieldProps) {
   return (
     <Box className="input-field-wrapper">
@@ -32,10 +38,12 @@ export default function InputField({
         onChange={(e) => onChange(e.target.value)}
         size="medium"
         placeholder={placeholder}
-        fullWidth
-        className="input-field"
+        fullWidth={fullWidth}
+        className={`input-field ${multiline ? "input-field-multiline" : ""}`}
         type={type}
         error={error}
+        multiline={multiline}
+        rows={multiline ? rows : undefined}
       />
       {helperText && (
         <FormHelperText error={error}>{helperText}</FormHelperText>

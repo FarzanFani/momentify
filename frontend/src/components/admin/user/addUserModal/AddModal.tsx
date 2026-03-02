@@ -17,6 +17,7 @@ import { Close } from "@mui/icons-material";
 import { useAddUser } from "@/hooks/users";
 import { AddUserPayload } from "@/services/admin/user";
 import { useSnackbar } from "@/contexts/SnackbarContext";
+import { extractApiError } from "@/utils/extractApiError";
 
 interface AddModalProps {
   open: boolean;
@@ -50,18 +51,7 @@ export default function AddModal({ open, onClose }: AddModalProps) {
         showSnackbar("User added successfully", "success");
       },
       onError: (error) => {
-        console.log(error.response?.data.errors);
-
-        const apiErrors = error.response?.data?.errors;
-        if (apiErrors) {
-          const message = Object.values(apiErrors).flat().join("\n");
-          showSnackbar(message, "error");
-        } else {
-          showSnackbar(
-            error.response?.data?.message || "User addition failed",
-            "error",
-          );
-        }
+        showSnackbar(extractApiError(error, "User addition failed"), "error");
       },
     });
   };

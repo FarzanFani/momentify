@@ -22,7 +22,9 @@ interface TableProps {
   emptyMessage?: string;
 }
 
-export default function TableCompontnt({
+const ACTION_COL_ID = "action_items";
+
+export default function TableComponent({
   columns,
   data,
   rowsPerPageOptions = [5, 10, 25],
@@ -32,6 +34,10 @@ export default function TableCompontnt({
 }: TableProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
+
+  const headerColumns = columns.filter((col) => col.id !== ACTION_COL_ID);
+  const hasActions = columns.some((col) => col.id === ACTION_COL_ID);
+  const totalColumns = headerColumns.length + (hasActions ? 1 : 0);
 
   const paginatedData = data.slice(
     page * rowsPerPage,
@@ -49,23 +55,26 @@ export default function TableCompontnt({
       <Table>
         <TableHead sx={{ backgroundColor: "primary.dark" }}>
           <TableRow>
-            {columns.map((column) => (
+            {headerColumns.map((column) => (
               <TableCell key={column.id} sx={{ color: "primary.contrastText" }}>
                 {column.label}
               </TableCell>
             ))}
+            {hasActions && (
+              <TableCell sx={{ width: "1%", whiteSpace: "nowrap" }} />
+            )}
           </TableRow>
         </TableHead>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+              <TableCell colSpan={totalColumns} align="center" sx={{ py: 8 }}>
                 <CircularProgress color="primary" />
               </TableCell>
             </TableRow>
           ) : paginatedData.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
+              <TableCell colSpan={totalColumns} align="center" sx={{ py: 8 }}>
                 {emptyMessage}
               </TableCell>
             </TableRow>
@@ -77,9 +86,17 @@ export default function TableCompontnt({
                   backgroundColor: index % 2 === 0 ? "#f5f7fa" : "#f0f0f0",
                 }}
               >
-                {columns.map((column) => (
+                {headerColumns.map((column) => (
                   <TableCell key={column.id}>{row.cells[column.id]}</TableCell>
                 ))}
+                {hasActions && (
+                  <TableCell
+                    align="right"
+                    sx={{ width: "1%", whiteSpace: "nowrap" }}
+                  >
+                    {row.cells[ACTION_COL_ID]}
+                  </TableCell>
+                )}
               </TableRow>
             ))
           )}

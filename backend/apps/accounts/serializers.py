@@ -3,10 +3,26 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    has_company_registered = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = User
-        fields = ["id", "email", "first_name", "last_name", "role", "phone_number", "is_verified", "date_joined"]
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "phone_number",
+            "is_verified",
+            "date_joined",
+            "has_company_registered",
+        ]
         read_only_fields = fields
+
+    def get_has_company_registered(self, user):
+        if user.role != user.Role.PROVIDER:
+            return False
+        return user.owned_companies.exists()
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

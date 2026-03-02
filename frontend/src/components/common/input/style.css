@@ -9,7 +9,10 @@
 }
 
 .input-field {
-  height: 45px;
   font-size: 18px;
   border-radius: 6px;
+}
+
+.input-field:not(.input-field-multiline) {
+  height: 45px;
 }

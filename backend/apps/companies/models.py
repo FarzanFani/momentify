@@ -1,7 +1,8 @@
 from django.db import models
 import uuid
 from django.utils import timezone
-
+from apps.accounts.models import User
+from django.conf import settings
 class Company(models.Model):
 
     class VerificationStatus(models.TextChoices):
@@ -10,6 +11,11 @@ class Company(models.Model):
         REJECTED = "REJECTED", "Rejected"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_companies",
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     email = models.EmailField(unique=True)
