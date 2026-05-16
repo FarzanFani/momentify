@@ -16,6 +16,8 @@ export interface CompanyLocationFormValues {
   country: string;
   latitude: string;
   longitude: string;
+  name: string;
+  id?: string;
 }
 
 export interface WorkingHoursFormValues {
@@ -29,13 +31,17 @@ export interface CancellationPolicyFormValues {
   auto_approve_booking: boolean;
 }
 
-export interface AddCompanyFormValues extends RegisterCompanyFormValues, WorkingHoursFormValues {
+export interface AddCompanyFormValues
+  extends RegisterCompanyFormValues, WorkingHoursFormValues {
   locations: CompanyLocationFormValues[];
 }
 
 export type RegisterCompanyPayload = RegisterCompanyFormValues;
 export interface CompanyLocationPayload extends CompanyLocationFormValues {
   company: string;
+}
+export interface CompanyLocation extends CompanyLocationPayload {
+  id: string;
 }
 export type WorkingHoursPayload = WorkingHoursFormValues;
 export type CancellationPolicyPayload = CancellationPolicyFormValues;
@@ -46,7 +52,9 @@ export interface StepFormProps {
 }
 
 export interface LocationFormProps extends StepFormProps {
-  fieldArray: UseFieldArrayReturn<AddCompanyFormValues, "locations">;
+  fieldArray: UseFieldArrayReturn<AddCompanyFormValues, "locations", "fieldId">;
+  onSaveAddress?: (index: number) => void;
+  isSavingAddress?: boolean;
 }
 
 export type RegisterFormProps = StepFormProps;

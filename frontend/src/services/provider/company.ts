@@ -1,4 +1,6 @@
 import {
+  CompanyLocation,
+  CompanyLocationFormValues,
   CompanyLocationPayload,
   RegisterCompanyPayload,
 } from "@/components/provider/company/add/formTypes";
@@ -9,15 +11,18 @@ export interface Company extends RegisterCompanyPayload {
   id: string;
   verification_status: string;
 }
-export interface CompanyLocation extends CompanyLocationPayload {
-  id: string;
-}
-
 export interface CompanyListResponse {
   count: number;
   next: string | null;
   previous: string | null;
   results: Company[];
+}
+
+export interface AddressListResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CompanyLocation[];
 }
 
 export const registerCompany = async (
@@ -32,20 +37,6 @@ export const registerCompany = async (
     throw data;
   }
   return data.data as Company;
-};
-
-export const createCompanyLocation = async (
-  payload: CompanyLocationPayload,
-): Promise<CompanyLocation> => {
-  const { data } = await axiosInstance.post<ApiResponse<CompanyLocation>>(
-    "/api/company-locations/",
-    payload,
-  );
-
-  if (!data.success) {
-    throw data;
-  }
-  return data.data as CompanyLocation;
 };
 
 export const updateCompany = async (
@@ -74,26 +65,6 @@ export const getCompanyById = async (id: string): Promise<Company> => {
   return data.data as Company;
 };
 
-export interface CompanyLocationListResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: CompanyLocation[];
-}
-
-export const getCompanyLocations = async (
-  companyId: string,
-): Promise<CompanyLocationListResponse> => {
-  const { data } = await axiosInstance.get<
-    ApiResponse<CompanyLocationListResponse>
-  >("/api/company-locations/", { params: { company: companyId } });
-
-  if (!data.success) {
-    throw data;
-  }
-  return data.data as CompanyLocationListResponse;
-};
-
 export const getProviderCompanies = async (
   search: string,
 ): Promise<CompanyListResponse> => {
@@ -108,13 +79,50 @@ export const getProviderCompanies = async (
   return data.data as CompanyListResponse;
 };
 
-export const updateCompanyLocation = async (
-  id: string,
-  payload: Partial<CompanyLocationPayload>,
+export const createLocation = async (
+  companyLocation: CompanyLocationPayload,
 ): Promise<CompanyLocation> => {
-  const { data } = await axiosInstance.patch<ApiResponse<CompanyLocation>>(
-    `/api/company-locations/${id}/`,
-    payload,
+  const createdData: CompanyLocationFormValues = {
+    address: companyLocation.address,
+    city: companyLocation.city,
+    country: companyLocation.country,
+    latitude: companyLocation.latitude,
+    longitude: companyLocation.longitude,
+    name: companyLocation.name,
+  };
+
+  const { data } = await axiosInstance.post<
+    ApiResponse<CompanyLocationPayload>
+  >(`/api/companies/${companyLocation.company}/locations/`, createdData);
+
+  if (!data.success) {
+    throw data;
+  }
+  return data.data as CompanyLocation;
+};
+
+export const getCompanyLocations = async (
+  companyId: string,
+): Promise<AddressListResponse> => {
+  const { data } = await axiosInstance.get<ApiResponse<AddressListResponse>>(
+    `/api/companies/${companyId}/locations/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+  return data.data as AddressListResponse;
+};
+
+export const updateLocation = async (
+  location: CompanyLocation,
+  companyId: string,
+): Promise<CompanyLocation> => {
+  console.log(location);
+
+  const { data } = await axiosInstance.put<ApiResponse<CompanyLocation>>(
+    `/api/companies/${companyId}/locations/${location.id}/`,
+    location,
   );
 
   if (!data.success) {

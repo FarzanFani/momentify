@@ -1,0 +1,6 @@
+{
+    "snyk.advanced.autoSelectOrganization": true,
+    // "editor.wordWrap": "wordWrapColumn",
+    // "editor.wordWrapColumn": 100,
+    // "editor.rulers": [100]
+}

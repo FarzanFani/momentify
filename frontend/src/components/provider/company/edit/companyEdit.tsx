@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
+  updateCompanyLocation,
+  useCreateCompanyLocation,
   useGetCompanyById,
   useGetCompanyLocations,
   useUpdateCompany,
-  useCreateCompanyLocation,
-  useUpdateCompanyLocation,
 } from "@/hooks/company";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { extractApiError } from "@/utils/extractApiError";
@@ -19,17 +19,16 @@ import {
   CircularProgress,
   Typography,
 } from "@mui/material";
-import { useFieldArray, useForm } from "react-hook-form";
+import { FieldPath, useFieldArray, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import RegisterForm from "@/components/provider/company/add/registerForm";
-import LocationForm from "@/components/provider/company/add/locationForm";
 import WorkingHoursForm from "@/components/provider/company/add/workingHoursForm";
 import CancellationPolicyForm from "@/components/provider/company/add/cancellationPolicyForm";
 import {
   AddCompanyFormValues,
-  CompanyLocationPayload,
   RegisterCompanyPayload,
 } from "@/components/provider/company/add/formTypes";
+import LocationForm from "../add/locationForm";
 
 interface CompanyEditProps {
   companyId: string;
@@ -42,17 +41,29 @@ const steps = [
   "Cancellation Policy",
 ];
 
+const emptyLocation = {
+  address: "",
+  city: "",
+  country: "",
+  latitude: "",
+  longitude: "",
+  name: "",
+};
+
 export default function CompanyEdit({ companyId }: CompanyEditProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+
   const { data: company, isLoading } = useGetCompanyById(companyId);
-  const { data: locationsData } = useGetCompanyLocations(companyId);
-  const locations = locationsData?.results;
+
+  const { data: locations, isLoading: isLocationLoading } =
+    useGetCompanyLocations(companyId);
   const { mutate: updateCompany, isPending: isUpdating } = useUpdateCompany();
-  const { mutate: updateLocation, isPending: isUpdatingLocation } =
-    useUpdateCompanyLocation();
-  const { mutate: createLocation, isPending: isCreatingLocation } =
+  const { mutate: createCompanyLocation, isPending: isLocationCreating } =
     useCreateCompanyLocation();
+
+  const { mutate: updateLocation, isPending: isLocationUpdating } =
+    updateCompanyLocation();
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -71,52 +82,66 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       phone_number: "",
       description: "",
       timezone: "UTC",
-      locations: [
-        { address: "", city: "", country: "", latitude: "", longitude: "" },
-      ],
       work_start_time: "",
       work_end_time: "",
       working_days: "",
       cancellation_policy_text: "",
       auto_approve_booking: false,
+      locations: [emptyLocation],
     },
   });
 
-  const locationFieldArray = useFieldArray({
+  const locationFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "locations",
+    "fieldId"
+  >({
     control,
     name: "locations",
+    keyName: "fieldId",
   });
+
+  const { replace } = locationFieldArray;
 
   useEffect(() => {
     if (!company) return;
 
-    const locationsArr =
-      locations && locations.length > 0
-        ? locations.map((loc) => ({
-            address: loc.address,
-            city: loc.city,
-            country: loc.country,
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-          }))
-        : [{ address: "", city: "", country: "", latitude: "", longitude: "" }];
-
     reset({
-      name: company.name,
-      email: company.email,
-      phone_number: company.phone_number,
-      description: company.description,
-      timezone: company.timezone,
-      cancellation_policy_text: company.cancellation_policy_text,
-      auto_approve_booking: company.auto_approve_booking,
-      locations: locationsArr,
+      name: company.name ?? "",
+      email: company.email ?? "",
+      phone_number: company.phone_number ?? "",
+      description: company.description ?? "",
+      timezone: company.timezone ?? "UTC",
+      cancellation_policy_text: company.cancellation_policy_text ?? "",
+      auto_approve_booking: company.auto_approve_booking ?? false,
       work_start_time: "",
       work_end_time: "",
       working_days: "",
+      locations: getValues("locations"),
     });
-  }, [company, locations, reset]);
+  }, [company, reset, getValues]);
 
-  const stepFields: (keyof AddCompanyFormValues | "locations")[][] = [
+  useEffect(() => {
+    const backendLocations = locations?.results;
+
+    if (!backendLocations) return;
+
+    replace(
+      backendLocations.length
+        ? backendLocations.map((location) => ({
+            address: location.address ?? "",
+            city: location.city ?? "",
+            country: location.country ?? "",
+            latitude: location.latitude?.toString() ?? "",
+            longitude: location.longitude?.toString() ?? "",
+            name: location.name ?? "",
+            id: location.id,
+          }))
+        : [emptyLocation],
+    );
+  }, [locations?.results, replace]);
+
+  const stepFields: FieldPath<AddCompanyFormValues>[][] = [
     [
       "name",
       "email",
@@ -136,7 +161,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
   );
 
   const handleNext = async () => {
-    const isValid = await trigger(stepFields[activeStep] as any);
+    const isValid = await trigger(stepFields[activeStep]);
     if (!isValid) return;
 
     if (!isCurrentStepDirty) {
@@ -156,6 +181,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
         cancellation_policy_text: allValues.cancellation_policy_text,
         auto_approve_booking: allValues.auto_approve_booking,
       };
+
       updateCompany(
         { id: companyId, payload },
         {
@@ -168,57 +194,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
           },
         },
       );
-      return;
-    }
 
-    if (activeStep === 1) {
-      let successCount = 0;
-      const locationsList = allValues.locations;
-
-      locationsList.forEach((loc, index) => {
-        const payload: CompanyLocationPayload = {
-          ...loc,
-          company: companyId,
-        };
-        const existingId = locations?.[index]?.id;
-
-        if (existingId) {
-          updateLocation(
-            { id: existingId, payload },
-            {
-              onSuccess: () => {
-                successCount++;
-                if (successCount === locationsList.length) {
-                  showSnackbar("Locations updated", "success");
-                  setActiveStep((prev) => prev + 1);
-                }
-              },
-              onError: (error) => {
-                showSnackbar(
-                  extractApiError(error, "Location update failed"),
-                  "error",
-                );
-              },
-            },
-          );
-        } else {
-          createLocation(payload, {
-            onSuccess: () => {
-              successCount++;
-              if (successCount === locationsList.length) {
-                showSnackbar("Locations saved", "success");
-                setActiveStep((prev) => prev + 1);
-              }
-            },
-            onError: (error) => {
-              showSnackbar(
-                extractApiError(error, "Location creation failed"),
-                "error",
-              );
-            },
-          });
-        }
-      });
       return;
     }
 
@@ -239,6 +215,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       cancellation_policy_text: values.cancellation_policy_text,
       auto_approve_booking: values.auto_approve_booking,
     };
+
     updateCompany(
       { id: companyId, payload },
       {
@@ -253,28 +230,89 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
     );
   };
 
+  const handleSaveAddress = async (index: number) => {
+    console.log(index);
+
+    const isValid = await trigger(`locations.${index}` as any);
+    if (!isValid) return;
+
+    const location = getValues(`locations.${index}`);
+
+    const { id, ...locationPayload } = location;
+
+    if (id) {
+      updateLocation(
+        {
+          companyId,
+          payload: {
+            ...locationPayload,
+            company: companyId,
+            id: id,
+          },
+        },
+        {
+          onSuccess: () => {
+            showSnackbar("Location updated successfully", "success");
+          },
+          onError: (error) => {
+            showSnackbar(
+              extractApiError(error, "Location update failed"),
+              "error",
+            );
+          },
+        },
+      );
+
+      return;
+    }
+
+    createCompanyLocation(
+      {
+        ...locationPayload,
+        company: companyId,
+      },
+      {
+        onSuccess: () => {
+          showSnackbar("Location created successfully", "success");
+        },
+        onError: (error) => {
+          showSnackbar(
+            extractApiError(error, "Location creation failed"),
+            "error",
+          );
+        },
+      },
+    );
+  };
+
   const renderStepForm = () => {
     switch (activeStep) {
       case 0:
         return <RegisterForm control={control} errors={errors} />;
+
       case 1:
         return (
           <LocationForm
             control={control}
             errors={errors}
             fieldArray={locationFieldArray}
+            onSaveAddress={handleSaveAddress}
+            isSavingAddress={isLocationUpdating || isLocationCreating}
           />
         );
+
       case 2:
         return <WorkingHoursForm control={control} errors={errors} />;
+
       case 3:
         return <CancellationPolicyForm control={control} errors={errors} />;
+
       default:
         return null;
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLocationLoading) {
     return (
       <Box
         sx={{
@@ -349,6 +387,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
                 >
                   {step}
                 </Typography>
+
                 {index < steps.length - 1 && (
                   <Typography color="grey.500" fontWeight={700}>
                     &gt;
@@ -365,6 +404,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
           <Typography variant="h5" fontWeight={700} color="primary.main" mb={1}>
             {steps[activeStep]}
           </Typography>
+
           <Typography color="text.secondary" mb={3}>
             Update this section and continue to the next one.
           </Typography>
@@ -377,14 +417,23 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
             {renderStepForm()}
 
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 1,
+              }}
             >
               <Button
                 variant="outlined"
                 color="primary"
                 disabled={activeStep === 0}
                 onClick={handleBack}
-                sx={{ textTransform: "none", px: 4, py: 1.2, borderRadius: 2 }}
+                sx={{
+                  textTransform: "none",
+                  px: 4,
+                  py: 1.2,
+                  borderRadius: 2,
+                }}
               >
                 Back
               </Button>
@@ -395,7 +444,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
                   variant="contained"
                   color="primary"
                   onClick={handleNext}
-                  disabled={isUpdating || isUpdatingLocation || isCreatingLocation}
+                  disabled={isUpdating}
                   sx={{
                     textTransform: "none",
                     px: 4,
@@ -403,7 +452,9 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
                     borderRadius: 2,
                   }}
                 >
-                  {isCurrentStepDirty ? "Save & Next" : "Next"}
+                  {isCurrentStepDirty && activeStep === 0
+                    ? "Save & Next"
+                    : "Next"}
                 </Button>
               ) : (
                 <Button

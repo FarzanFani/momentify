@@ -49,7 +49,14 @@ export default function AddCompany() {
       description: "",
       timezone: "UTC",
       locations: [
-        { address: "", city: "", country: "", latitude: "", longitude: "" },
+        {
+          address: "",
+          city: "",
+          country: "",
+          latitude: "",
+          longitude: "",
+          name: "",
+        },
       ],
       work_start_time: "",
       work_end_time: "",
@@ -59,9 +66,14 @@ export default function AddCompany() {
     },
   });
 
-  const locationFieldArray = useFieldArray({
+  const locationFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "locations",
+    "fieldId"
+  >({
     control,
     name: "locations",
+    keyName: "fieldId",
   });
 
   const onSubmit = async (values: AddCompanyFormValues) => {
@@ -159,6 +171,35 @@ export default function AddCompany() {
     advanceStep();
   };
 
+  const handleSaveAddress = async (index: number) => {
+    const isValid = await trigger(`locations.${index}` as any);
+    if (!isValid) return;
+
+    const location = getValues(`locations.${index}`);
+
+    if (!companyId) {
+      showSnackbar("Please register the company first", "error");
+      return;
+    }
+
+    const payload: CompanyLocationPayload = {
+      ...location,
+      company: companyId,
+    };
+
+    createCompanyLocation(payload, {
+      onSuccess: () => {
+        showSnackbar("Location created successfully", "success");
+      },
+      onError: (error) => {
+        showSnackbar(
+          extractApiError(error, "Location creation failed"),
+          "error",
+        );
+      },
+    });
+  };
+
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
@@ -173,6 +214,7 @@ export default function AddCompany() {
             control={control}
             errors={errors}
             fieldArray={locationFieldArray}
+            onSaveAddress={handleSaveAddress}
           />
         );
       case 2:

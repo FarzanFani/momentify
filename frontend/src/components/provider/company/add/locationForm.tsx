@@ -1,12 +1,21 @@
 "use client";
 
 import InputField from "@/components/common/input/InputField";
-import { Box, Button, Divider, Grid, IconButton, Typography } from "@mui/material";
-import { Add, Delete } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Divider,
+  Grid,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { Add, Check, Delete } from "@mui/icons-material";
 import { Controller } from "react-hook-form";
-import { LocationFormProps } from "./formTypes";
+import { CompanyLocation, LocationFormProps } from "./formTypes";
+import { updateCompanyLocation } from "@/hooks/company";
 
 const emptyLocation = {
+  name: "",
   address: "",
   city: "",
   country: "",
@@ -18,13 +27,15 @@ export default function LocationForm({
   control,
   errors,
   fieldArray,
+  onSaveAddress,
+  isSavingAddress,
 }: LocationFormProps) {
   const { fields, append, remove } = fieldArray;
 
   return (
     <Box>
       {fields.map((field, index) => (
-        <Box key={field.id}>
+        <Box key={field.fieldId}>
           {index > 0 && <Divider sx={{ my: 3 }} />}
           <Box
             sx={{
@@ -38,13 +49,17 @@ export default function LocationForm({
               Address {index + 1}
             </Typography>
             {fields.length > 1 && (
-              <IconButton color="error" onClick={() => remove(index)} size="small">
+              <IconButton
+                color="error"
+                onClick={() => remove(index)}
+                size="small"
+              >
                 <Delete fontSize="small" />
               </IconButton>
             )}
           </Box>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Controller
                 name={`locations.${index}.address`}
                 control={control}
@@ -56,6 +71,22 @@ export default function LocationForm({
                     onChange={f.onChange}
                     error={!!errors.locations?.[index]?.address}
                     helperText={errors.locations?.[index]?.address?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name={`locations.${index}.name`}
+                control={control}
+                rules={{ required: "Name is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="name"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.name}
+                    helperText={errors.locations?.[index]?.name?.message}
                   />
                 )}
               />
@@ -125,6 +156,23 @@ export default function LocationForm({
               />
             </Grid>
           </Grid>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              mt: 2,
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button
+              startIcon={<Check />}
+              onClick={() => onSaveAddress?.(index)}
+              disabled={isSavingAddress}
+              sx={{ mt: 2, textTransform: "none" }}
+            >
+              {isSavingAddress ? "Saving..." : "Save Address"}
+            </Button>
+          </Box>
         </Box>
       ))}
 

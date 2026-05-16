@@ -3,18 +3,18 @@ import { AxiosError } from "axios";
 import { ApiResponse } from "@/types/general";
 import {
   Company,
-  CompanyLocation,
-  CompanyLocationListResponse,
-  createCompanyLocation,
   registerCompany,
   updateCompany,
   getCompanyById,
-  getCompanyLocations,
   getProviderCompanies,
   CompanyListResponse,
-  updateCompanyLocation,
+  createLocation,
+  getCompanyLocations,
+  AddressListResponse,
+  updateLocation,
 } from "@/services/provider/company";
 import {
+  CompanyLocation,
   CompanyLocationPayload,
   RegisterCompanyPayload,
 } from "@/components/provider/company/add/formTypes";
@@ -26,16 +26,6 @@ export const useRegisterCompany = () => {
     RegisterCompanyPayload
   >({
     mutationFn: registerCompany,
-  });
-};
-
-export const useCreateCompanyLocation = () => {
-  return useMutation<
-    CompanyLocation,
-    AxiosError<ApiResponse<null>>,
-    CompanyLocationPayload
-  >({
-    mutationFn: createCompanyLocation,
   });
 };
 
@@ -57,18 +47,6 @@ export const useGetCompanyById = (id: string) => {
   });
 };
 
-export const useGetCompanyLocations = (companyId: string) => {
-  return useQuery<
-    CompanyLocationListResponse,
-    AxiosError<ApiResponse<null>>,
-    CompanyLocationListResponse
-  >({
-    queryKey: ["company-locations", companyId],
-    queryFn: () => getCompanyLocations(companyId),
-    enabled: !!companyId,
-  });
-};
-
 export const useGetProviderCompanies = (search: string) => {
   return useQuery<
     CompanyListResponse,
@@ -80,12 +58,32 @@ export const useGetProviderCompanies = (search: string) => {
   });
 };
 
-export const useUpdateCompanyLocation = () => {
+export const useCreateCompanyLocation = () => {
   return useMutation<
     CompanyLocation,
     AxiosError<ApiResponse<null>>,
-    { id: string; payload: Partial<CompanyLocationPayload> }
+    CompanyLocationPayload
+  >({ mutationFn: createLocation });
+};
+
+export const useGetCompanyLocations = (id: string) => {
+  return useQuery<
+    AddressListResponse,
+    AxiosError<ApiResponse<null>>,
+    AddressListResponse
   >({
-    mutationFn: ({ id, payload }) => updateCompanyLocation(id, payload),
+    queryKey: ["company-location", id],
+    queryFn: () => getCompanyLocations(id),
+    enabled: !!id,
+  });
+};
+
+export const updateCompanyLocation = () => {
+  return useMutation<
+    CompanyLocation,
+    AxiosError<ApiResponse<null>>,
+    { companyId: string; payload: CompanyLocation }
+  >({
+    mutationFn: ({ companyId, payload }) => updateLocation(payload, companyId),
   });
 };
