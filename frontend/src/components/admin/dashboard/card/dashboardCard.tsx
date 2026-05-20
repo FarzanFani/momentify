@@ -12,6 +12,7 @@ interface DashboardCardProps {
   bgcolor: string;
   compact: boolean;
   active?: boolean;
+  onclick?: () => void;
 }
 
 export default function DashboardCard({
@@ -24,11 +25,15 @@ export default function DashboardCard({
   bgcolor,
   compact = false,
   active = false,
+  onclick,
 }: DashboardCardProps) {
   const router = useRouter();
   return (
     <Box
-      onClick={() => router.push(link)}
+      onClick={() => {
+        router.push(link);
+        onclick?.();
+      }}
       sx={[
         styles.cardContainer,
         ...(compact ? [styles.compactCard] : []),

@@ -45,7 +45,11 @@ const navItems = [
   },
 ];
 
-export default function ProviderNavCards() {
+export default function ProviderNavCards({
+  onclick,
+}: {
+  onclick?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -66,6 +70,7 @@ export default function ProviderNavCards() {
               bgcolor={item.bgcolor}
               compact
               active={pathname.startsWith(item.link)}
+              onclick={onclick}
             />
           </Box>
         ))}
