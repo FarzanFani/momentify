@@ -2,10 +2,16 @@
 
 import { useEffect, useState } from "react";
 import {
+  updateCompanyCancellationPolicy,
   updateCompanyLocation,
+  updateCompanyWorkingHour,
+  useCreateCompanyCancellationPolicy,
   useCreateCompanyLocation,
+  useCreateCompanyWorkingHour,
   useGetCompanyById,
+  useGetCompanyCancellationPolicies,
   useGetCompanyLocations,
+  useGetCompanyWorkingHours,
   useUpdateCompany,
 } from "@/hooks/company";
 import { useSnackbar } from "@/contexts/SnackbarContext";
@@ -21,14 +27,15 @@ import {
 } from "@mui/material";
 import { FieldPath, useFieldArray, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import RegisterForm from "@/components/provider/company/add/registerForm";
-import WorkingHoursForm from "@/components/provider/company/add/workingHoursForm";
-import CancellationPolicyForm from "@/components/provider/company/add/cancellationPolicyForm";
+import RegisterForm from "@/components/provider/company/detailsForm/registerForm";
+import WorkingHoursForm from "@/components/provider/company/detailsForm/workingHoursForm";
+import CancellationPolicyForm from "@/components/provider/company/detailsForm/cancellationPolicyForm";
 import {
   AddCompanyFormValues,
+  CompanyCancellationPolicy,
   RegisterCompanyPayload,
 } from "@/components/provider/company/add/formTypes";
-import LocationForm from "../add/locationForm";
+import LocationForm from "../detailsForm/locationForm";
 
 interface CompanyEditProps {
   companyId: string;
@@ -50,6 +57,20 @@ const emptyLocation = {
   name: "",
 };
 
+const emptyWorkingHour = {
+  weekday: [],
+  start_time: "",
+  end_time: "",
+};
+
+const emptyCancellationPolicy = {
+  rule_description: "",
+  hours_before_event: "",
+  refund_precentage: "",
+  priority: "",
+  is_active: true,
+};
+
 export default function CompanyEdit({ companyId }: CompanyEditProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -58,12 +79,38 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
 
   const { data: locations, isLoading: isLocationLoading } =
     useGetCompanyLocations(companyId);
+
+  const { data: workingHoursData, isLoading: isWorkingHoursLoading } =
+    useGetCompanyWorkingHours(companyId);
+
+  const {
+    data: cancellationPoliciesData,
+    isLoading: isCancellationPoliciesLoading,
+  } = useGetCompanyCancellationPolicies(companyId);
+
   const { mutate: updateCompany, isPending: isUpdating } = useUpdateCompany();
+
   const { mutate: createCompanyLocation, isPending: isLocationCreating } =
     useCreateCompanyLocation();
 
   const { mutate: updateLocation, isPending: isLocationUpdating } =
     updateCompanyLocation();
+
+  const { mutate: updateWorkingHour, isPending: isWorkingHourUpdating } =
+    updateCompanyWorkingHour();
+
+  const { mutate: createWorkingHour, isPending: isWorkingHourCreating } =
+    useCreateCompanyWorkingHour();
+
+  const {
+    mutate: updateCancellationPolicy,
+    isPending: isCancellationPolicyUpdating,
+  } = updateCompanyCancellationPolicy();
+
+  const {
+    mutate: createCancellationPolicy,
+    isPending: isCancellationPolicyCreating,
+  } = useCreateCompanyCancellationPolicy();
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -82,11 +129,9 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       phone_number: "",
       description: "",
       timezone: "UTC",
-      work_start_time: "",
-      work_end_time: "",
-      working_days: "",
-      cancellation_policy_text: "",
       auto_approve_booking: false,
+      working_hours: [emptyWorkingHour],
+      cancellation_policies: [emptyCancellationPolicy],
       locations: [emptyLocation],
     },
   });
@@ -101,7 +146,29 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
     keyName: "fieldId",
   });
 
+  const workingHoursFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "working_hours",
+    "fieldId"
+  >({
+    control,
+    name: "working_hours",
+    keyName: "fieldId",
+  });
+
+  const cancellationPolicyFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "cancellation_policies",
+    "fieldId"
+  >({
+    control,
+    name: "cancellation_policies",
+    keyName: "fieldId",
+  });
+
   const { replace } = locationFieldArray;
+  const { replace: replaceWorkingHours } = workingHoursFieldArray;
+  const { replace: replaceCancellationPolicies } = cancellationPolicyFieldArray;
 
   useEffect(() => {
     if (!company) return;
@@ -112,11 +179,9 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       phone_number: company.phone_number ?? "",
       description: company.description ?? "",
       timezone: company.timezone ?? "UTC",
-      cancellation_policy_text: company.cancellation_policy_text ?? "",
       auto_approve_booking: company.auto_approve_booking ?? false,
-      work_start_time: "",
-      work_end_time: "",
-      working_days: "",
+      working_hours: getValues("working_hours"),
+      cancellation_policies: getValues("cancellation_policies"),
       locations: getValues("locations"),
     });
   }, [company, reset, getValues]);
@@ -141,6 +206,44 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
     );
   }, [locations?.results, replace]);
 
+  useEffect(() => {
+    const workingHours = workingHoursData;
+
+    if (!workingHours || workingHours.length === 0) {
+      replaceWorkingHours([emptyWorkingHour]);
+      return;
+    }
+
+    replaceWorkingHours(
+      workingHours.map((workingHour) => ({
+        id: workingHour.id,
+        weekday: (workingHour.weekday ?? []).map(String),
+        start_time: workingHour.start_time ?? "",
+        end_time: workingHour.end_time ?? "",
+      })),
+    );
+  }, [workingHoursData, replaceWorkingHours]);
+
+  useEffect(() => {
+    const cancellationPolicies = cancellationPoliciesData;
+
+    if (!cancellationPolicies || cancellationPolicies.length === 0) {
+      replaceCancellationPolicies([emptyCancellationPolicy]);
+      return;
+    }
+
+    replaceCancellationPolicies(
+      cancellationPolicies.map((policy) => ({
+        id: policy.id,
+        rule_description: policy.rule_description ?? "",
+        hours_before_event: policy.hours_before_event?.toString() ?? "",
+        refund_precentage: policy.refund_precentage?.toString() ?? "",
+        priority: policy.priority?.toString() ?? "",
+        is_active: policy.is_active ?? true,
+      })),
+    );
+  }, [cancellationPoliciesData, replaceCancellationPolicies]);
+
   const stepFields: FieldPath<AddCompanyFormValues>[][] = [
     [
       "name",
@@ -148,12 +251,11 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       "phone_number",
       "description",
       "timezone",
-      "cancellation_policy_text",
       "auto_approve_booking",
     ],
     ["locations"],
-    ["work_start_time", "work_end_time", "working_days"],
-    ["cancellation_policy_text", "auto_approve_booking"],
+    ["working_hours"],
+    ["cancellation_policies"],
   ];
 
   const isCurrentStepDirty = stepFields[activeStep]?.some(
@@ -178,7 +280,6 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
         phone_number: allValues.phone_number,
         description: allValues.description,
         timezone: allValues.timezone,
-        cancellation_policy_text: allValues.cancellation_policy_text,
         auto_approve_booking: allValues.auto_approve_booking,
       };
 
@@ -189,7 +290,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
             showSnackbar("Company info updated", "success");
             setActiveStep((prev) => prev + 1);
           },
-          onError: (error) => {
+          onError: (error: any) => {
             showSnackbar(extractApiError(error, "Update failed"), "error");
           },
         },
@@ -212,7 +313,6 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
       phone_number: values.phone_number,
       description: values.description,
       timezone: values.timezone,
-      cancellation_policy_text: values.cancellation_policy_text,
       auto_approve_booking: values.auto_approve_booking,
     };
 
@@ -223,7 +323,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
           showSnackbar("Company updated successfully", "success");
           router.push(`/provider/company/${companyId}/preview`);
         },
-        onError: (error) => {
+        onError: (error: any) => {
           showSnackbar(extractApiError(error, "Update failed"), "error");
         },
       },
@@ -231,9 +331,9 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
   };
 
   const handleSaveAddress = async (index: number) => {
-    console.log(index);
-
-    const isValid = await trigger(`locations.${index}` as any);
+    const isValid = await trigger(
+      `locations.${index}` as FieldPath<AddCompanyFormValues>,
+    );
     if (!isValid) return;
 
     const location = getValues(`locations.${index}`);
@@ -247,14 +347,14 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
           payload: {
             ...locationPayload,
             company: companyId,
-            id: id,
+            id,
           },
         },
         {
           onSuccess: () => {
             showSnackbar("Location updated successfully", "success");
           },
-          onError: (error) => {
+          onError: (error: any) => {
             showSnackbar(
               extractApiError(error, "Location update failed"),
               "error",
@@ -275,9 +375,119 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
         onSuccess: () => {
           showSnackbar("Location created successfully", "success");
         },
-        onError: (error) => {
+        onError: (error: any) => {
           showSnackbar(
             extractApiError(error, "Location creation failed"),
+            "error",
+          );
+        },
+      },
+    );
+  };
+
+  const handleSaveWorkingHour = async (index: number) => {
+    const isValid = await trigger(
+      `working_hours.${index}` as FieldPath<AddCompanyFormValues>,
+    );
+    if (!isValid) return;
+
+    const workingHour = getValues(`working_hours.${index}`);
+
+    const { id, ...workingHourPayload } = workingHour;
+
+    if (id) {
+      updateWorkingHour(
+        {
+          companyId,
+          payload: {
+            ...workingHourPayload,
+            company: companyId,
+            id,
+          },
+        },
+        {
+          onSuccess: () => {
+            showSnackbar("Working hours updated successfully", "success");
+          },
+          onError: (error: any) => {
+            showSnackbar(
+              extractApiError(error, "Working hours update failed"),
+              "error",
+            );
+          },
+        },
+      );
+
+      return;
+    }
+
+    createWorkingHour(
+      {
+        ...workingHourPayload,
+        company: companyId,
+      },
+      {
+        onSuccess: () => {
+          showSnackbar("Working hours created successfully", "success");
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Working hours creation failed"),
+            "error",
+          );
+        },
+      },
+    );
+  };
+
+  const handleSaveCancellationPolicy = async (index: number) => {
+    const isValid = await trigger(
+      `cancellation_policies.${index}` as FieldPath<AddCompanyFormValues>,
+    );
+    if (!isValid) return;
+
+    const cancellationPolicy = getValues(`cancellation_policies.${index}`);
+
+    const { id, ...cancellationPolicyPayload } = cancellationPolicy;
+
+    if (id) {
+      updateCancellationPolicy(
+        {
+          companyId,
+          payload: {
+            ...cancellationPolicyPayload,
+            company: companyId,
+            id,
+          } as CompanyCancellationPolicy,
+        },
+        {
+          onSuccess: () => {
+            showSnackbar("Cancellation policy updated successfully", "success");
+          },
+          onError: (error: any) => {
+            showSnackbar(
+              extractApiError(error, "Cancellation policy update failed"),
+              "error",
+            );
+          },
+        },
+      );
+
+      return;
+    }
+
+    createCancellationPolicy(
+      {
+        ...cancellationPolicyPayload,
+        company: companyId,
+      },
+      {
+        onSuccess: () => {
+          showSnackbar("Cancellation policy created successfully", "success");
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Cancellation policy creation failed"),
             "error",
           );
         },
@@ -302,17 +512,40 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
         );
 
       case 2:
-        return <WorkingHoursForm control={control} errors={errors} />;
+        return (
+          <WorkingHoursForm
+            fieldArray={workingHoursFieldArray}
+            control={control}
+            errors={errors}
+            onSaveWorkingHour={handleSaveWorkingHour}
+            isSavingWorkingHour={isWorkingHourUpdating || isWorkingHourCreating}
+          />
+        );
 
       case 3:
-        return <CancellationPolicyForm control={control} errors={errors} />;
+        return (
+          <CancellationPolicyForm
+            control={control}
+            errors={errors}
+            fieldArray={cancellationPolicyFieldArray}
+            onSaveCancellationPolicy={handleSaveCancellationPolicy}
+            isSavingCancellationPolicy={
+              isCancellationPolicyUpdating || isCancellationPolicyCreating
+            }
+          />
+        );
 
       default:
         return null;
     }
   };
 
-  if (isLoading || isLocationLoading) {
+  if (
+    isLoading ||
+    isLocationLoading ||
+    isWorkingHoursLoading ||
+    isCancellationPoliciesLoading
+  ) {
     return (
       <Box
         sx={{
@@ -347,6 +580,11 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
         gap: 2,
       }}
     >
+      <Box sx={{ width: "90%" }}>
+        <Typography variant="h4" fontWeight={700} color="primary.main">
+          Edit Company
+        </Typography>
+      </Box>
       <Box sx={{ width: "90%" }}>
         <Breadcrumb
           items={[

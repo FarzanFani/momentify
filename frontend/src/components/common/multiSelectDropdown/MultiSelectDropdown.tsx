@@ -30,8 +30,10 @@ export default function MultiSelectDropdown({
     typeof option === "string" ? { label: option, value: option } : option,
   );
 
+  console.log(value);
+
   const selectedLabels = normalizedOptions
-    .filter((option) => value.includes(option.value))
+    .filter((option) => (value ?? []).includes(option.value))
     .map((option) => option.label);
 
   return (
@@ -41,7 +43,15 @@ export default function MultiSelectDropdown({
       </Typography>
       <Select
         value={value}
-        onChange={(e) => onChange(e.target.value as string[])}
+        onChange={(e) => {
+          const selectedValue = e.target.value;
+
+          onChange(
+            typeof selectedValue === "string"
+              ? selectedValue.split(",")
+              : selectedValue,
+          );
+        }}
         multiple
         fullWidth
         renderValue={() => (
@@ -55,7 +65,7 @@ export default function MultiSelectDropdown({
         }}
       >
         {normalizedOptions.map((option) => {
-          const selected = value.includes(option.value);
+          const selected = (value ?? []).includes(option.value);
           const SelectionIcon = selected
             ? CheckBoxIcon
             : CheckBoxOutlineBlankIcon;

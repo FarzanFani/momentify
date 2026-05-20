@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Add, Check, Delete } from "@mui/icons-material";
 import { Controller } from "react-hook-form";
-import { CompanyLocation, LocationFormProps } from "./formTypes";
+import { CompanyLocation, LocationFormProps } from "../add/formTypes";
 import { updateCompanyLocation } from "@/hooks/company";
 
 const emptyLocation = {
@@ -59,7 +59,7 @@ export default function LocationForm({
             )}
           </Box>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }} sx={{ maxWidth: "400px" }}>
               <Controller
                 name={`locations.${index}.address`}
                 control={control}
@@ -71,6 +71,7 @@ export default function LocationForm({
                     onChange={f.onChange}
                     error={!!errors.locations?.[index]?.address}
                     helperText={errors.locations?.[index]?.address?.message}
+                    multiline
                   />
                 )}
               />

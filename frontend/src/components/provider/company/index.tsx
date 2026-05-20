@@ -9,6 +9,7 @@ import {
   IconButton,
   Typography,
   Menu,
+  Chip,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Company } from "@/services/provider/company";
@@ -64,7 +65,25 @@ export default function ProviderCompaies() {
     (company) => ({
       id: company.id,
       cells: {
-        name: <Typography>{company.name}</Typography>,
+        name: (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <Typography>{company.name}</Typography>
+            {!company.is_profile_complete && (
+              <Chip
+                label="Not Complete"
+                size="small"
+                color="warning"
+                variant="outlined"
+              />
+            )}
+          </Box>
+        ),
         email: <Typography>{company.email}</Typography>,
         phone_number: <Typography>{company.phone_number}</Typography>,
         verification_status: (

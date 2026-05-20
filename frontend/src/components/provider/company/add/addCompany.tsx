@@ -4,17 +4,24 @@ import { useState } from "react";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import { useFieldArray, useForm } from "react-hook-form";
-import RegisterForm from "./registerForm";
-import LocationForm from "./locationForm";
-import WorkingHoursForm from "./workingHoursForm";
-import CancellationPolicyForm from "./cancellationPolicyForm";
+import RegisterForm from "../detailsForm/registerForm";
+import LocationForm from "../detailsForm/locationForm";
+import WorkingHoursForm from "../detailsForm/workingHoursForm";
+import CancellationPolicyForm from "../detailsForm/cancellationPolicyForm";
 import {
   AddCompanyFormValues,
+  CompanyCancellationPolicyPayload,
   CompanyLocationPayload,
   RegisterCompanyPayload,
 } from "./formTypes";
-import { useCreateCompanyLocation, useRegisterCompany } from "@/hooks/company";
+import {
+  useCreateCompanyCancellationPolicy,
+  useCreateCompanyLocation,
+  useCreateCompanyWorkingHour,
+  useRegisterCompany,
+} from "@/hooks/company";
 import { extractApiError } from "@/utils/extractApiError";
+import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
 
 const steps = [
   "Register Company",
@@ -28,10 +35,15 @@ export default function AddCompany() {
 
   const { mutate: registerCompany } = useRegisterCompany();
   const { mutate: createCompanyLocation } = useCreateCompanyLocation();
+  const { mutate: createWorkingHour } = useCreateCompanyWorkingHour();
+  const { mutate: createCancellationPolicy } =
+    useCreateCompanyCancellationPolicy();
 
   const [companyId, setCompanyId] = useState<string>("");
   const [activeStep, setActiveStep] = useState(0);
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
+  const [isSavingCancellationPolicy, setIsSavingCancellationPolicy] =
+    useState(false);
 
   const {
     control,
@@ -48,6 +60,7 @@ export default function AddCompany() {
       phone_number: "",
       description: "",
       timezone: "UTC",
+      auto_approve_booking: false,
       locations: [
         {
           address: "",
@@ -58,11 +71,22 @@ export default function AddCompany() {
           name: "",
         },
       ],
-      work_start_time: "",
-      work_end_time: "",
-      working_days: "",
-      cancellation_policy_text: "",
-      auto_approve_booking: false,
+      working_hours: [
+        {
+          weekday: [],
+          start_time: "",
+          end_time: "",
+        },
+      ],
+      cancellation_policies: [
+        {
+          rule_description: "",
+          hours_before_event: "",
+          refund_precentage: "",
+          priority: "",
+          is_active: true,
+        },
+      ],
     },
   });
 
@@ -76,25 +100,44 @@ export default function AddCompany() {
     keyName: "fieldId",
   });
 
+  const workingHoursFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "working_hours",
+    "fieldId"
+  >({
+    control,
+    name: "working_hours",
+    keyName: "fieldId",
+  });
+
+  const cancellationPolicyFieldArray = useFieldArray<
+    AddCompanyFormValues,
+    "cancellation_policies",
+    "fieldId"
+  >({
+    control,
+    name: "cancellation_policies",
+    keyName: "fieldId",
+  });
+
   const onSubmit = async (values: AddCompanyFormValues) => {
     console.log("Add company payload:", values);
     showSnackbar("Company form submitted", "success");
     reset(values);
   };
 
-  const stepFields: (keyof AddCompanyFormValues | "locations")[][] = [
+  const stepFields: (keyof AddCompanyFormValues)[][] = [
     [
       "name",
       "email",
       "phone_number",
       "description",
       "timezone",
-      "cancellation_policy_text",
       "auto_approve_booking",
     ],
     ["locations"],
-    ["work_start_time", "work_end_time", "working_days"],
-    ["cancellation_policy_text", "auto_approve_booking"],
+    ["working_hours"],
+    ["cancellation_policies"],
   ];
 
   const advanceStep = () => {
@@ -118,22 +161,23 @@ export default function AddCompany() {
         phone_number: allValues.phone_number,
         description: allValues.description,
         timezone: allValues.timezone,
-        cancellation_policy_text: allValues.cancellation_policy_text,
         auto_approve_booking: allValues.auto_approve_booking,
       };
+
       registerCompany(payload, {
         onSuccess: (data) => {
           setCompanyId(data.id);
           showSnackbar("Company registered successfully", "success");
           advanceStep();
         },
-        onError: (error) => {
+        onError: (error: any) => {
           showSnackbar(
             extractApiError(error, "Company registration failed"),
             "error",
           );
         },
       });
+
       return;
     }
 
@@ -141,14 +185,21 @@ export default function AddCompany() {
       let successCount = 0;
       const locationsList = allValues.locations;
 
+      if (!companyId) {
+        showSnackbar("Please register the company first", "error");
+        return;
+      }
+
       locationsList.forEach((loc) => {
         const payload: CompanyLocationPayload = {
           ...loc,
           company: companyId,
         };
+
         createCompanyLocation(payload, {
           onSuccess: () => {
             successCount++;
+
             if (successCount === locationsList.length) {
               showSnackbar(
                 `${successCount} location(s) created successfully`,
@@ -157,7 +208,7 @@ export default function AddCompany() {
               advanceStep();
             }
           },
-          onError: (error) => {
+          onError: (error: any) => {
             showSnackbar(
               extractApiError(error, "Location creation failed"),
               "error",
@@ -165,6 +216,49 @@ export default function AddCompany() {
           },
         });
       });
+
+      return;
+    }
+
+    if (activeStep === 2) {
+      let successCount = 0;
+      const workingHoursList = allValues.working_hours;
+
+      if (!companyId) {
+        showSnackbar("Please register the company first", "error");
+        return;
+      }
+
+      workingHoursList.forEach((workingHour) => {
+        createWorkingHour(
+          {
+            company: companyId,
+            weekday: workingHour.weekday,
+            start_time: workingHour.start_time,
+            end_time: workingHour.end_time,
+          },
+          {
+            onSuccess: () => {
+              successCount++;
+
+              if (successCount === workingHoursList.length) {
+                showSnackbar(
+                  `${successCount} working hour(s) created successfully`,
+                  "success",
+                );
+                advanceStep();
+              }
+            },
+            onError: (error: any) => {
+              showSnackbar(
+                extractApiError(error, "Working hours creation failed"),
+                "error",
+              );
+            },
+          },
+        );
+      });
+
       return;
     }
 
@@ -191,12 +285,89 @@ export default function AddCompany() {
       onSuccess: () => {
         showSnackbar("Location created successfully", "success");
       },
-      onError: (error) => {
+      onError: (error: any) => {
         showSnackbar(
           extractApiError(error, "Location creation failed"),
           "error",
         );
       },
+    });
+  };
+
+  const handleSaveCancellationPolicy = async (index: number) => {
+    const isValid = await trigger(`cancellation_policies.${index}` as any);
+    if (!isValid) return;
+
+    const cancellationPolicy = getValues(`cancellation_policies.${index}`);
+
+    if (!companyId) {
+      showSnackbar("Please register the company first", "error");
+      return;
+    }
+
+    const payload: CompanyCancellationPolicyPayload = {
+      ...cancellationPolicy,
+      company: companyId,
+    };
+
+    setIsSavingCancellationPolicy(true);
+
+    createCancellationPolicy(payload, {
+      onSuccess: () => {
+        showSnackbar("Cancellation policy created successfully", "success");
+        setIsSavingCancellationPolicy(false);
+      },
+      onError: (error: any) => {
+        showSnackbar(
+          extractApiError(error, "Cancellation policy creation failed"),
+          "error",
+        );
+        setIsSavingCancellationPolicy(false);
+      },
+    });
+  };
+
+  const handleSaveAllCancellationPolicies = async () => {
+    const isValid = await trigger("cancellation_policies");
+    if (!isValid) return;
+
+    const allValues = getValues();
+    const cancellationPoliciesList = allValues.cancellation_policies;
+
+    if (!companyId) {
+      showSnackbar("Please register the company first", "error");
+      return;
+    }
+
+    let successCount = 0;
+    setIsSavingCancellationPolicy(true);
+
+    cancellationPoliciesList.forEach((cancellationPolicy) => {
+      const payload: CompanyCancellationPolicyPayload = {
+        ...cancellationPolicy,
+        company: companyId,
+      };
+
+      createCancellationPolicy(payload, {
+        onSuccess: () => {
+          successCount++;
+
+          if (successCount === cancellationPoliciesList.length) {
+            showSnackbar(
+              `${successCount} cancellation policy(s) created successfully`,
+              "success",
+            );
+            setIsSavingCancellationPolicy(false);
+          }
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Cancellation policy creation failed"),
+            "error",
+          );
+          setIsSavingCancellationPolicy(false);
+        },
+      });
     });
   };
 
@@ -218,9 +389,23 @@ export default function AddCompany() {
           />
         );
       case 2:
-        return <WorkingHoursForm control={control} errors={errors} />;
+        return (
+          <WorkingHoursForm
+            control={control}
+            fieldArray={workingHoursFieldArray}
+            errors={errors}
+          />
+        );
       case 3:
-        return <CancellationPolicyForm control={control} errors={errors} />;
+        return (
+          <CancellationPolicyForm
+            control={control}
+            errors={errors}
+            fieldArray={cancellationPolicyFieldArray}
+            onSaveCancellationPolicy={handleSaveCancellationPolicy}
+            isSavingCancellationPolicy={isSavingCancellationPolicy}
+          />
+        );
       default:
         return null;
     }
@@ -245,7 +430,14 @@ export default function AddCompany() {
           Add Company
         </Typography>
       </Box>
-
+      <Box sx={{ width: "90%" }}>
+        <Breadcrumb
+          items={[
+            { label: "Companies", href: "/provider/company" },
+            { label: "Add" },
+          ]}
+        />
+      </Box>
       <Card sx={{ width: "90%", borderRadius: 3 }}>
         <CardContent sx={{ p: 3 }}>
           <Box
@@ -280,6 +472,7 @@ export default function AddCompany() {
                 >
                   {step}
                 </Typography>
+
                 {index < steps.length - 1 && (
                   <Typography color="grey.500" fontWeight={700}>
                     &gt;
@@ -296,6 +489,7 @@ export default function AddCompany() {
           <Typography variant="h5" fontWeight={700} color="primary.main" mb={1}>
             {steps[activeStep]}
           </Typography>
+
           <Typography color="text.secondary" mb={3}>
             Complete this step and continue to the next one.
           </Typography>
@@ -337,10 +531,11 @@ export default function AddCompany() {
                 </Button>
               ) : (
                 <Button
-                  type="submit"
+                  type="button"
                   variant="contained"
                   color="primary"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSavingCancellationPolicy}
+                  onClick={handleSaveAllCancellationPolicies}
                   sx={{
                     textTransform: "none",
                     px: 4,
@@ -348,7 +543,9 @@ export default function AddCompany() {
                     borderRadius: 2,
                   }}
                 >
-                  {isSubmitting ? "Submitting..." : "Create Company"}
+                  {isSavingCancellationPolicy
+                    ? "Saving..."
+                    : "Save Cancellation Policies"}
                 </Button>
               )}
             </Box>
