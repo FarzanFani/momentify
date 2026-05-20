@@ -1,5 +1,6 @@
 .input-field-wrapper {
-  width: 400px;
+  /* width: 400px; */
+  width: 100%;
 }
 
 .input-field-label {

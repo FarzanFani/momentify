@@ -1,5 +1,6 @@
 .password-field-wrapper {
-  width: 400px;
+  /* width: 400px; */
+  width: 100%
 }
 
 .password-field-label {
