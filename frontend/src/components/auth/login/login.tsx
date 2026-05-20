@@ -36,8 +36,6 @@ export default function Login() {
   });
 
   const onSubmit = (data: LoginForm) => {
-    console.log(data);
-
     mutate(data, {
       onSuccess: ({ user }) => {
         dispatch(setUser(user));
@@ -63,15 +61,24 @@ export default function Login() {
 
   return (
     <Box sx={styles.pageContainer}>
-      <Container maxWidth="sm">
+      <Container
+        sx={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Box
           display="flex"
           flexDirection="column"
           alignItems="center"
+          justifyContent="center"
           gap={2}
           sx={styles.card}
         >
-          <Box sx={styles.headerBox}>
+          <Box sx={styles.headerBox} maxWidth={"400px"} width={"100%"}>
             <Typography variant="body2" sx={styles.subtitle}>
               Welcome to
             </Typography>
@@ -80,59 +87,68 @@ export default function Login() {
             </Typography>
           </Box>
 
-          <Controller
-            name="email"
-            control={control}
-            rules={{
-              required: "Email is required",
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: "Enter a valid email address",
-              },
-            }}
-            render={({ field }) => (
-              <InputField
-                value={field.value}
-                onChange={field.onChange}
-                label="Email"
-                placeholder="Enter your email"
-                type="email"
-                error={!!errors.email}
-                helperText={errors.email?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="password"
-            control={control}
-            rules={{ required: "Password is required" }}
-            render={({ field }) => (
-              <PasswordField
-                value={field.value}
-                onChange={field.onChange}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-              />
-            )}
-          />
-
-          <Button
-            type="button"
-            variant="contained"
-            color="primary"
-            disabled={isPending}
-            sx={styles.loginButton}
-            onClick={handleSubmit(onSubmit)}
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={2}
+            maxWidth={"400px"}
+            width={"100%"}
           >
-            {isPending ? "Logging in..." : "Login"}
-          </Button>
+            <Controller
+              name="email"
+              control={control}
+              rules={{
+                required: "Email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Enter a valid email address",
+                },
+              }}
+              render={({ field }) => (
+                <InputField
+                  value={field.value}
+                  onChange={field.onChange}
+                  label="Email"
+                  placeholder="Enter your email"
+                  type="email"
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
+              )}
+            />
 
-          <Link href="/register">
-            <Button variant="text" color="primary" sx={styles.registerButton}>
-              Don&apos;t have an account?
+            <Controller
+              name="password"
+              control={control}
+              rules={{ required: "Password is required" }}
+              render={({ field }) => (
+                <PasswordField
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                />
+              )}
+            />
+
+            <Button
+              type="button"
+              variant="contained"
+              color="primary"
+              disabled={isPending}
+              sx={styles.loginButton}
+              onClick={handleSubmit(onSubmit)}
+            >
+              {isPending ? "Logging in..." : "Login"}
             </Button>
-          </Link>
+
+            <Link href="/register" style={{ width: "100%" }}>
+              <Button variant="text" color="primary" sx={styles.registerButton}>
+                Don&apos;t have an account?
+              </Button>
+            </Link>
+          </Box>
         </Box>
       </Container>
     </Box>

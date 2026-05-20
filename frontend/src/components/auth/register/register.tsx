@@ -205,7 +205,7 @@ export default function Register() {
             {isPending ? "Registering..." : "Register"}
           </Button>
 
-          <Link href="/login">
+          <Link href="/login" style={{ width: "100%" }}>
             <Button variant="text" color="primary" sx={styles.registerButton}>
               Already have an account?
             </Button>
