@@ -18,6 +18,7 @@ export interface User {
   role: "CUSTOMER" | "PROVIDER" | "ADMIN";
   phone_number: string;
   is_verified: boolean;
+  has_company_registered: boolean;
 }
 
 export interface RegisterResponse {
