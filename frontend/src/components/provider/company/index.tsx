@@ -70,6 +70,7 @@ export default function ProviderCompaies() {
             sx={{
               display: "flex",
               alignItems: "center",
+              flexWrap: "wrap",
               gap: "16px",
             }}
           >
@@ -151,31 +152,42 @@ export default function ProviderCompaies() {
         display={"flex"}
         justifyContent={"space-between"}
         alignItems={"center"}
-        px={4}
+        flexDirection={{ xs: "column", sm: "row" }}
+        px={{ xs: 0, sm: 4 }}
+        rowGap={2}
       >
-        <Box>
+        <Box
+          display={"flex"}
+          justifyContent={"start"}
+          width={{ xs: "100%", sm: "100%" }}
+        >
           <SearchInput
             fullWidth={false}
-            width="300px"
+            maxWidth="450px"
             onSearch={handleSearch}
           />
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          endIcon={<Add fontSize="medium" />}
-          sx={{
-            textTransform: "none",
-            fontSize: "16px",
-            fontWeight: 600,
-            borderRadius: "15px",
-            height: "50px",
-            width: "160px",
-          }}
-          onClick={() => router.push("/provider/company/add")}
+        <Box
+          display={"flex"}
+          justifyContent={"end"}
+          width={{ xs: "100%", sm: "100%" }}
         >
-          Add New
-        </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<Add fontSize="medium" />}
+            sx={{
+              textTransform: "none",
+              fontSize: "16px",
+              fontWeight: 600,
+              borderRadius: "10px",
+              height: "45px",
+            }}
+            onClick={() => router.push("/provider/company/add")}
+          >
+            Add New
+          </Button>
+        </Box>
       </Box>
       <Box mt={4}>
         <TableComponent

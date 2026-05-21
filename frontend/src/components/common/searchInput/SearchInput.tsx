@@ -11,6 +11,7 @@ interface SearchBarProps {
   debounce?: number;
   fullWidth?: boolean;
   width?: string;
+  maxWidth?: string;
 }
 
 const SearchBar = ({
@@ -19,6 +20,7 @@ const SearchBar = ({
   debounce = 300,
   fullWidth = true,
   width = "100%",
+  maxWidth,
 }: SearchBarProps) => {
   const [value, setValue] = useState("");
 
@@ -57,7 +59,7 @@ const SearchBar = ({
       placeholder={placeholder}
       size="small"
       fullWidth={fullWidth}
-      sx={{ ...searchInputStyles, width }}
+      sx={{ ...searchInputStyles, width, maxWidth }}
       endAdornment={
         value && (
           <InputAdornment position="end">
