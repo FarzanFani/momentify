@@ -54,7 +54,7 @@ export default function RegisterForm({ control, errors }: RegisterFormProps) {
           )}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <Controller
           name="phone_number"
           control={control}
@@ -70,12 +70,12 @@ export default function RegisterForm({ control, errors }: RegisterFormProps) {
           )}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
         <Controller
           name="timezone"
           control={control}
           render={({ field }) => (
-            <Box sx={{ width: "400px", maxWidth: "100%" }}>
+            <Box>
               <SelectDropdown
                 label="Timezone"
                 value={field.value}

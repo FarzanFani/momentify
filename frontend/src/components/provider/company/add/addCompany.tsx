@@ -422,6 +422,7 @@ export default function AddCompany() {
         ml: -3,
         mt: -3,
         mb: -3,
+        mr: -3,
         minHeight: "calc(100% + 48px)",
       }}
     >
@@ -452,32 +453,39 @@ export default function AddCompany() {
             {steps.map((step, index) => (
               <Box
                 key={step}
-                sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: "center",
+                  gap: 1.5,
+                }}
               >
-                <Typography
-                  onClick={() => {
-                    if (index <= maxVisitedStep) setActiveStep(index);
-                  }}
-                  sx={{
-                    color: activeStep === index ? "primary.main" : "grey.500",
-                    fontWeight: activeStep === index ? 700 : 600,
-                    cursor:
-                      index <= maxVisitedStep && index !== activeStep
-                        ? "pointer"
-                        : index > maxVisitedStep
-                          ? "not-allowed"
-                          : "default",
-                    userSelect: "none",
-                  }}
-                >
-                  {step}
-                </Typography>
-
-                {index < steps.length - 1 && (
-                  <Typography color="grey.500" fontWeight={700}>
-                    &gt;
+                <Box sx={{ display: "flex", gap: 1.5 }}>
+                  <Typography
+                    onClick={() => {
+                      if (index <= maxVisitedStep) setActiveStep(index);
+                    }}
+                    sx={{
+                      color: activeStep === index ? "primary.main" : "grey.500",
+                      fontWeight: activeStep === index ? 700 : 600,
+                      cursor:
+                        index <= maxVisitedStep && index !== activeStep
+                          ? "pointer"
+                          : index > maxVisitedStep
+                            ? "not-allowed"
+                            : "default",
+                      userSelect: "none",
+                    }}
+                  >
+                    {step}
                   </Typography>
-                )}
+
+                  {index < steps.length - 1 && (
+                    <Typography color="grey.500" fontWeight={700}>
+                      &gt;
+                    </Typography>
+                  )}
+                </Box>
               </Box>
             ))}
           </Box>

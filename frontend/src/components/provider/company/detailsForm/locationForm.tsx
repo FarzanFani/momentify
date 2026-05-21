@@ -4,6 +4,7 @@ import InputField from "@/components/common/input/InputField";
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   Grid,
   IconButton,
@@ -48,18 +49,108 @@ export default function LocationForm({
             <Typography fontWeight={600} color="primary.main">
               Address {index + 1}
             </Typography>
-            {fields.length > 1 && (
+            <Box display={"flex"} gap={1}>
+              {fields.length > 1 && (
+                <IconButton color="error" onClick={() => remove(index)}>
+                  <Delete fontSize="medium" />
+                </IconButton>
+              )}
               <IconButton
-                color="error"
-                onClick={() => remove(index)}
+                color="primary"
+                onClick={() => onSaveAddress?.(index)}
+                disabled={isSavingAddress}
                 size="small"
               >
-                <Delete fontSize="small" />
+                {isSavingAddress ? (
+                  <CircularProgress color="primary" />
+                ) : (
+                  <Check fontSize="medium" />
+                )}
               </IconButton>
-            )}
+            </Box>
           </Box>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }} sx={{ maxWidth: "400px" }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name={`locations.${index}.name`}
+                control={control}
+                rules={{ required: "Name is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="name"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.name}
+                    helperText={errors.locations?.[index]?.name?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name={`locations.${index}.city`}
+                control={control}
+                rules={{ required: "City is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="City"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.city}
+                    helperText={errors.locations?.[index]?.city?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name={`locations.${index}.country`}
+                control={control}
+                rules={{ required: "Country is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="Country"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.country}
+                    helperText={errors.locations?.[index]?.country?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name={`locations.${index}.latitude`}
+                control={control}
+                rules={{ required: "Latitude is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="Latitude"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.latitude}
+                    helperText={errors.locations?.[index]?.latitude?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name={`locations.${index}.longitude`}
+                control={control}
+                rules={{ required: "Longitude is required" }}
+                render={({ field: f }) => (
+                  <InputField
+                    label="Longitude"
+                    value={f.value}
+                    onChange={f.onChange}
+                    error={!!errors.locations?.[index]?.longitude}
+                    helperText={errors.locations?.[index]?.longitude?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
               <Controller
                 name={`locations.${index}.address`}
                 control={control}
@@ -76,104 +167,7 @@ export default function LocationForm({
                 )}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name={`locations.${index}.name`}
-                control={control}
-                rules={{ required: "Name is required" }}
-                render={({ field: f }) => (
-                  <InputField
-                    label="name"
-                    value={f.value}
-                    onChange={f.onChange}
-                    error={!!errors.locations?.[index]?.name}
-                    helperText={errors.locations?.[index]?.name?.message}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name={`locations.${index}.city`}
-                control={control}
-                rules={{ required: "City is required" }}
-                render={({ field: f }) => (
-                  <InputField
-                    label="City"
-                    value={f.value}
-                    onChange={f.onChange}
-                    error={!!errors.locations?.[index]?.city}
-                    helperText={errors.locations?.[index]?.city?.message}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name={`locations.${index}.country`}
-                control={control}
-                rules={{ required: "Country is required" }}
-                render={({ field: f }) => (
-                  <InputField
-                    label="Country"
-                    value={f.value}
-                    onChange={f.onChange}
-                    error={!!errors.locations?.[index]?.country}
-                    helperText={errors.locations?.[index]?.country?.message}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name={`locations.${index}.latitude`}
-                control={control}
-                rules={{ required: "Latitude is required" }}
-                render={({ field: f }) => (
-                  <InputField
-                    label="Latitude"
-                    value={f.value}
-                    onChange={f.onChange}
-                    error={!!errors.locations?.[index]?.latitude}
-                    helperText={errors.locations?.[index]?.latitude?.message}
-                  />
-                )}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name={`locations.${index}.longitude`}
-                control={control}
-                rules={{ required: "Longitude is required" }}
-                render={({ field: f }) => (
-                  <InputField
-                    label="Longitude"
-                    value={f.value}
-                    onChange={f.onChange}
-                    error={!!errors.locations?.[index]?.longitude}
-                    helperText={errors.locations?.[index]?.longitude?.message}
-                  />
-                )}
-              />
-            </Grid>
           </Grid>
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              mt: 2,
-              justifyContent: "flex-end",
-            }}
-          >
-            <Button
-              startIcon={<Check />}
-              onClick={() => onSaveAddress?.(index)}
-              disabled={isSavingAddress}
-              sx={{ mt: 2, textTransform: "none" }}
-            >
-              {isSavingAddress ? "Saving..." : "Save Address"}
-            </Button>
-          </Box>
         </Box>
       ))}
 

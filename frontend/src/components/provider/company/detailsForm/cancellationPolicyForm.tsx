@@ -4,6 +4,7 @@ import InputField from "@/components/common/input/InputField";
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   FormControlLabel,
   Grid,
@@ -50,18 +51,33 @@ export default function CancellationPolicyForm({
               Cancellation Policy {index + 1}
             </Typography>
 
-            {fields.length > 1 && (
+            <Box display={"flex"} gap={1}>
+              {fields.length > 1 && (
+                <IconButton color="error" onClick={() => remove(index)}>
+                  <Delete fontSize="medium" />
+                </IconButton>
+              )}
               <IconButton
-                color="error"
-                onClick={() => remove(index)}
+                color="primary"
+                onClick={() => onSaveCancellationPolicy?.(index)}
+                disabled={isSavingCancellationPolicy}
                 size="small"
               >
-                <Delete fontSize="small" />
+                {isSavingCancellationPolicy ? (
+                  <CircularProgress color="primary" />
+                ) : (
+                  <Check fontSize="medium" />
+                )}
               </IconButton>
-            )}
+            </Box>
           </Box>
 
-          <Grid container spacing={2}>
+          <Grid
+            container
+            spacing={2}
+            justifyContent={"center"}
+            alignItems={"end"}
+          >
             <Grid size={{ xs: 12 }}>
               <Controller
                 name={`cancellation_policies.${index}.rule_description`}
@@ -169,26 +185,6 @@ export default function CancellationPolicyForm({
               />
             </Grid>
           </Grid>
-
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              mt: 2,
-              justifyContent: "flex-end",
-            }}
-          >
-            <Button
-              startIcon={<Check />}
-              onClick={() => onSaveCancellationPolicy?.(index)}
-              disabled={isSavingCancellationPolicy}
-              sx={{ mt: 2, textTransform: "none" }}
-            >
-              {isSavingCancellationPolicy
-                ? "Saving..."
-                : "Save Cancellation Policy"}
-            </Button>
-          </Box>
         </Box>
       ))}
 

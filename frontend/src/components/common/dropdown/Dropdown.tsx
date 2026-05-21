@@ -28,7 +28,7 @@ export default function SelectDropdown({
   );
 
   return (
-    <Box sx={{ width: fullWidth ? "100%" : "300px" }}>
+    <Box sx={{ width: "100%" }}>
       <Typography color="primary.dark" fontWeight={"500"} mb={"4px"}>
         {label}
       </Typography>
@@ -42,7 +42,6 @@ export default function SelectDropdown({
           </Typography>
         )}
         sx={{
-          width: fullWidth ? "100%" : "300px",
           height,
         }}
       >

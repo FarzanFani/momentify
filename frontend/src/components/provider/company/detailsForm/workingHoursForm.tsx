@@ -2,10 +2,11 @@
 
 import InputField from "@/components/common/input/InputField";
 import MultiSelectDropdown from "@/components/common/multiSelectDropdown/MultiSelectDropdown";
-import { Add, Delete } from "@mui/icons-material";
+import { Add, Check, Delete } from "@mui/icons-material";
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   FormHelperText,
   Grid,
@@ -59,15 +60,25 @@ export default function WorkingHoursForm({
               Working Hours {index + 1}
             </Typography>
 
-            {fields.length > 1 && (
+            <Box display={"flex"} gap={1}>
+              {fields.length > 1 && (
+                <IconButton color="error" onClick={() => remove(index)}>
+                  <Delete fontSize="medium" />
+                </IconButton>
+              )}
               <IconButton
-                color="error"
-                onClick={() => remove(index)}
+                color="primary"
+                onClick={() => onSaveWorkingHour?.(index)}
+                disabled={isSavingWorkingHour}
                 size="small"
               >
-                <Delete fontSize="small" />
+                {isSavingWorkingHour ? (
+                  <CircularProgress color="primary" />
+                ) : (
+                  <Check fontSize="medium" />
+                )}
               </IconButton>
-            )}
+            </Box>
           </Box>
 
           <Grid container spacing={2}>
@@ -139,18 +150,6 @@ export default function WorkingHoursForm({
               />
             </Grid>
           </Grid>
-          {onSaveWorkingHour && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-              <Button
-                variant="contained"
-                onClick={() => onSaveWorkingHour(index)}
-                disabled={isSavingWorkingHour}
-                sx={{ textTransform: "none" }}
-              >
-                {isSavingWorkingHour ? "Saving..." : "Save Working Hours"}
-              </Button>
-            </Box>
-          )}
         </Box>
       ))}
 
