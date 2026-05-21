@@ -92,7 +92,6 @@ export default function RegisterForm({ control, errors }: RegisterFormProps) {
         <Controller
           name="description"
           control={control}
-          rules={{ required: "Description is required" }}
           render={({ field }) => (
             <InputField
               label="Description"

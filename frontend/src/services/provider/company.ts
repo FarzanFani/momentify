@@ -285,3 +285,18 @@ export const updateCancellationPolicy = async (
 
   return data.data as CompanyCancellationPolicy;
 };
+
+export const deleteCompanyLocation = async (
+  companyId: string,
+  locationId: string,
+): Promise<void> => {
+  const { data } = await axiosInstance.delete(
+    `/api/companies/${companyId}/location/${locationId}/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data as void;
+};

@@ -30,6 +30,7 @@ export default function CancellationPolicyForm({
   fieldArray,
   onSaveCancellationPolicy,
   isSavingCancellationPolicy,
+  isAddPage,
 }: CancellationPolicyFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -57,18 +58,20 @@ export default function CancellationPolicyForm({
                   <Delete fontSize="medium" />
                 </IconButton>
               )}
-              <IconButton
-                color="primary"
-                onClick={() => onSaveCancellationPolicy?.(index)}
-                disabled={isSavingCancellationPolicy}
-                size="small"
-              >
-                {isSavingCancellationPolicy ? (
-                  <CircularProgress color="primary" />
-                ) : (
-                  <Check fontSize="medium" />
-                )}
-              </IconButton>
+              {!isAddPage && (
+                <IconButton
+                  color="primary"
+                  onClick={() => onSaveCancellationPolicy?.(index)}
+                  disabled={isSavingCancellationPolicy}
+                  size="small"
+                >
+                  {isSavingCancellationPolicy ? (
+                    <CircularProgress color="primary" />
+                  ) : (
+                    <Check fontSize="medium" />
+                  )}
+                </IconButton>
+              )}
             </Box>
           </Box>
 

@@ -22,6 +22,7 @@ import {
 } from "@/hooks/company";
 import { extractApiError } from "@/utils/extractApiError";
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
+import { useRouter } from "next/navigation";
 
 const steps = [
   "Register Company",
@@ -32,18 +33,29 @@ const steps = [
 
 export default function AddCompany() {
   const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
-  const { mutate: registerCompany } = useRegisterCompany();
-  const { mutate: createCompanyLocation } = useCreateCompanyLocation();
-  const { mutate: createWorkingHour } = useCreateCompanyWorkingHour();
-  const { mutate: createCancellationPolicy } =
-    useCreateCompanyCancellationPolicy();
+  const { mutateAsync: registerCompanyAsync, isPending: isRegisterCompany } =
+    useRegisterCompany();
+
+  const {
+    mutateAsync: createCompanyLocationAsync,
+    isPending: isCreateLocation,
+  } = useCreateCompanyLocation();
+
+  const {
+    mutateAsync: createWorkingHourAsync,
+    isPending: isCreateWorkingHours,
+  } = useCreateCompanyWorkingHour();
+
+  const {
+    mutateAsync: createCancellationPolicyAsync,
+    isPending: isCreateCancellationPolicy,
+  } = useCreateCompanyCancellationPolicy();
 
   const [companyId, setCompanyId] = useState<string>("");
   const [activeStep, setActiveStep] = useState(0);
   const [maxVisitedStep, setMaxVisitedStep] = useState(0);
-  const [isSavingCancellationPolicy, setIsSavingCancellationPolicy] =
-    useState(false);
 
   const {
     control,
@@ -51,7 +63,7 @@ export default function AddCompany() {
     reset,
     trigger,
     getValues,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<AddCompanyFormValues>({
     mode: "onChange",
     defaultValues: {
@@ -164,25 +176,23 @@ export default function AddCompany() {
         auto_approve_booking: allValues.auto_approve_booking,
       };
 
-      registerCompany(payload, {
-        onSuccess: (data) => {
-          setCompanyId(data.id);
-          showSnackbar("Company registered successfully", "success");
-          advanceStep();
-        },
-        onError: (error: any) => {
-          showSnackbar(
-            extractApiError(error, "Company registration failed"),
-            "error",
-          );
-        },
-      });
+      try {
+        const data = await registerCompanyAsync(payload);
+
+        setCompanyId(data.id);
+        showSnackbar("Company registered successfully", "success");
+        advanceStep();
+      } catch (error: any) {
+        showSnackbar(
+          extractApiError(error, "Company registration failed"),
+          "error",
+        );
+      }
 
       return;
     }
 
     if (activeStep === 1) {
-      let successCount = 0;
       const locationsList = allValues.locations;
 
       if (!companyId) {
@@ -190,38 +200,35 @@ export default function AddCompany() {
         return;
       }
 
-      locationsList.forEach((loc) => {
-        const payload: CompanyLocationPayload = {
-          ...loc,
-          company: companyId,
-        };
+      try {
+        await Promise.all(
+          locationsList.map((loc) => {
+            const payload: CompanyLocationPayload = {
+              ...loc,
+              company: companyId,
+            };
 
-        createCompanyLocation(payload, {
-          onSuccess: () => {
-            successCount++;
+            return createCompanyLocationAsync(payload);
+          }),
+        );
 
-            if (successCount === locationsList.length) {
-              showSnackbar(
-                `${successCount} location(s) created successfully`,
-                "success",
-              );
-              advanceStep();
-            }
-          },
-          onError: (error: any) => {
-            showSnackbar(
-              extractApiError(error, "Location creation failed"),
-              "error",
-            );
-          },
-        });
-      });
+        showSnackbar(
+          `${locationsList.length} location(s) created successfully`,
+          "success",
+        );
+
+        advanceStep();
+      } catch (error: any) {
+        showSnackbar(
+          extractApiError(error, "Location creation failed"),
+          "error",
+        );
+      }
 
       return;
     }
 
     if (activeStep === 2) {
-      let successCount = 0;
       const workingHoursList = allValues.working_hours;
 
       if (!companyId) {
@@ -229,146 +236,69 @@ export default function AddCompany() {
         return;
       }
 
-      workingHoursList.forEach((workingHour) => {
-        createWorkingHour(
-          {
-            company: companyId,
-            weekday: workingHour.weekday,
-            start_time: workingHour.start_time,
-            end_time: workingHour.end_time,
-          },
-          {
-            onSuccess: () => {
-              successCount++;
-
-              if (successCount === workingHoursList.length) {
-                showSnackbar(
-                  `${successCount} working hour(s) created successfully`,
-                  "success",
-                );
-                advanceStep();
-              }
-            },
-            onError: (error: any) => {
-              showSnackbar(
-                extractApiError(error, "Working hours creation failed"),
-                "error",
-              );
-            },
-          },
+      try {
+        await Promise.all(
+          workingHoursList.map((workingHour) =>
+            createWorkingHourAsync({
+              company: companyId,
+              weekday: workingHour.weekday,
+              start_time: workingHour.start_time,
+              end_time: workingHour.end_time,
+            }),
+          ),
         );
-      });
 
-      return;
-    }
-
-    advanceStep();
-  };
-
-  const handleSaveAddress = async (index: number) => {
-    const isValid = await trigger(`locations.${index}` as any);
-    if (!isValid) return;
-
-    const location = getValues(`locations.${index}`);
-
-    if (!companyId) {
-      showSnackbar("Please register the company first", "error");
-      return;
-    }
-
-    const payload: CompanyLocationPayload = {
-      ...location,
-      company: companyId,
-    };
-
-    createCompanyLocation(payload, {
-      onSuccess: () => {
-        showSnackbar("Location created successfully", "success");
-      },
-      onError: (error: any) => {
         showSnackbar(
-          extractApiError(error, "Location creation failed"),
+          `${workingHoursList.length} working hour(s) created successfully`,
+          "success",
+        );
+
+        advanceStep();
+      } catch (error: any) {
+        showSnackbar(
+          extractApiError(error, "Working hours creation failed"),
           "error",
         );
-      },
-    });
-  };
+      }
 
-  const handleSaveCancellationPolicy = async (index: number) => {
-    const isValid = await trigger(`cancellation_policies.${index}` as any);
-    if (!isValid) return;
-
-    const cancellationPolicy = getValues(`cancellation_policies.${index}`);
-
-    if (!companyId) {
-      showSnackbar("Please register the company first", "error");
       return;
     }
 
-    const payload: CompanyCancellationPolicyPayload = {
-      ...cancellationPolicy,
-      company: companyId,
-    };
+    if (activeStep === 3) {
+      const cancellationPoliciesList = allValues.cancellation_policies;
 
-    setIsSavingCancellationPolicy(true);
+      if (!companyId) {
+        showSnackbar("Please register the company first", "error");
+        return;
+      }
 
-    createCancellationPolicy(payload, {
-      onSuccess: () => {
-        showSnackbar("Cancellation policy created successfully", "success");
-        setIsSavingCancellationPolicy(false);
-      },
-      onError: (error: any) => {
+      try {
+        await Promise.all(
+          cancellationPoliciesList.map((cancellationPolicy) => {
+            const payload: CompanyCancellationPolicyPayload = {
+              ...cancellationPolicy,
+              company: companyId,
+            };
+
+            return createCancellationPolicyAsync(payload);
+          }),
+        );
+
+        showSnackbar(
+          `${cancellationPoliciesList.length} cancellation policy(s) created successfully`,
+          "success",
+        );
+
+        router.push("/provider/company/");
+      } catch (error: any) {
         showSnackbar(
           extractApiError(error, "Cancellation policy creation failed"),
           "error",
         );
-        setIsSavingCancellationPolicy(false);
-      },
-    });
-  };
+      }
 
-  const handleSaveAllCancellationPolicies = async () => {
-    const isValid = await trigger("cancellation_policies");
-    if (!isValid) return;
-
-    const allValues = getValues();
-    const cancellationPoliciesList = allValues.cancellation_policies;
-
-    if (!companyId) {
-      showSnackbar("Please register the company first", "error");
       return;
     }
-
-    let successCount = 0;
-    setIsSavingCancellationPolicy(true);
-
-    cancellationPoliciesList.forEach((cancellationPolicy) => {
-      const payload: CompanyCancellationPolicyPayload = {
-        ...cancellationPolicy,
-        company: companyId,
-      };
-
-      createCancellationPolicy(payload, {
-        onSuccess: () => {
-          successCount++;
-
-          if (successCount === cancellationPoliciesList.length) {
-            showSnackbar(
-              `${successCount} cancellation policy(s) created successfully`,
-              "success",
-            );
-            setIsSavingCancellationPolicy(false);
-          }
-        },
-        onError: (error: any) => {
-          showSnackbar(
-            extractApiError(error, "Cancellation policy creation failed"),
-            "error",
-          );
-          setIsSavingCancellationPolicy(false);
-        },
-      });
-    });
   };
 
   const handleBack = () => {
@@ -378,38 +308,48 @@ export default function AddCompany() {
   const renderStepForm = () => {
     switch (activeStep) {
       case 0:
-        return <RegisterForm control={control} errors={errors} />;
+        return <RegisterForm control={control} errors={errors} isAddPage />;
+
       case 1:
         return (
           <LocationForm
             control={control}
             errors={errors}
             fieldArray={locationFieldArray}
-            onSaveAddress={handleSaveAddress}
+            isAddPage
           />
         );
+
       case 2:
         return (
           <WorkingHoursForm
             control={control}
             fieldArray={workingHoursFieldArray}
             errors={errors}
+            isAddPage
           />
         );
+
       case 3:
         return (
           <CancellationPolicyForm
             control={control}
             errors={errors}
             fieldArray={cancellationPolicyFieldArray}
-            onSaveCancellationPolicy={handleSaveCancellationPolicy}
-            isSavingCancellationPolicy={isSavingCancellationPolicy}
+            isAddPage
           />
         );
+
       default:
         return null;
     }
   };
+
+  const isLoading =
+    isRegisterCompany ||
+    isCreateLocation ||
+    isCreateWorkingHours ||
+    isCreateCancellationPolicy;
 
   return (
     <Box
@@ -431,6 +371,7 @@ export default function AddCompany() {
           Add Company
         </Typography>
       </Box>
+
       <Box sx={{ width: "90%" }}>
         <Breadcrumb
           items={[
@@ -439,6 +380,7 @@ export default function AddCompany() {
           ]}
         />
       </Box>
+
       <Card sx={{ width: "90%", borderRadius: 3 }}>
         <CardContent sx={{ p: 3 }}>
           <Box
@@ -466,7 +408,12 @@ export default function AddCompany() {
                       if (index <= maxVisitedStep) setActiveStep(index);
                     }}
                     sx={{
-                      color: activeStep === index ? "primary.main" : "grey.500",
+                      color:
+                        activeStep === index
+                          ? "primary.main"
+                          : activeStep > index
+                            ? "green"
+                            : "grey.500",
                       fontWeight: activeStep === index ? 700 : 600,
                       cursor:
                         index <= maxVisitedStep && index !== activeStep
@@ -510,52 +457,42 @@ export default function AddCompany() {
             {renderStepForm()}
 
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 1,
+              }}
             >
               <Button
                 variant="outlined"
                 color="primary"
-                disabled={activeStep === 0}
+                disabled={activeStep === 0 || isLoading}
                 onClick={handleBack}
-                sx={{ textTransform: "none", px: 4, py: 1.2, borderRadius: 2 }}
+                sx={{
+                  textTransform: "none",
+                  px: 4,
+                  py: 1.2,
+                  borderRadius: 2,
+                }}
               >
                 Back
               </Button>
 
-              {activeStep < steps.length - 1 ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNext}
-                  sx={{
-                    textTransform: "none",
-                    px: 4,
-                    py: 1.2,
-                    borderRadius: 2,
-                  }}
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="contained"
-                  color="primary"
-                  disabled={isSubmitting || isSavingCancellationPolicy}
-                  onClick={handleSaveAllCancellationPolicies}
-                  sx={{
-                    textTransform: "none",
-                    px: 4,
-                    py: 1.2,
-                    borderRadius: 2,
-                  }}
-                >
-                  {isSavingCancellationPolicy
-                    ? "Saving..."
-                    : "Save Cancellation Policies"}
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                disabled={isLoading}
+                sx={{
+                  textTransform: "none",
+                  px: 4,
+                  py: 1.2,
+                  borderRadius: 2,
+                }}
+              >
+                {isLoading ? "Saving..." : activeStep === 3 ? "Done" : "Next"}
+              </Button>
             </Box>
           </Box>
         </CardContent>

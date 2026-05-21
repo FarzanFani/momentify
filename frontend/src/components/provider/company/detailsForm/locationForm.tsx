@@ -30,6 +30,7 @@ export default function LocationForm({
   fieldArray,
   onSaveAddress,
   isSavingAddress,
+  isAddPage,
 }: LocationFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -55,18 +56,20 @@ export default function LocationForm({
                   <Delete fontSize="medium" />
                 </IconButton>
               )}
-              <IconButton
-                color="primary"
-                onClick={() => onSaveAddress?.(index)}
-                disabled={isSavingAddress}
-                size="small"
-              >
-                {isSavingAddress ? (
-                  <CircularProgress color="primary" />
-                ) : (
-                  <Check fontSize="medium" />
-                )}
-              </IconButton>
+              {!isAddPage && (
+                <IconButton
+                  color="primary"
+                  onClick={() => onSaveAddress?.(index)}
+                  disabled={isSavingAddress}
+                  size="small"
+                >
+                  {isSavingAddress ? (
+                    <CircularProgress color="primary" />
+                  ) : (
+                    <Check fontSize="medium" />
+                  )}
+                </IconButton>
+              )}
             </Box>
           </Box>
           <Grid container spacing={2}>

@@ -103,6 +103,7 @@ export type CancellationPolicyPayload = CompanyCancellationPolicyPayload;
 export interface StepFormProps {
   control: Control<AddCompanyFormValues>;
   errors: FieldErrors<AddCompanyFormValues>;
+  isAddPage?: boolean;
 }
 
 export interface LocationFormProps extends StepFormProps {

@@ -39,6 +39,7 @@ export default function WorkingHoursForm({
   fieldArray,
   onSaveWorkingHour,
   isSavingWorkingHour,
+  isAddPage,
 }: WorkingHoursFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -66,18 +67,20 @@ export default function WorkingHoursForm({
                   <Delete fontSize="medium" />
                 </IconButton>
               )}
-              <IconButton
-                color="primary"
-                onClick={() => onSaveWorkingHour?.(index)}
-                disabled={isSavingWorkingHour}
-                size="small"
-              >
-                {isSavingWorkingHour ? (
-                  <CircularProgress color="primary" />
-                ) : (
-                  <Check fontSize="medium" />
-                )}
-              </IconButton>
+              {!isAddPage && (
+                <IconButton
+                  color="primary"
+                  onClick={() => onSaveWorkingHour?.(index)}
+                  disabled={isSavingWorkingHour}
+                  size="small"
+                >
+                  {isSavingWorkingHour ? (
+                    <CircularProgress color="primary" />
+                  ) : (
+                    <Check fontSize="medium" />
+                  )}
+                </IconButton>
+              )}
             </Box>
           </Box>
 
