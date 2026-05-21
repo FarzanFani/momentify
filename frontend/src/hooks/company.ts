@@ -63,10 +63,14 @@ export const useGetCompanyById = (id: string) => {
   });
 };
 
-export const useGetProviderCompanies = (search = "") => {
+export const useGetProviderCompanies = (
+  page: number,
+  search?: string,
+  page_size?: number,
+) => {
   return useQuery({
-    queryKey: ["companies", search],
-    queryFn: () => getProviderCompanies(search),
+    queryKey: ["companies", search, page, page_size],
+    queryFn: () => getProviderCompanies({ search, page, page_size }),
   });
 };
 

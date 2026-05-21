@@ -89,12 +89,18 @@ export const getCompanyById = async (id: string): Promise<Company> => {
   return data.data as Company;
 };
 
-export const getProviderCompanies = async (
-  search: string,
-): Promise<CompanyListResponse> => {
+export const getProviderCompanies = async ({
+  search,
+  page,
+  page_size,
+}: {
+  search?: string;
+  page: number;
+  page_size?: number;
+}): Promise<CompanyListResponse> => {
   const { data } = await axiosInstance.get<ApiResponse<CompanyListResponse>>(
     "/api/companies/",
-    { params: { search } },
+    { params: { search, page, page_size } },
   );
 
   if (!data.success) {

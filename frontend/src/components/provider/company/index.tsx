@@ -23,8 +23,14 @@ export default function ProviderCompaies() {
 
   const [companiesState, setCompaniesState] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
+  const [paginationPage, setPaginationPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const { data: companies, isLoading } = useGetProviderCompanies(search);
+  const { data: companies, isLoading } = useGetProviderCompanies(
+    paginationPage,
+    search.trim() === "" ? undefined : search,
+    pageSize,
+  );
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(
@@ -194,6 +200,11 @@ export default function ProviderCompaies() {
           columns={provierTableHeader}
           data={providerTableData}
           isLoading={isLoading}
+          setPaginationPage={setPaginationPage}
+          paginationPage={paginationPage}
+          count={companies?.count ?? -1}
+          setPageSize={setPageSize}
+          pageSize={pageSize}
         />
       </Box>
     </Box>

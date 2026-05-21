@@ -26,6 +26,11 @@ interface TableProps {
   isLoading?: boolean;
   emptyMessage?: string;
   inOneLineWhenCompact?: boolean;
+  paginationPage: number;
+  setPaginationPage: (page: number) => void;
+  count: number;
+  setPageSize: (pageSize: number) => void;
+  pageSize: number;
 }
 
 const ACTION_COL_ID = "action_items";
@@ -38,21 +43,18 @@ export default function TableComponent({
   isLoading = false,
   emptyMessage = "No result found",
   inOneLineWhenCompact = true,
+  setPaginationPage,
+  paginationPage,
+  count,
+  setPageSize,
+  pageSize,
 }: TableProps) {
   const theme = useTheme();
   const isCompact = useMediaQuery(theme.breakpoints.down("md")); // < 900px
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
-
   const headerColumns = columns.filter((col) => col.id !== ACTION_COL_ID);
   const hasActions = columns.some((col) => col.id === ACTION_COL_ID);
   const totalColumns = headerColumns.length + (hasActions ? 1 : 0);
-
-  const paginatedData = data.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
 
   const desktopMinWidth = columns.reduce(
     (total, column) => total + (column.minWidth ?? 160),
@@ -103,14 +105,14 @@ export default function TableComponent({
                 <CircularProgress color="primary" />
               </TableCell>
             </TableRow>
-          ) : paginatedData.length === 0 ? (
+          ) : data.length === 0 ? (
             <TableRow>
               <TableCell colSpan={totalColumns} align="center" sx={{ py: 8 }}>
                 {emptyMessage}
               </TableCell>
             </TableRow>
           ) : (
-            paginatedData.map((row, index) => (
+            data.map((row, index) => (
               <TableRow
                 key={row.id}
                 sx={{
@@ -155,7 +157,7 @@ export default function TableComponent({
       );
     }
 
-    if (paginatedData.length === 0) {
+    if (data.length === 0) {
       return (
         <Box sx={{ py: 8, textAlign: "center" }}>
           <Typography>{emptyMessage}</Typography>
@@ -166,7 +168,7 @@ export default function TableComponent({
     return (
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {paginatedData.map((row, index) => (
+          {data.map((row, index) => (
             <Box
               key={row.id}
               sx={{
@@ -244,6 +246,9 @@ export default function TableComponent({
       </Box>
     );
   };
+  function MyFirstPageIcon() {
+    return <span style={{ fontSize: 18 }}>First</span>;
+  }
 
   return (
     <Box
@@ -258,15 +263,24 @@ export default function TableComponent({
 
       <TablePagination
         component="div"
-        count={data.length}
-        page={page}
-        onPageChange={(_, newPage) => setPage(newPage)}
-        rowsPerPage={rowsPerPage}
+        count={count}
+        page={paginationPage - 1}
+        onPageChange={(_, page) => {
+          setPaginationPage(page + 1);
+        }}
+        rowsPerPage={pageSize}
         onRowsPerPageChange={(e) => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPage(0);
+          setPageSize(parseInt(e.target.value, 10));
         }}
         rowsPerPageOptions={rowsPerPageOptions}
+        labelRowsPerPage={"Available records"}
+        showFirstButton
+        showLastButton
+        labelDisplayedRows={({ from, to, count }) => {
+          return from === to
+            ? `record ${from}`
+            : `${from} to ${to} from ${count} records`;
+        }}
         sx={{
           backgroundColor: "primary.dark",
           color: "primary.contrastText",
