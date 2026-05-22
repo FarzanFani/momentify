@@ -38,7 +38,6 @@ const SearchBar = ({
 
   const handleClear = () => {
     setValue("");
-    if (onSearch) onSearch("");
   };
 
   const handleSearch = () => {

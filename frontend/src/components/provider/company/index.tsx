@@ -11,7 +11,7 @@ import {
   Menu,
   Chip,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Company } from "@/services/provider/company";
 import TableComponent from "@/components/common/table/Table";
 import { Add, MoreVert } from "@mui/icons-material";
@@ -148,9 +148,12 @@ export default function ProviderCompaies() {
     }),
   );
 
-  const handleSearch = (value: string) => {
+  const handleSearch = useCallback((value: string) => {
+    console.log("here");
+
+    setPaginationPage(1);
     setSearch(value);
-  };
+  }, []);
 
   return (
     <Box>
