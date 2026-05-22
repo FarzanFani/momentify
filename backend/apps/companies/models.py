@@ -33,7 +33,6 @@ class Company(models.Model):
     timezone = models.CharField(max_length=64, default="UTC")
 
     auto_approve_booking = models.BooleanField(default=False)
-    cancellation_policy_text = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

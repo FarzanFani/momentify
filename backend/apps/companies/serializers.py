@@ -26,7 +26,6 @@ class CompanySerializer(serializers.ModelSerializer):
             "email",
             "phone_number",
             "auto_approve_booking",
-            "cancellation_policy_text",
             "verification_status",
             "timezone",
             "has_location",
