@@ -40,6 +40,7 @@ export default function WorkingHoursForm({
   onSaveWorkingHour,
   isSavingWorkingHour,
   isAddPage,
+  handleDeleteWorkingHour,
 }: WorkingHoursFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -63,7 +64,21 @@ export default function WorkingHoursForm({
 
             <Box display={"flex"} gap={1}>
               {fields.length > 1 && (
-                <IconButton color="error" onClick={() => remove(index)}>
+                <IconButton
+                  color="error"
+                  onClick={() => {
+                    if (field.id && handleDeleteWorkingHour) {
+                      handleDeleteWorkingHour(field.id).then((value) => {
+                        if (value) {
+                          remove(index);
+                        }
+                      });
+                      return;
+                    }
+
+                    remove(index);
+                  }}
+                >
                   <Delete fontSize="medium" />
                 </IconButton>
               )}

@@ -164,6 +164,19 @@ export const updateLocation = async (
   return data.data as CompanyLocation;
 };
 
+export const deleteCompanyLocation = async (
+  companyId: string,
+  locationId: string,
+): Promise<void> => {
+  const data = await axiosInstance.delete(
+    `/api/companies/${companyId}/locations/${locationId}/`,
+  );
+
+  if (data.status !== 204) {
+    throw data;
+  }
+};
+
 export const createWorkingHour = async (
   workingHour: CompanyWorkingHourPayload,
 ): Promise<CompanyWorkingHour> => {
@@ -292,17 +305,28 @@ export const updateCancellationPolicy = async (
   return data.data as CompanyCancellationPolicy;
 };
 
-export const deleteCompanyLocation = async (
+export const deleteCompanyWorkingHour = async (
   companyId: string,
-  locationId: string,
+  workingHourId: string,
 ): Promise<void> => {
-  const { data } = await axiosInstance.delete(
-    `/api/companies/${companyId}/location/${locationId}/`,
+  const response = await axiosInstance.delete(
+    `/api/companies/${companyId}/working-hours/${workingHourId}/`,
   );
 
-  if (!data.success) {
-    throw data;
+  if (response.status !== 204) {
+    throw response;
   }
+};
 
-  return data as void;
+export const deleteCompanyCancellationPolicy = async (
+  companyId: string,
+  cancellationPolicyId: string,
+): Promise<void> => {
+  const response = await axiosInstance.delete(
+    `/api/companies/${companyId}/cancellation-policy/${cancellationPolicyId}/`,
+  );
+
+  if (response.status !== 204) {
+    throw response;
+  }
 };

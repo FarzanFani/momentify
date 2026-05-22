@@ -20,6 +20,8 @@ import {
   getCompanyCancellationPolicies,
   createCancellationPolicy,
   deleteCompanyLocation,
+  deleteCompanyCancellationPolicy,
+  deleteCompanyWorkingHour,
 } from "@/services/provider/company";
 import {
   CompanyLocation,
@@ -209,6 +211,46 @@ export const useDeleteCompanyLocation = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["company-locations", variables.companyId],
+      });
+    },
+  });
+};
+
+export const useDeleteCompanyWorkingHour = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      companyId,
+      workingHourId,
+    }: {
+      companyId: string;
+      workingHourId: string;
+    }) => deleteCompanyWorkingHour(companyId, workingHourId),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["company-working-hours", variables.companyId],
+      });
+    },
+  });
+};
+
+export const useDeleteCompanyCancellationPolicy = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      companyId,
+      cancellationPolicyId,
+    }: {
+      companyId: string;
+      cancellationPolicyId: string;
+    }) => deleteCompanyCancellationPolicy(companyId, cancellationPolicyId),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["company-cancellation-policies", variables.companyId],
       });
     },
   });

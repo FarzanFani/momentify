@@ -8,6 +8,9 @@ import {
   useCreateCompanyCancellationPolicy,
   useCreateCompanyLocation,
   useCreateCompanyWorkingHour,
+  useDeleteCompanyCancellationPolicy,
+  useDeleteCompanyLocation,
+  useDeleteCompanyWorkingHour,
   useGetCompanyById,
   useGetCompanyCancellationPolicies,
   useGetCompanyLocations,
@@ -111,6 +114,14 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
     mutate: createCancellationPolicy,
     isPending: isCancellationPolicyCreating,
   } = useCreateCompanyCancellationPolicy();
+
+  const { mutate: deleteCompanyLocation, isPending: isLocationDeleting } =
+    useDeleteCompanyLocation();
+
+  const { mutate: deleteCompanyWorkingHour } = useDeleteCompanyWorkingHour();
+
+  const { mutate: deleteCompanyCancellationPolicy } =
+    useDeleteCompanyCancellationPolicy();
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -263,6 +274,9 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
   );
 
   const handleNext = async () => {
+    if (activeStep === 3) {
+      router.push("/provider/company/");
+    }
     const isValid = await trigger(stepFields[activeStep]);
     if (!isValid) return;
 
@@ -495,6 +509,72 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
     );
   };
 
+  const handleDeleteLocation = async (
+    locationId: string,
+  ): Promise<boolean | undefined> => {
+    deleteCompanyLocation(
+      { companyId: companyId, locationId: locationId },
+      {
+        onSuccess: () => {
+          showSnackbar("Location deleted successfully", "success");
+          return true;
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Location Deleted failed"),
+            "error",
+          );
+          return false;
+        },
+      },
+    );
+    return false;
+  };
+
+  const handleDeleteWorkingHour = async (
+    workingHourId: string,
+  ): Promise<boolean | undefined> => {
+    deleteCompanyWorkingHour(
+      { companyId: companyId, workingHourId: workingHourId },
+      {
+        onSuccess: () => {
+          showSnackbar("Working Hour deleted successfully", "success");
+          return true;
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Working Hour Deleted failed"),
+            "error",
+          );
+          return false;
+        },
+      },
+    );
+    return false;
+  };
+
+  const handleDeleteCancellationPolicy = async (
+    cancellationPolicyId: string,
+  ): Promise<boolean | undefined> => {
+    deleteCompanyCancellationPolicy(
+      { companyId: companyId, cancellationPolicyId: cancellationPolicyId },
+      {
+        onSuccess: () => {
+          showSnackbar("Cancellation Policy deleted successfully", "success");
+          return true;
+        },
+        onError: (error: any) => {
+          showSnackbar(
+            extractApiError(error, "Cancellation Policy Deleted failed"),
+            "error",
+          );
+          return false;
+        },
+      },
+    );
+    return false;
+  };
+
   const renderStepForm = () => {
     switch (activeStep) {
       case 0:
@@ -508,6 +588,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
             fieldArray={locationFieldArray}
             onSaveAddress={handleSaveAddress}
             isSavingAddress={isLocationUpdating || isLocationCreating}
+            handleDeleteLocation={handleDeleteLocation}
           />
         );
 
@@ -519,6 +600,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
             errors={errors}
             onSaveWorkingHour={handleSaveWorkingHour}
             isSavingWorkingHour={isWorkingHourUpdating || isWorkingHourCreating}
+            handleDeleteWorkingHour={handleDeleteWorkingHour}
           />
         );
 
@@ -532,6 +614,7 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
             isSavingCancellationPolicy={
               isCancellationPolicyUpdating || isCancellationPolicyCreating
             }
+            handleDeleteCancellationPolicy={handleDeleteCancellationPolicy}
           />
         );
 
@@ -676,40 +759,25 @@ export default function CompanyEdit({ companyId }: CompanyEditProps) {
                 Back
               </Button>
 
-              {activeStep < steps.length - 1 ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  color="primary"
-                  onClick={handleNext}
-                  disabled={isUpdating}
-                  sx={{
-                    textTransform: "none",
-                    px: 4,
-                    py: 1.2,
-                    borderRadius: 2,
-                  }}
-                >
-                  {isCurrentStepDirty && activeStep === 0
-                    ? "Save & Next"
+              <Button
+                type="button"
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                disabled={isUpdating}
+                sx={{
+                  textTransform: "none",
+                  px: 4,
+                  py: 1.2,
+                  borderRadius: 2,
+                }}
+              >
+                {isCurrentStepDirty && activeStep === 0
+                  ? "Save & Next"
+                  : activeStep === 3
+                    ? "Done"
                     : "Next"}
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={isSubmitting || isUpdating}
-                  sx={{
-                    textTransform: "none",
-                    px: 4,
-                    py: 1.2,
-                    borderRadius: 2,
-                  }}
-                >
-                  {isUpdating ? "Saving..." : "Save Changes"}
-                </Button>
-              )}
+              </Button>
             </Box>
           </Box>
         </CardContent>

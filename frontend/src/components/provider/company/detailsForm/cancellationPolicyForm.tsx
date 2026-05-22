@@ -31,6 +31,7 @@ export default function CancellationPolicyForm({
   onSaveCancellationPolicy,
   isSavingCancellationPolicy,
   isAddPage,
+  handleDeleteCancellationPolicy,
 }: CancellationPolicyFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -54,7 +55,21 @@ export default function CancellationPolicyForm({
 
             <Box display={"flex"} gap={1}>
               {fields.length > 1 && (
-                <IconButton color="error" onClick={() => remove(index)}>
+                <IconButton
+                  color="error"
+                  onClick={() => {
+                    if (field.id && handleDeleteCancellationPolicy) {
+                      handleDeleteCancellationPolicy(field.id).then((value) => {
+                        if (value) {
+                          remove(index);
+                        }
+                      });
+                      return;
+                    }
+
+                    remove(index);
+                  }}
+                >
                   <Delete fontSize="medium" />
                 </IconButton>
               )}

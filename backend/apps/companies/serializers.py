@@ -52,10 +52,10 @@ class CompanySerializer(serializers.ModelSerializer):
         return getattr(obj, "has_location_value", obj.location.exists())
 
     def get_has_cancelation_policy(self, obj):
-        return getattr(obj, "has_cancelation_policy", obj.location.exists())
+        return getattr(obj, "has_cancelation_policy", obj.cancellation_policy.exists())
 
     def get_has_working_hours(self, obj):
-        return getattr(obj, "has_working_hours", obj.location.exists())
+        return getattr(obj, "has_working_hours", obj.working_hours.exists())
 
     def get_is_profile_complete(self, obj):
         return (

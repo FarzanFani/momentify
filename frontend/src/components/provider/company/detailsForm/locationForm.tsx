@@ -31,6 +31,7 @@ export default function LocationForm({
   onSaveAddress,
   isSavingAddress,
   isAddPage,
+  handleDeleteLocation,
 }: LocationFormProps) {
   const { fields, append, remove } = fieldArray;
 
@@ -52,7 +53,24 @@ export default function LocationForm({
             </Typography>
             <Box display={"flex"} gap={1}>
               {fields.length > 1 && (
-                <IconButton color="error" onClick={() => remove(index)}>
+                <IconButton
+                  color="error"
+                  onClick={() => {
+                    console.log(field.id, handleDeleteLocation);
+
+                    if (field.id && handleDeleteLocation) {
+                      handleDeleteLocation(field.id ?? "").then((value) => {
+                        if (value) {
+                          remove(index);
+                          return;
+                        } else {
+                          return;
+                        }
+                      });
+                    }
+                    remove(index);
+                  }}
+                >
                   <Delete fontSize="medium" />
                 </IconButton>
               )}

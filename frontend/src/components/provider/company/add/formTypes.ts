@@ -110,6 +110,7 @@ export interface LocationFormProps extends StepFormProps {
   fieldArray: UseFieldArrayReturn<AddCompanyFormValues, "locations", "fieldId">;
   onSaveAddress?: (index: number) => void;
   isSavingAddress?: boolean;
+  handleDeleteLocation?: (locationForm: string) => Promise<boolean | undefined>;
 }
 
 export type RegisterFormProps = StepFormProps;
@@ -122,6 +123,9 @@ export interface WorkingHoursFormProps extends StepFormProps {
   >;
   onSaveWorkingHour?: (index: number) => void;
   isSavingWorkingHour?: boolean;
+  handleDeleteWorkingHour?: (
+    workingHourId: string,
+  ) => Promise<boolean | undefined>;
 }
 
 export interface CancellationPolicyFormProps extends StepFormProps {
@@ -132,4 +136,7 @@ export interface CancellationPolicyFormProps extends StepFormProps {
   >;
   onSaveCancellationPolicy?: (index: number) => void;
   isSavingCancellationPolicy?: boolean;
+  handleDeleteCancellationPolicy?: (
+    cancellationPolicyId: string,
+  ) => Promise<boolean | undefined>;
 }
