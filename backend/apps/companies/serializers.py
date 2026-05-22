@@ -52,10 +52,12 @@ class CompanySerializer(serializers.ModelSerializer):
         return getattr(obj, "has_location_value", obj.location.exists())
 
     def get_has_cancelation_policy(self, obj):
-        return getattr(obj, "has_cancelation_policy", obj.cancellation_policy.exists())
+        return getattr(
+            obj, "has_cancelation_policy_value", obj.cancellation_policy.exists()
+        )
 
     def get_has_working_hours(self, obj):
-        return getattr(obj, "has_working_hours", obj.working_hours.exists())
+        return getattr(obj, "has_working_hours_value", obj.working_hours.exists())
 
     def get_is_profile_complete(self, obj):
         return (
@@ -222,3 +224,46 @@ class CompanyCancellationPolicySerilizer(serializers.ModelSerializer):
                 "Refund percentage must be between 0 and 100"
             )
         return value
+
+
+class CompanyPreviewSerializer(CompanySerializer):
+    locations = CompanyLocationSerializer(source="location", many=True, read_only=True)
+
+    working_hours = serializers.SerializerMethodField()
+
+    cancellation_policy = CompanyCancellationPolicySerilizer(many=True, read_only=True)
+
+    class Meta(CompanySerializer.Meta):
+        fields = CompanySerializer.Meta.fields + [
+            "locations",
+            "cancellation_policy",
+            "working_hours",
+        ]
+
+    def get_working_hours(self, obj):
+        queryset = obj.working_hours.all().order_by(
+            "start_time",
+            "end_time",
+            "weekday",
+        )
+
+        grouped = {}
+
+        for item in queryset:
+            key = (item.start_time, item.end_time)
+
+            if key not in grouped:
+                grouped[key] = {
+                    "weekday": [],
+                    "weekday_display": [],
+                    "start_time": item.start_time,
+                    "end_time": item.end_time,
+                }
+
+            grouped[key]["weekday"].append(item.weekday)
+            grouped[key]["weekday_display"].append(item.get_weekday_display())
+
+        return CompanyWorkingHoursGroupedSerializer(
+            list(grouped.values()),
+            many=True,
+        ).data

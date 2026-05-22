@@ -18,6 +18,12 @@ export interface Company extends RegisterCompanyPayload {
   is_profile_complete: boolean;
 }
 
+export interface CompanyPreview extends Company {
+  locations: CompanyLocation[];
+  working_hours: CompanyWorkingHour[];
+  cancellation_policy: CompanyCancellationPolicy[];
+}
+
 export interface CompanyListResponse {
   count: number;
   next: string | null;
@@ -87,6 +93,20 @@ export const getCompanyById = async (id: string): Promise<Company> => {
   }
 
   return data.data as Company;
+};
+
+export const getCompanyPreview = async (
+  id: string,
+): Promise<CompanyPreview> => {
+  const { data } = await axiosInstance.get<ApiResponse<CompanyPreview>>(
+    `/api/companies/${id}/preview/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as CompanyPreview;
 };
 
 export const getProviderCompanies = async ({

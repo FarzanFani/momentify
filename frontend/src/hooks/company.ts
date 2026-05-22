@@ -22,6 +22,7 @@ import {
   deleteCompanyLocation,
   deleteCompanyCancellationPolicy,
   deleteCompanyWorkingHour,
+  getCompanyPreview,
 } from "@/services/provider/company";
 import {
   CompanyLocation,
@@ -61,6 +62,14 @@ export const useGetCompanyById = (id: string) => {
   return useQuery({
     queryKey: ["company", id],
     queryFn: () => getCompanyById(id),
+    enabled: !!id,
+  });
+};
+
+export const useGetCompanyPreivew = (id: string) => {
+  return useQuery({
+    queryKey: ["company", id],
+    queryFn: () => getCompanyPreview(id),
     enabled: !!id,
   });
 };

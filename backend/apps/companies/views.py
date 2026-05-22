@@ -1,7 +1,9 @@
 from apps.accounts.permissions import IsProvider
+from django.core.serializers import serialize
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -16,6 +18,7 @@ from .models import (
 from .serializers import (
     CompanyCancellationPolicySerilizer,
     CompanyLocationSerializer,
+    CompanyPreviewSerializer,
     CompanySerializer,
     CompanyTimeOffSerializer,
     CompanyWorkingHoursGroupedSerializer,
@@ -48,6 +51,15 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    @action(detail=True, methods=["get"], url_path="preview")
+    def preview(self, request, pk=None):
+        company = get_object_or_404(Company, pk=pk, owner=request.user)
+        serializer = CompanyPreviewSerializer(
+            company,
+            context=self.get_serializer_context(),
+        )
+        return Response(serializer.data)
 
 
 class CompanyLocationViewSet(viewsets.ModelViewSet):
