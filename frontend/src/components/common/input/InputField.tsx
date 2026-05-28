@@ -4,7 +4,7 @@ import { Box, Typography, OutlinedInput, FormHelperText } from "@mui/material";
 import "./style.css";
 
 interface InputFieldProps {
-  value: string;
+  value?: string | number | null;
   onChange: (value: string) => void;
   label: string;
   placeholder?: string;
@@ -34,7 +34,7 @@ export default function InputField({
         {label}
       </Typography>
       <OutlinedInput
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         size="medium"
         placeholder={placeholder}

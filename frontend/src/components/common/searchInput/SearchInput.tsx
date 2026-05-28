@@ -1,4 +1,3 @@
-// SearchBar.jsx
 import React, { useState, useEffect } from "react";
 import { OutlinedInput, InputAdornment, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -6,7 +5,9 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { searchInputStyles } from "./style";
 
 interface SearchBarProps {
+  value: string;
   placeholder?: string;
+  onChange: (value: string) => void;
   onSearch?: (value: string) => void;
   debounce?: number;
   fullWidth?: boolean;
@@ -21,9 +22,9 @@ const SearchBar = ({
   fullWidth = true,
   width = "100%",
   maxWidth,
+  value,
+  onChange,
 }: SearchBarProps) => {
-  const [value, setValue] = useState("");
-
   useEffect(() => {
     const handler = setTimeout(() => {
       if (onSearch) {
@@ -37,7 +38,8 @@ const SearchBar = ({
   }, [value, debounce, onSearch]);
 
   const handleClear = () => {
-    setValue("");
+    onChange("");
+    onSearch?.("");
   };
 
   const handleSearch = () => {
@@ -48,7 +50,7 @@ const SearchBar = ({
     <OutlinedInput
       value={value}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        setValue(e.target.value)
+        onChange(e.target.value)
       }
       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {

@@ -52,6 +52,11 @@ export interface CancellationPolicyListResponse {
   results: CompanyCancellationPolicy[];
 }
 
+export type CompanyTinyList = {
+  id: string;
+  name: string;
+};
+
 export const registerCompany = async (
   payload: RegisterCompanyPayload,
 ): Promise<Company> => {
@@ -128,6 +133,20 @@ export const getProviderCompanies = async ({
   }
 
   return data.data as CompanyListResponse;
+};
+
+export const getProviderCompanyTinyList = async (): Promise<
+  CompanyTinyList[]
+> => {
+  const { data } = await axiosInstance.get<ApiResponse<CompanyTinyList[]>>(
+    "/api/companies/tiny-list/",
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as CompanyTinyList[];
 };
 
 export const createLocation = async (

@@ -7,12 +7,12 @@ export function extractApiError(
 ): string {
   const data = error.response?.data;
 
+  if (data?.message) return data.message;
+
   if (data?.errors) {
     const fieldMessages = Object.values(data.errors).flat().join("\n");
     if (fieldMessages) return fieldMessages;
   }
-
-  if (data?.message) return data.message;
 
   return fallback;
 }

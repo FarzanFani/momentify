@@ -30,8 +30,6 @@ export default function MultiSelectDropdown({
     typeof option === "string" ? { label: option, value: option } : option,
   );
 
-  console.log(value);
-
   const selectedLabels = normalizedOptions
     .filter((option) => (value ?? []).includes(option.value))
     .map((option) => option.label);

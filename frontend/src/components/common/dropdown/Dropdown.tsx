@@ -1,6 +1,13 @@
 "use client";
 
-import { Box, Typography, Select, MenuItem, ListItemText } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  ListItemText,
+  FormHelperText,
+} from "@mui/material";
 import { DropdownOptionItem } from "@/types/general";
 
 interface DropdownProps {
@@ -10,6 +17,8 @@ interface DropdownProps {
   onChange: (value: string) => void;
   fullWidth?: boolean;
   height?: number;
+  error?: string;
+  disable?: boolean;
 }
 export default function SelectDropdown({
   label,
@@ -18,6 +27,8 @@ export default function SelectDropdown({
   onChange,
   fullWidth = true,
   height = 45,
+  error,
+  disable,
 }: DropdownProps) {
   const normalizedOptions: DropdownOptionItem[] = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option,
@@ -36,6 +47,7 @@ export default function SelectDropdown({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         fullWidth={fullWidth}
+        disabled={disable}
         renderValue={() => (
           <Typography color="primary.dark" fontWeight={"600"}>
             {selectedOption?.label ?? ""}
@@ -59,6 +71,7 @@ export default function SelectDropdown({
           );
         })}
       </Select>
+      {error && <FormHelperText error>{error}</FormHelperText>}
     </Box>
   );
 }

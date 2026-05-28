@@ -254,6 +254,7 @@ export default function User() {
           data={TableData}
           isLoading={isLoading}
           emptyMessage="No result found"
+          count={data?.count ?? 0}
         />
       </Box>
       <AddModal

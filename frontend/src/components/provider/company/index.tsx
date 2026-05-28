@@ -149,8 +149,6 @@ export default function ProviderCompaies() {
   );
 
   const handleSearch = useCallback((value: string) => {
-    console.log("here");
-
     setPaginationPage(1);
     setSearch(value);
   }, []);

@@ -7,14 +7,11 @@ import {
   updateCompany,
   getCompanyById,
   getProviderCompanies,
-  CompanyListResponse,
   createLocation,
   getCompanyLocations,
-  AddressListResponse,
   updateLocation,
   createWorkingHour,
   getCompanyWorkingHours,
-  WorkingHoursListResponse,
   updateWorkingHour,
   updateCancellationPolicy,
   getCompanyCancellationPolicies,
@@ -23,6 +20,7 @@ import {
   deleteCompanyCancellationPolicy,
   deleteCompanyWorkingHour,
   getCompanyPreview,
+  getProviderCompanyTinyList,
 } from "@/services/provider/company";
 import {
   CompanyLocation,
@@ -63,6 +61,13 @@ export const useGetCompanyById = (id: string) => {
     queryKey: ["company", id],
     queryFn: () => getCompanyById(id),
     enabled: !!id,
+  });
+};
+
+export const useGetCompanyTinyList = () => {
+  return useQuery({
+    queryKey: ["company-tiny-list"],
+    queryFn: getProviderCompanyTinyList,
   });
 };
 

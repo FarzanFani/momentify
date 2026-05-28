@@ -49,6 +49,10 @@ export default function Filter({
   };
 
   const handleReset = () => {
+    filterOptions.forEach((option) => {
+      if (option.name === "multiSelectDropdown") option.onChange([]);
+      else if (option.name === "selectDropdown") option.onChange("");
+    });
     onReset?.();
     setOpen(false);
   };

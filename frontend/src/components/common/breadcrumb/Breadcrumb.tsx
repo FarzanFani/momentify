@@ -15,20 +15,13 @@ interface BreadcrumbProps {
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <Breadcrumbs
-      separator={<NavigateNext fontSize="small" />}
-      sx={{ mb: 2 }}
-    >
+    <Breadcrumbs separator={<NavigateNext fontSize="small" />} sx={{ mb: 2 }}>
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
 
         if (isLast || !item.href) {
           return (
-            <Typography
-              key={item.label}
-              color="text.primary"
-              fontWeight={600}
-            >
+            <Typography key={item.label} color="text.primary" fontWeight={600}>
               {item.label}
             </Typography>
           );
