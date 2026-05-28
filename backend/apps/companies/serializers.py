@@ -9,6 +9,13 @@ from .models import (
 )
 
 
+class CompanyTinySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name"]
+        read_only_fields = ["id"]
+
+
 class CompanySerializer(serializers.ModelSerializer):
     has_location = serializers.SerializerMethodField()
     has_cancelation_policy = serializers.SerializerMethodField()

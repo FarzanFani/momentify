@@ -1,5 +1,4 @@
 import uuid
-from email.policy import default
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator

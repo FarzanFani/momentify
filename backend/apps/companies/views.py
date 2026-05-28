@@ -21,6 +21,7 @@ from .serializers import (
     CompanyPreviewSerializer,
     CompanySerializer,
     CompanyTimeOffSerializer,
+    CompanyTinySerializer,
     CompanyWorkingHoursGroupedSerializer,
     CompanyWorkingHoursSerializer,
 )
@@ -58,6 +59,18 @@ class CompanyViewSet(viewsets.ModelViewSet):
         serializer = CompanyPreviewSerializer(
             company,
             context=self.get_serializer_context(),
+        )
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="tiny-list")
+    def tiny_list(self, request):
+        companies = self.get_queryset().filter(
+            has_location_value=True,
+            has_cancellation_policy_value=True,
+            has_working_hours_value=True,
+        )
+        serializer = CompanyTinySerializer(
+            companies, many=True, context=self.get_serializer_context()
         )
         return Response(serializer.data)
 
