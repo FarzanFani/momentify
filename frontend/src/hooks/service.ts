@@ -6,6 +6,8 @@ import {
   retrieveProviderService,
   putProviderService,
 } from "@/services/provider/services";
+import { getPublicServices } from "@/services/public/public";
+import type { PublicServicesPayload } from "@/services/public/public";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useGetProviderServices = (params: CompanyServicesPayload) => {
@@ -38,5 +40,12 @@ export const useGetSingleProviderService = (serviceUuid: string) => {
 export const useEditServices = () => {
   return useMutation({
     mutationFn: putProviderService,
+  });
+};
+
+export const useGetPublicServices = (params: PublicServicesPayload = {}) => {
+  return useQuery({
+    queryKey: ["public-services", params],
+    queryFn: () => getPublicServices(params),
   });
 };

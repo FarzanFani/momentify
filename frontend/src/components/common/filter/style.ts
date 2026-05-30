@@ -29,7 +29,6 @@ export const dialogTitleText: SxProps<Theme> = {
 
 export const dialogActions: SxProps<Theme> = {
   pt: 2,
-  px: 4,
 };
 
 export const actionButton: SxProps<Theme> = {

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { OutlinedInput, InputAdornment, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
-import { searchInputStyles } from "./style";
+import { getSearchInputStyles } from "./style";
 
 interface SearchBarProps {
-  value: string;
+  value?: string;
   placeholder?: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   onSearch?: (value: string) => void;
   debounce?: number;
   fullWidth?: boolean;
@@ -25,32 +25,40 @@ const SearchBar = ({
   value,
   onChange,
 }: SearchBarProps) => {
+  const [internalValue, setInternalValue] = useState("");
+  const inputValue = value ?? internalValue;
+
   useEffect(() => {
     const handler = setTimeout(() => {
       if (onSearch) {
-        onSearch(value);
+        onSearch(inputValue);
       }
     }, debounce);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [value, debounce, onSearch]);
+  }, [inputValue, debounce, onSearch]);
+
+  const handleChange = (nextValue: string) => {
+    setInternalValue(nextValue);
+    onChange?.(nextValue);
+  };
 
   const handleClear = () => {
-    onChange("");
+    handleChange("");
     onSearch?.("");
   };
 
   const handleSearch = () => {
-    if (onSearch) onSearch(value);
+    if (onSearch) onSearch(inputValue);
   };
 
   return (
     <OutlinedInput
-      value={value}
+      value={inputValue}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        onChange(e.target.value)
+        handleChange(e.target.value)
       }
       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
@@ -60,9 +68,9 @@ const SearchBar = ({
       placeholder={placeholder}
       size="small"
       fullWidth={fullWidth}
-      sx={{ ...searchInputStyles, width, maxWidth }}
+      sx={{ ...getSearchInputStyles(Boolean(inputValue)), width, maxWidth }}
       endAdornment={
-        value && (
+        inputValue && (
           <InputAdornment position="end">
             <IconButton onClick={handleClear} size="small">
               <ClearIcon color="primary" />

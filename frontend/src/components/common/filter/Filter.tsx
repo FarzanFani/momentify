@@ -6,23 +6,15 @@ import {
   Dialog,
   DialogTitle,
   Typography,
-  Stack,
   Grid,
   DialogActions,
   Box,
 } from "@mui/material";
 import { FilterList } from "@mui/icons-material";
 import { useState } from "react";
-import { FilterOptions } from "@/types/general";
-import MultiSelectDropdown from "../multiSelectDropdown/MultiSelectDropdown";
-import SelectDropdown from "../dropdown/Dropdown";
+import type { FilterProps, FilterValueRecord } from "@/types/general";
 import * as styles from "./style";
-
-interface FilterProps {
-  filterOptions: FilterOptions[];
-  onApply: (filterValues: { [key: string]: string }[]) => void;
-  onReset?: () => void;
-}
+import renderComponent from "./renderFilterComponents";
 
 export default function Filter({
   filterOptions,
@@ -33,7 +25,7 @@ export default function Filter({
 
   const handleApply = () => {
     setOpen(false);
-    const filterValues: { [key: string]: string }[] = [];
+    const filterValues: FilterValueRecord[] = [];
     for (const option of filterOptions) {
       if (option.name === "multiSelectDropdown") {
         filterValues.push({
@@ -43,6 +35,20 @@ export default function Filter({
         filterValues.push({
           [option.optionKey]: option.value,
         });
+      } else if (
+        option.name === "autocompleteDropdown" ||
+        option.name === "number"
+      ) {
+        filterValues.push({
+          [option.optionKey]: option.value,
+        });
+      } else if (option.name === "rangeSlider") {
+        if (option.value[0] !== option.min) {
+          filterValues.push({ [option.minOptionKey]: option.value[0] });
+        }
+        if (option.value[1] !== option.max) {
+          filterValues.push({ [option.maxOptionKey]: option.value[1] });
+        }
       }
     }
     onApply(filterValues);
@@ -52,6 +58,11 @@ export default function Filter({
     filterOptions.forEach((option) => {
       if (option.name === "multiSelectDropdown") option.onChange([]);
       else if (option.name === "selectDropdown") option.onChange("");
+      else if (option.name === "autocompleteDropdown") option.onChange("");
+      else if (option.name === "number") option.onChange(null);
+      else if (option.name === "rangeSlider") {
+        option.onChange([option.min, option.max]);
+      }
     });
     onReset?.();
     setOpen(false);
@@ -84,40 +95,20 @@ export default function Filter({
         <DialogContent>
           <Grid container rowSpacing={2} columnSpacing={2}>
             {filterOptions.map((option) => {
-              const renderComponent = () => {
-                switch (option.name) {
-                  case "multiSelectDropdown":
-                    return (
-                      <Box width="100%">
-                        <MultiSelectDropdown {...option} fullWidth={true} />
-                      </Box>
-                    );
-                  case "selectDropdown":
-                    return (
-                      <Box width="100%">
-                        <SelectDropdown {...option} fullWidth={true} />
-                      </Box>
-                    );
-
-                  default:
-                    return null;
-                }
-              };
-
               return (
                 <Grid
                   key={option.optionKey}
                   size={{ xs: 12, sm: option.fullWidth ? 12 : 6 }}
                   justifyContent={"center"}
                 >
-                  {renderComponent()}
+                  {renderComponent(option)}
                 </Grid>
               );
             })}
           </Grid>
         </DialogContent>
         <DialogActions sx={styles.dialogActions}>
-          <Box display={"flex"} gap={2}>
+          <Box display={"flex"} justifyContent={"center"} gap={2}>
             <Button
               variant="outlined"
               color="error"

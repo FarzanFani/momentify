@@ -9,6 +9,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 import { DropdownOptionItem } from "@/types/general";
+import { getOutlinedInputStyles } from "@/components/common/inputStyles";
 
 interface DropdownProps {
   label: string;
@@ -19,6 +20,7 @@ interface DropdownProps {
   height?: number;
   error?: string;
   disable?: boolean;
+  placeholder?: string;
 }
 export default function SelectDropdown({
   label,
@@ -29,6 +31,7 @@ export default function SelectDropdown({
   height = 45,
   error,
   disable,
+  placeholder,
 }: DropdownProps) {
   const normalizedOptions: DropdownOptionItem[] = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option,
@@ -37,6 +40,7 @@ export default function SelectDropdown({
   const selectedOption = normalizedOptions.find(
     (option) => option.value === value,
   );
+  const hasValue = Boolean(selectedOption);
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -48,14 +52,22 @@ export default function SelectDropdown({
         onChange={(e) => onChange(e.target.value)}
         fullWidth={fullWidth}
         disabled={disable}
-        renderValue={() => (
-          <Typography color="primary.dark" fontWeight={"600"}>
-            {selectedOption?.label ?? ""}
-          </Typography>
-        )}
-        sx={{
-          height,
+        displayEmpty
+        renderValue={() => {
+          if (!selectedOption) {
+            return (
+              <Typography color="primary.light" fontWeight="500">
+                {placeholder}
+              </Typography>
+            );
+          }
+          return (
+            <Typography color="primary.dark" fontWeight={"600"}>
+              {selectedOption?.label ?? ""}
+            </Typography>
+          );
         }}
+        sx={getOutlinedInputStyles(hasValue, height)}
       >
         {normalizedOptions.map((option) => {
           return (

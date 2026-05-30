@@ -1,15 +1,13 @@
-import {
-  Box,
-  ListItemText,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-} from "@mui/material";
+import { Box, ListItemText, MenuItem, Select } from "@mui/material";
 
 import { Typography } from "@mui/material";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { DropdownOptionItem } from "@/types/general";
+import {
+  getOutlinedInputStyles,
+  INPUT_HEIGHT,
+} from "@/components/common/inputStyles";
 
 interface MultiSelectDropdownProps {
   label: string;
@@ -17,6 +15,7 @@ interface MultiSelectDropdownProps {
   onChange: (value: string[]) => void;
   value: string[];
   fullWidth?: boolean;
+  placeholder?: string;
 }
 
 export default function MultiSelectDropdown({
@@ -25,6 +24,7 @@ export default function MultiSelectDropdown({
   onChange,
   value,
   fullWidth = true,
+  placeholder,
 }: MultiSelectDropdownProps) {
   const normalizedOptions: DropdownOptionItem[] = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option,
@@ -34,6 +34,8 @@ export default function MultiSelectDropdown({
     .filter((option) => (value ?? []).includes(option.value))
     .map((option) => option.label);
 
+  const hasValue = selectedLabels.length > 0;
+
   return (
     <Box sx={{ width: fullWidth ? "100%" : "300px" }}>
       <Typography color="primary.dark" fontWeight={"500"} mb={"4px"}>
@@ -41,6 +43,7 @@ export default function MultiSelectDropdown({
       </Typography>
       <Select
         value={value}
+        displayEmpty
         onChange={(e) => {
           const selectedValue = e.target.value;
 
@@ -52,14 +55,19 @@ export default function MultiSelectDropdown({
         }}
         multiple
         fullWidth
-        renderValue={() => (
-          <Typography color="primary.dark" fontWeight={"600"}>
-            {selectedLabels.join(", ")}
-          </Typography>
-        )}
+        renderValue={() => {
+          if (!hasValue) {
+            return <Typography color="primary.light">{placeholder}</Typography>;
+          }
+          return (
+            <Typography color="primary.dark" fontWeight={"600"}>
+              {selectedLabels.join(", ")}
+            </Typography>
+          );
+        }}
         sx={{
+          ...getOutlinedInputStyles(hasValue, INPUT_HEIGHT),
           width: fullWidth ? "100%" : "300px",
-          height: "45px",
         }}
       >
         {normalizedOptions.map((option) => {

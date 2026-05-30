@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Momentify",
-  description: "Event services platform",
+  description: "Booking event services platform",
 };
 
 export default function RootLayout({
@@ -26,9 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Providers>
-        {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

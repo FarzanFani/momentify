@@ -4,18 +4,27 @@ export const componentOverrides: Components<Theme> = {
   MuiOutlinedInput: {
     styleOverrides: {
       root: ({ theme }) => ({
-        backgroundColor: "transparent",
-        "&:hover .MuiOutlinedInput-notchedOutline": {
+        backgroundColor: "#ffffff",
+        borderRadius: "6px",
+        color: theme.palette.primary.dark,
+        fontWeight: 500,
+        "& .MuiOutlinedInput-notchedOutline": {
           borderColor: theme.palette.primary.light,
+          borderRadius: "6px",
+        },
+        "&:hover .MuiOutlinedInput-notchedOutline": {
+          borderColor: theme.palette.primary.dark,
         },
         "&.Mui-focused": {
           backgroundColor: "#ffffff",
         },
         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-          borderColor: theme.palette.primary.main,
+          borderColor: theme.palette.primary.dark,
         },
-        "&:not(.Mui-focused):has(input:not(:placeholder-shown))": {
-          backgroundColor: "#f0f0f0",
+        "& input::placeholder, & textarea::placeholder": {
+          color: theme.palette.primary.light,
+          opacity: 1,
+          fontWeight: 500,
         },
       }),
     },

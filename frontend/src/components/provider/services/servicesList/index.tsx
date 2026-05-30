@@ -7,12 +7,12 @@ import {
 } from "@/services/provider/services";
 import { Box, Typography, Button, Grid, Divider } from "@mui/material";
 import { useRouter } from "next/navigation";
-import ServiceCardView from "./cardView";
-import ServiceCardSkeleton from "./skeletonLoadingView";
+import ServiceCardView from "../../../common/serviceCard/cardView";
+import ServiceCardSkeleton from "../../../common/serviceCard/skeletonLoadingView";
 import SearchInput from "@/components/common/searchInput/SearchInput";
 import { useState, useCallback } from "react";
 import Filter from "@/components/common/filter/Filter";
-import { FilterOptions } from "@/types/general";
+import { FilterOptions, FilterValueRecord } from "@/types/general";
 import { useGetCategoryTinyList } from "@/hooks/service";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
 import { useGetCompanyTinyList } from "@/hooks/company";
@@ -61,7 +61,7 @@ export default function ProviderServices() {
   ];
 
   const handleApplyFilters = useCallback(
-    (filterValues: { [key: string]: string | string[] }[]) => {
+    (filterValues: FilterValueRecord[]) => {
       setParams((prev) => {
         const nextParams: CompanyServicesPayload = {
           ...prev,
@@ -77,7 +77,9 @@ export default function ProviderServices() {
               } else {
                 delete nextParams[key as keyof CompanyServicesPayload];
               }
-            } else if (value && value.trim() !== "") {
+            } else if (typeof value === "number") {
+              nextParams[key as keyof CompanyServicesPayload] = value as never;
+            } else if (typeof value === "string" && value.trim() !== "") {
               nextParams[key as keyof CompanyServicesPayload] = value as never;
             } else {
               delete nextParams[key as keyof CompanyServicesPayload];

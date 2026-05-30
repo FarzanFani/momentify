@@ -1,11 +1,15 @@
 "use client";
 
 import { Box, Typography, OutlinedInput, FormHelperText } from "@mui/material";
+import {
+  getOutlinedInputStyles,
+  INPUT_HEIGHT,
+} from "@/components/common/inputStyles";
 import "./style.css";
 
 interface InputFieldProps {
-  value?: string | number | null;
-  onChange: (value: string) => void;
+  value: string | number | null;
+  onChange: (value: string | number | null) => void;
   label: string;
   placeholder?: string;
   type?: string;
@@ -28,6 +32,8 @@ export default function InputField({
   multiline = false,
   rows = 3,
 }: InputFieldProps) {
+  const hasValue = value !== "" && value !== null && value !== undefined;
+
   return (
     <Box className="input-field-wrapper">
       <Typography variant="body1" className="input-field-label">
@@ -44,6 +50,10 @@ export default function InputField({
         error={error}
         multiline={multiline}
         rows={multiline ? rows : undefined}
+        sx={getOutlinedInputStyles(
+          hasValue,
+          multiline ? "auto" : INPUT_HEIGHT,
+        )}
       />
       {helperText && (
         <FormHelperText error={error}>{helperText}</FormHelperText>

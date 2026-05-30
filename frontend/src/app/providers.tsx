@@ -56,6 +56,7 @@ export default function Providers({ children }: { children: ReactNode }) {
             <CssBaseline />
             <AuthBootstrap />
             <SnackbarProvider>
+              <CssBaseline />
               {children}
             </SnackbarProvider>
           </ThemeProvider>

@@ -6,7 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Button, Switch, Typography } from "@mui/material";
 
 import Filter from "@/components/common/filter/Filter";
-import { FilterOptions, TableColumn, TableRowDataType } from "@/types/general";
+import {
+  FilterOptions,
+  FilterValueRecord,
+  TableColumn,
+  TableRowDataType,
+} from "@/types/general";
 import { PersonAdd } from "@mui/icons-material";
 import TableComponent from "@/components/common/table/Table";
 import { UserList, UsersParams } from "@/services/admin/user";
@@ -180,11 +185,18 @@ export default function User() {
     },
   }));
 
-  const handleApply = (filterValues: { [key: string]: string }[]) => {
-    const rawFilters = filterValues.reduce<Record<string, string>>(
-      (acc, item) => ({ ...acc, ...item }),
-      {},
-    );
+  const handleApply = (filterValues: FilterValueRecord[]) => {
+    const rawFilters: Record<string, string> = {};
+
+    filterValues.forEach((item) => {
+      Object.entries(item).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          rawFilters[key] = value.join(",");
+        } else if (value !== null) {
+          rawFilters[key] = String(value);
+        }
+      });
+    });
 
     const nextFilters: Record<string, string | boolean> = {};
 

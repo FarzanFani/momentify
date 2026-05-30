@@ -22,7 +22,6 @@ export default function ServiceCardSkeleton() {
         border: "1px solid rgba(11, 61, 145, 0.12)",
       }}
     >
-      {/* Header skeleton */}
       <Box
         sx={{
           height: 110,
@@ -60,22 +59,18 @@ export default function ServiceCardSkeleton() {
 
       <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
         <Stack spacing={1.8}>
-          {/* Title */}
           <Skeleton variant="text" width="75%" height={32} />
 
-          {/* Company */}
           <Stack direction="row" spacing={1} alignItems="center">
             <Skeleton variant="circular" width={18} height={18} />
             <Skeleton variant="text" width="45%" height={22} />
           </Stack>
 
-          {/* Description */}
           <Box>
             <Skeleton variant="text" width="100%" height={22} />
             <Skeleton variant="text" width="70%" height={22} />
           </Box>
 
-          {/* Info boxes */}
           <Grid container spacing={1.5}>
             {[1, 2, 3, 4].map((item) => (
               <Grid key={item} size={{ xs: 6 }}>
@@ -97,7 +92,6 @@ export default function ServiceCardSkeleton() {
             ))}
           </Grid>
 
-          {/* Price box */}
           <Box
             sx={{
               mt: 1,
