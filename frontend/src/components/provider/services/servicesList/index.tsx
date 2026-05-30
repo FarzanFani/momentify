@@ -244,7 +244,7 @@ export default function ProviderServices() {
               <Grid container spacing={3} px={4} width={"100%"}>
                 {data.results.map((service: CompanyServices) => (
                   <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-                    <ServiceCardView service={service} />
+                    <ServiceCardView service={service} isPublic={false} />
                   </Grid>
                 ))}
               </Grid>

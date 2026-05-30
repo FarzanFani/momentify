@@ -39,3 +39,17 @@ export const getPublicCompaniesTinyList = async (): Promise<
 
   return data.data as CompanyTinyList[];
 };
+
+export const retrievePublicService = async (
+  serviceUuid: string,
+): Promise<CompanyServices> => {
+  const { data } = await axiosInstance.get<ApiResponse<CompanyServices>>(
+    `api/public/services/${serviceUuid}/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as CompanyServices;
+};

@@ -6,7 +6,10 @@ import {
   retrieveProviderService,
   putProviderService,
 } from "@/services/provider/services";
-import { getPublicServices } from "@/services/public/public";
+import {
+  getPublicServices,
+  retrievePublicService,
+} from "@/services/public/public";
 import type { PublicServicesPayload } from "@/services/public/public";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -35,6 +38,13 @@ export const useGetSingleProviderService = (serviceUuid: string) => {
   return useQuery({
     queryKey: ["service", serviceUuid],
     queryFn: () => retrieveProviderService(serviceUuid),
+  });
+};
+
+export const useGetSinglePublicService = (serviceUuid: string) => {
+  return useQuery({
+    queryKey: ["service", serviceUuid],
+    queryFn: () => retrievePublicService(serviceUuid),
   });
 };
 

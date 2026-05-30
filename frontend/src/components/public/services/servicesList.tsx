@@ -238,105 +238,96 @@ export default function ServicesListPage() {
   );
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "calc(100vh - 80px)",
-        borderColor: "black",
-        pb: "30px",
-      }}
-    >
-      <Grid container width="100%">
-        <Grid
-          size={{ md: 4, lg: 3, xl: 2 }}
-          display={{ xs: "none", md: "flex" }}
-        >
-          <SideFilter
-            filterOptions={filterOptions}
-            onApply={handleApplyFilters}
-            onReset={handleResetFilters}
-            widthPercentage={isXl ? 2 : isLg ? 3 : 4}
-          />
-        </Grid>
+    <Grid container width={"100%"}>
+      <Grid size={{ md: 4, lg: 3, xl: 2 }} display={{ xs: "none", md: "flex" }}>
+        <SideFilter
+          filterOptions={filterOptions}
+          onApply={handleApplyFilters}
+          onReset={handleResetFilters}
+          widthPercentage={isXl ? 2 : isLg ? 3 : 4}
+        />
+      </Grid>
 
-        <Grid size={{ md: 8, lg: 9, xl: 10 }}>
-          <Box>
-            {isServicesLoading ? (
-              <Grid container spacing={3} px={{ xs: 2, md: 4 }}>
-                {Array.from({ length: 6 }).map((_, index) => (
-                  <Grid key={index} size={{ xs: 12, sm: 6, xl: 4 }}>
-                    <ServiceCardSkeleton />
-                  </Grid>
-                ))}
-              </Grid>
-            ) : !serviceResponse ? (
-              <ApiErrorResponse />
-            ) : serviceResponse.count > 0 ? (
-              <>
+      <Grid size={{ md: 8, lg: 9, xl: 10 }} width={"100%"}>
+        <Box>
+          {isServicesLoading ? (
+            <Grid container spacing={3} px={{ xs: 2, md: 4 }}>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Grid key={index} size={{ xs: 12, sm: 6, xl: 4 }}>
+                  <ServiceCardSkeleton />
+                </Grid>
+              ))}
+            </Grid>
+          ) : !serviceResponse ? (
+            <ApiErrorResponse />
+          ) : serviceResponse.count > 0 ? (
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  width: "100%",
+                  px: 4,
+                  pt: 3,
+                  mb: 4,
+                }}
+              >
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "space-between",
+                    gap: 2,
+                    flexGrow: 1,
                     alignItems: "flex-end",
-                    width: "100%",
-                    px: 4,
-                    pt: 3,
-                    mb: 4,
+                    flexWrap: "wrap",
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      flexGrow: 1,
-                      alignItems: "flex-end",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <SearchInput
-                      placeholder="Search services"
-                      onSearch={handleSearch}
-                      maxWidth="500px"
-                      onChange={setSearch}
-                      value={search}
+                  <SearchInput
+                    placeholder="Search services"
+                    onSearch={handleSearch}
+                    maxWidth="500px"
+                    onChange={setSearch}
+                    value={search}
+                  />
+
+                  <Box display={{ xs: "block", md: "none" }}>
+                    <Filter
+                      onApply={handleApplyFilters}
+                      onReset={handleResetFilters}
+                      filterOptions={filterOptions}
                     />
-
-                    <Box display={{ xs: "block", md: "none" }}>
-                      <Filter
-                        onApply={handleApplyFilters}
-                        onReset={handleResetFilters}
-                        filterOptions={filterOptions}
-                      />
-                    </Box>
                   </Box>
-
-                  <Divider />
                 </Box>
 
-                <Grid container spacing={3} px={{ xs: 2, md: 4 }} width="100%">
-                  {serviceResponse.results.map((service: CompanyServices) => (
-                    <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-                      <ServiceCardView service={service} />
-                    </Grid>
-                  ))}
-                </Grid>
-              </>
-            ) : (
-              <Box
-                minHeight="300px"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Typography color="primary.main">No result found</Typography>
+                <Divider />
               </Box>
-            )}
-          </Box>
-        </Grid>
+
+              <Grid container spacing={3} px={{ xs: 2, md: 4 }} width="100%">
+                {serviceResponse.results.map((service: CompanyServices) => (
+                  <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
+                    <ServiceCardView service={service} isPublic />
+                  </Grid>
+                ))}
+              </Grid>
+            </>
+          ) : (
+            <Box
+              minHeight="300px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Typography
+                color="primary.main"
+                width={"200px"}
+                textAlign={"center"}
+              >
+                No result found
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Grid>
-    </Box>
+    </Grid>
   );
 }
