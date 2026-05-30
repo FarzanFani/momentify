@@ -21,6 +21,7 @@ export const useGetCategoryTinyList = () => {
   return useQuery({
     queryKey: ["category"],
     queryFn: getServicesCategoryTinyList,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -47,5 +48,6 @@ export const useGetPublicServices = (params: PublicServicesPayload = {}) => {
   return useQuery({
     queryKey: ["public-services", params],
     queryFn: () => getPublicServices(params),
+    refetchOnWindowFocus: false,
   });
 };

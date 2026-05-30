@@ -70,6 +70,7 @@ export const useGetPublicCompanyTinyList = () => {
   return useQuery({
     queryKey: ["public-company-tiny-list"],
     queryFn: getPublicCompaniesTinyList,
+    refetchOnWindowFocus: false,
   });
 };
 
