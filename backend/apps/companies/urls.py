@@ -7,6 +7,7 @@ from .views import (
     CompanyTimeOffViewSet,
     CompanyViewSet,
     CompanyWorkingHoursViewSet,
+    PublicCompanyTinyListView,
 )
 
 router = DefaultRouter()
@@ -57,6 +58,11 @@ company_time_off_detail = CompanyTimeOffViewSet.as_view(
 
 
 urlpatterns = [
+    path(
+        "public/companies/tiny-list/",
+        PublicCompanyTinyListView.as_view(),
+        name="public-company-tiny-list",
+    ),
     path("", include(router.urls)),
     path(
         "companies/<uuid:company_id>/locations/",

@@ -136,7 +136,6 @@ class PublicServiceViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ServiceCategoryViewSet(viewsets.ModelViewSet):
-
     serializer_class = ServiceCategorySerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
@@ -149,12 +148,6 @@ class ServiceCategoryViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
         return [IsAuthenticated(), IsAdmin()]
-
-    # @action(detail=False, methods=["get"], url_path="tiny-list")
-    # def tiny_list(self, request):
-    #     categories = ServiceCategory.objects.filter(is_active=True).order_by("name")
-    #     serializer = self.get_serializer(categories, many=True)
-    #     return Response(serializer.data)
 
 
 class ServiceCategoryTinyListViewSet(viewsets.ViewSet):

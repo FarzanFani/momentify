@@ -5,7 +5,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import (
@@ -72,6 +73,34 @@ class CompanyViewSet(viewsets.ModelViewSet):
         serializer = CompanyTinySerializer(
             companies, many=True, context=self.get_serializer_context()
         )
+        return Response(serializer.data)
+
+
+class PublicCompanyTinyListView(ListAPIView):
+    serializer_class = CompanyTinySerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return Company.objects.annotate(
+            has_location_value=Exists(
+                CompanyLocation.objects.filter(company=OuterRef("pk"))
+            ),
+            has_cancellation_policy_value=Exists(
+                CompanyCancellationPolicyRules.objects.filter(company=OuterRef("pk"))
+            ),
+            has_working_hours_value=Exists(
+                CompanyWorkingHours.objects.filter(company=OuterRef("pk"))
+            ),
+        ).filter(
+            has_location_value=True,
+            has_cancellation_policy_value=True,
+            has_working_hours_value=True,
+        )
+
+    def list(self, request, *args, **kwargs):
+        companies = self.get_queryset()
+        serializer = self.get_serializer(companies, many=True)
         return Response(serializer.data)
 
 

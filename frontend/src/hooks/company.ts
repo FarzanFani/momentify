@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
-import { ApiResponse } from "@/types/general";
 import {
-  Company,
   registerCompany,
   updateCompany,
   getCompanyById,
@@ -24,13 +21,11 @@ import {
 } from "@/services/provider/company";
 import {
   CompanyLocation,
-  CompanyLocationPayload,
   CompanyWorkingHour,
-  CompanyWorkingHourPayload,
   RegisterCompanyPayload,
-  CompanyCancellationPolicyPayload,
   CompanyCancellationPolicy,
 } from "@/components/provider/company/add/formTypes";
+import { getPublicCompaniesTinyList } from "@/services/public/public";
 
 export const useRegisterCompany = () => {
   return useMutation({
@@ -68,6 +63,13 @@ export const useGetCompanyTinyList = () => {
   return useQuery({
     queryKey: ["company-tiny-list"],
     queryFn: getProviderCompanyTinyList,
+  });
+};
+
+export const useGetPublicCompanyTinyList = () => {
+  return useQuery({
+    queryKey: ["public-company-tiny-list"],
+    queryFn: getPublicCompaniesTinyList,
   });
 };
 

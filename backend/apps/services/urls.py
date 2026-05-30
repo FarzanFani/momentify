@@ -14,7 +14,7 @@ router.register(
     r"companies/(?P<company_id>[^/.]+)/services", ServiceViewSet, basename="services"
 )
 
-router.register(r"services", PublicServiceViewSet, basename="public-service")
+router.register(r"public/services", PublicServiceViewSet, basename="public-service")
 
 router.register(
     r"provider/services", ProviderServiceViewSet, basename="provider-service"
