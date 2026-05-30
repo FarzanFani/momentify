@@ -5,7 +5,7 @@ import SearchInput from "@/components/common/searchInput/SearchInput";
 import ServiceCardView from "@/components/common/serviceCard/cardView";
 import ServiceCardSkeleton from "@/components/common/serviceCard/skeletonLoadingView";
 import SideFilter from "@/components/common/filter/sideFilter";
-import { useGetCompanyTinyList } from "@/hooks/company";
+import { useGetPublicCompanyTinyList } from "@/hooks/company";
 import { useGetCategoryTinyList, useGetPublicServices } from "@/hooks/service";
 import type { PublicServicesPayload } from "@/services/public/public";
 import type { CompanyServices } from "@/services/provider/services";
@@ -51,7 +51,7 @@ export default function ServicesListPage() {
   const isLg = useMediaQuery(theme.breakpoints.up("lg"));
 
   const { data: categories } = useGetCategoryTinyList();
-  const { data: companies } = useGetCompanyTinyList();
+  const { data: companies } = useGetPublicCompanyTinyList();
 
   const initialParams = useMemo(
     () => getParamsFromSearchParams(searchParams),
@@ -245,7 +245,6 @@ export default function ServicesListPage() {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "calc(100vh - 80px)",
-        pt: "75px",
         borderColor: "black",
         pb: "30px",
       }}

@@ -1,12 +1,9 @@
-import AutocompleteDropdown from "@/components/common/autoComplete/autoComplete";
-import SelectDropdown from "@/components/common/dropdown/Dropdown";
-import InputField from "@/components/common/input/InputField";
-import MultiSelectDropdown from "@/components/common/multiSelectDropdown/MultiSelectDropdown";
-import RangeSlider from "@/components/common/slider/RangeSlider";
+"use client";
+
 import type { FilterValueRecord, SideFilterProps } from "@/types/general";
 import { Box, Button, Grid } from "@mui/material";
-import { preconnect } from "react-dom";
 import renderComponent from "./renderFilterComponents";
+import { useAppSelector } from "@/store/hook";
 
 export default function SideFilter({
   filterOptions,
@@ -14,6 +11,7 @@ export default function SideFilter({
   onReset,
   widthPercentage,
 }: SideFilterProps) {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const collectFilterValues = (): FilterValueRecord[] =>
     filterOptions.flatMap((option) => {
       switch (option.name) {
@@ -76,7 +74,7 @@ export default function SideFilter({
         bottom: 0,
         left: 0,
         width: `${percentage}%`,
-        pt: "75px",
+        pt: isAuthenticated ? "100px" : "75px",
         overflowY: "hidden",
         overflowX: "hidden",
         backgroundColor: "background.default",

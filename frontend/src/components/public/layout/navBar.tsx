@@ -167,13 +167,19 @@ export default function NavBar() {
             ) : (
               <>
                 <Badge badgeContent={10} color="error">
-                  <Notifications fontSize="large" color="secondary" />
+                  <Notifications
+                    fontSize="large"
+                    sx={{ color: "secondary.main" }}
+                  />
                 </Badge>
                 <IconButton
                   size="large"
                   onClick={(e) => setAnchorEl(e.currentTarget)}
                 >
-                  <AccountCircle fontSize="large" color="secondary" />
+                  <AccountCircle
+                    fontSize="large"
+                    sx={{ color: "secondary.main" }}
+                  />
                 </IconButton>
               </>
             )}
