@@ -128,7 +128,9 @@ function Hero() {
         alignItems: "center",
         justifyContent: "center",
         overflow: "hidden",
-        pt: 8,
+        width: "100%",
+        p: 0,
+        m: 0,
       }}
     >
       <Box

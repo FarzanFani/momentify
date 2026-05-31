@@ -18,6 +18,7 @@ interface InputFieldProps {
   multiline?: boolean;
   rows?: number;
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
 export default function InputField({
@@ -31,6 +32,7 @@ export default function InputField({
   fullWidth = true,
   multiline = false,
   rows = 3,
+  disabled,
 }: InputFieldProps) {
   const hasValue = value !== "" && value !== null && value !== undefined;
 
@@ -47,13 +49,11 @@ export default function InputField({
         fullWidth={fullWidth}
         className={`input-field ${multiline ? "input-field-multiline" : ""}`}
         type={type}
+        disabled={disabled}
         error={error}
         multiline={multiline}
         rows={multiline ? rows : undefined}
-        sx={getOutlinedInputStyles(
-          hasValue,
-          multiline ? "auto" : INPUT_HEIGHT,
-        )}
+        sx={getOutlinedInputStyles(hasValue, multiline ? "auto" : INPUT_HEIGHT)}
       />
       {helperText && (
         <FormHelperText error={error}>{helperText}</FormHelperText>

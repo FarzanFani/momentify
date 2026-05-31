@@ -28,12 +28,45 @@ type InfoItemProps = {
   value: string | number;
 };
 
+const primaryButtonSx = {
+  borderRadius: 3,
+  py: 1.2,
+  fontWeight: 800,
+  textTransform: "none",
+  color: "#fff",
+  background: "linear-gradient(135deg, #0B3D91 0%, #2F5FB3 65%, #C9A227 100%)",
+  boxShadow: "0 8px 18px rgba(124, 77, 255, 0.3)",
+  "&:hover": {
+    background:
+      "linear-gradient(135deg, #072a63 0%, #0B3D91 60%, #8C6A12 100%)",
+  },
+};
+
+const secondaryButtonSx = {
+  borderRadius: 3,
+  py: 1.2,
+  fontWeight: 800,
+  textTransform: "none",
+  color: "#0B3D91",
+  borderColor: "rgba(11, 61, 145, 0.28)",
+  backgroundColor: "rgba(11, 61, 145, 0.04)",
+  "&:hover": {
+    borderColor: "#0B3D91",
+    backgroundColor: "rgba(11, 61, 145, 0.08)",
+  },
+};
+
 export default function ServiceCardView({
   service,
+  isPublic = true,
 }: {
   service: CompanyServices;
+  isPublic: boolean;
 }) {
   const router = useRouter();
+
+  const hasBookNow = isPublic;
+
   return (
     <Card
       sx={{
@@ -196,31 +229,44 @@ export default function ServiceCardView({
         </Stack>
       </CardContent>
 
-      <CardActions sx={{ px: { xs: 2.5, sm: 3 }, pb: 3, pt: 0 }}>
+      <CardActions
+        sx={{
+          px: { xs: 2.5, sm: 3 },
+          pb: 3,
+          pt: 0,
+          gap: 1.5,
+          flexDirection: { xs: "column", sm: "row" },
+        }}
+      >
         <Button
           fullWidth
-          variant="contained"
-          sx={{
-            borderRadius: 3,
-            py: 1.2,
-            fontWeight: 800,
-            textTransform: "none",
-            background:
-              "linear-gradient(135deg, #0B3D91 0%, #2F5FB3 65%, #C9A227 100%)",
-            boxShadow: "0 8px 18px rgba(124, 77, 255, 0.3)",
-            "&:hover": {
-              background:
-                "linear-gradient(135deg, #072a63 0%, #0B3D91 60%, #8C6A12 100%)",
-            },
-          }}
+          variant="outlined"
+          sx={hasBookNow ? secondaryButtonSx : primaryButtonSx}
           onClick={() =>
             router.push(
-              "/provider/services/62ecf176-42f4-4775-a149-0057d54ecbda/preview",
+              !isPublic
+                ? `/provider/services/${service.id}/preview`
+                : `/services/${service.id}/preview`,
             )
           }
         >
           View Details
         </Button>
+
+        {isPublic && (
+          <Button
+            fullWidth
+            variant="contained"
+            sx={primaryButtonSx}
+            // onClick={() =>
+            //   router.push(
+            //     "/provider/services/62ecf176-42f4-4775-a149-0057d54ecbda/preview",
+            //   )
+            // }
+          >
+            Book Now
+          </Button>
+        )}
       </CardActions>
     </Card>
   );
