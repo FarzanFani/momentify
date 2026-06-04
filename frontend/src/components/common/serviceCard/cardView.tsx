@@ -258,11 +258,9 @@ export default function ServiceCardView({
             fullWidth
             variant="contained"
             sx={primaryButtonSx}
-            // onClick={() =>
-            //   router.push(
-            //     "/provider/services/62ecf176-42f4-4775-a149-0057d54ecbda/preview",
-            //   )
-            // }
+            onClick={() =>
+              router.push(`/customer/checkout/?serviceId=${service.id}`)
+            }
           >
             Book Now
           </Button>

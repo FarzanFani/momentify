@@ -39,37 +39,17 @@ import { Controller, useForm } from "react-hook-form";
 import SelectDropdown from "@/components/common/dropdown/Dropdown";
 import { DropdownOptionItem } from "@/types/general";
 import { useAppSelector } from "@/store/hook";
-
-type CheckoutFormState = {
-  eventType: string;
-  eventDate: string;
-  startTime: string;
-  location: string;
-  guestCount: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  specialRequests: string;
-  paymentOption: string;
-};
-
-// const initialFormState: CheckoutFormState = {
-//   eventType: "",
-//   eventDate: "",
-//   startTime: "",
-//   location: "",
-//   guestCount: "",
-//   fullName: "",
-//   email: "",
-//   phone: "",
-//   specialRequests: "",
-//   paymentOption: "3",
-// };
+import { CustomerBookingPayload } from "@/services/customer/booking";
+import { usePostCustomerBooking } from "@/hooks/booking";
+import { useSnackbar } from "@/contexts/SnackbarContext";
+import { extractApiError } from "@/utils/extractApiError";
 
 const paymentOptions: DropdownOptionItem[] = [
-  { value: "1", label: "Request booking first" },
-  { value: "2", label: "Pay deposit later" },
-  { value: "3", label: "Pay full amount later" },
+  { value: "REQUEST_BOOKING_FIRST", label: "Request booking first" },
+  { value: "PAY_DEPOSIT_LATER", label: "Pay deposit later" },
+  { value: "PAY_FULL_AMOUNT_LATER", label: "Pay full amount later" },
+  { value: "PAY_FULL_AMOUNT_NOW", label: "Pay full amount now" },
+  { value: "PAY_DEPOSIT_NOW", label: "Pay deposite now" },
 ];
 
 export default function CustomerCheckoutPage() {
@@ -90,52 +70,52 @@ export default function CustomerCheckoutPage() {
   } = useGetSinglePublicService(serviceId || "");
 
   const [useRegisterContactInfo, setRegisterContactInfo] = useState(false);
+  const { mutate: createBooking, isPending: isBookingCreateLoading } =
+    usePostCustomerBooking();
+  const { showSnackbar } = useSnackbar();
 
   const { control, handleSubmit, setValue, clearErrors, formState } =
-    useForm<CheckoutFormState>({
+    useForm<CustomerBookingPayload>({
       mode: "onChange",
       defaultValues: {
-        paymentOption: "1",
+        payment_option: "REQUEST_BOOKING_FIRST",
       },
     });
 
-  const handleSubmitBooking = (data: CheckoutFormState) => {
+  const handleSubmitBooking = (data: CustomerBookingPayload) => {
     if (!service) return;
-    console.log(data);
-
-    // Later replace this with your mutation:
-    // createBooking({
-    //   service_id: service.id,
-    //   event_type: form.eventType,
-    //   event_date: form.eventDate,
-    //   start_time: form.startTime,
-    //   location: form.location,
-    //   guest_count: Number(form.guestCount),
-    //   full_name: form.fullName,
-    //   email: form.email,
-    //   phone: form.phone,
-    //   special_requests: form.specialRequests,
-    //   payment_option: form.paymentOption,
-    // });
-
-    // router.push("/customer/bookings");
+    createBooking(
+      { ...data, service: service.id },
+      {
+        onSuccess: (data) => {
+          showSnackbar("Checkout Succesfull", "success");
+          router.push(`/customer/booking/${data.id}/preview`);
+        },
+        onError: (error: any) => {
+          showSnackbar(extractApiError(error), "error");
+        },
+      },
+    );
   };
 
   useEffect(() => {
     if (useRegisterContactInfo) {
-      setValue("email", user?.email ?? "");
-      clearErrors("email");
-      setValue("fullName", `${user?.first_name} ${user?.last_name}`);
-      clearErrors("fullName");
-      setValue("phone", user?.phone_number ?? "");
-      clearErrors("phone");
+      setValue("contact_detail_email", user?.email ?? "");
+      clearErrors("contact_detail_email");
+      setValue(
+        "contact_detail_full_name",
+        `${user?.first_name} ${user?.last_name}`,
+      );
+      clearErrors("contact_detail_full_name");
+      setValue("contact_detail_phone_number", user?.phone_number ?? "");
+      clearErrors("contact_detail_phone_number");
     } else {
-      setValue("email", "");
-      clearErrors("email");
-      setValue("fullName", "");
-      clearErrors("fullName");
-      setValue("phone", "");
-      clearErrors("phone");
+      setValue("contact_detail_email", "");
+      clearErrors("contact_detail_email");
+      setValue("contact_detail_full_name", "");
+      clearErrors("contact_detail_full_name");
+      setValue("contact_detail_phone_number", "");
+      clearErrors("contact_detail_phone_number");
     }
   }, [
     useRegisterContactInfo,
@@ -232,7 +212,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
                       control={control}
-                      name="eventDate"
+                      name="event_date"
                       rules={{ required: "Event date is required" }}
                       render={({ field, fieldState }) => (
                         <InputField
@@ -250,7 +230,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
                       control={control}
-                      name="startTime"
+                      name="event_time"
                       rules={{ required: "Start time is required" }}
                       render={({ field, fieldState }) => (
                         <InputField
@@ -268,7 +248,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
                       control={control}
-                      name="guestCount"
+                      name="guest_numbers"
                       rules={{
                         required: "Guest Number is required",
                         min: { value: 1, message: "Minimum allow number is 1" },
@@ -332,7 +312,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
                       control={control}
-                      name="fullName"
+                      name="contact_detail_full_name"
                       rules={{ required: "Full name is required" }}
                       render={({ field, fieldState }) => (
                         <InputField
@@ -351,7 +331,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Controller
                       control={control}
-                      name="phone"
+                      name="contact_detail_phone_number"
                       rules={{ required: "Phone number is required" }}
                       render={({ field, fieldState }) => (
                         <InputField
@@ -370,7 +350,7 @@ export default function CustomerCheckoutPage() {
                   <Grid size={{ xs: 12 }}>
                     <Controller
                       control={control}
-                      name="email"
+                      name="contact_detail_email"
                       rules={{ required: "Email is required" }}
                       render={({ field, fieldState }) => (
                         <InputField
@@ -395,7 +375,7 @@ export default function CustomerCheckoutPage() {
               >
                 <Controller
                   control={control}
-                  name="specialRequests"
+                  name="special_request"
                   render={({ field }) => (
                     <InputField
                       label="Special Request"
@@ -416,7 +396,7 @@ export default function CustomerCheckoutPage() {
               >
                 <Controller
                   control={control}
-                  name="paymentOption"
+                  name="payment_option"
                   rules={{ required: "Payment option is required" }}
                   render={({ field, fieldState }) => (
                     <SelectDropdown

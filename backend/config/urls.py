@@ -27,4 +27,5 @@ urlpatterns = [
     path("api/accounts/", include("apps.accounts.urls")),
     path("api/", include("apps.companies.urls")),
     path("api/", include("apps.services.urls")),
+    path("api/", include("apps.booking.urls")),
 ]

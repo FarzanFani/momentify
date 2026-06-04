@@ -1,5 +1,4 @@
 from apps.accounts.permissions import IsProvider
-from django.core.serializers import serialize
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
