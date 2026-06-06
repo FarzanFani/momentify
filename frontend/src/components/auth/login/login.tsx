@@ -8,7 +8,7 @@ import PasswordField from "@/components/common/password/PasswordField";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/hooks/useLogin";
 import { useForm, Controller } from "react-hook-form";
 import { extractApiError } from "@/utils/extractApiError";
@@ -23,6 +23,7 @@ export default function Login() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { mutate, isPending } = useLogin();
+  const searchParams = useSearchParams();
 
   const {
     control,
@@ -40,6 +41,12 @@ export default function Login() {
       onSuccess: ({ user }) => {
         dispatch(setUser(user));
         showSnackbar("Login successful!", "success");
+
+        const nextRoute = searchParams.get("next");
+        if (nextRoute) {
+          router.push(nextRoute);
+          return;
+        }
 
         switch (user.role) {
           case "PROVIDER":
@@ -114,6 +121,7 @@ export default function Login() {
                   type="email"
                   error={!!errors.email}
                   helperText={errors.email?.message}
+                  onEnterPressed={handleSubmit(onSubmit)}
                 />
               )}
             />
@@ -128,6 +136,7 @@ export default function Login() {
                   onChange={field.onChange}
                   error={!!errors.password}
                   helperText={errors.password?.message}
+                  onEnterPressed={handleSubmit(onSubmit)}
                 />
               )}
             />

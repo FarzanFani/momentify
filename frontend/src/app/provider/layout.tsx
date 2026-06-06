@@ -12,12 +12,13 @@ import {
   Typography,
 } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/store/authSlice";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountCircle, Notifications } from "@mui/icons-material";
 import ProviderNavCards from "@/components/provider/providerNavCards/providerNavCards";
 import MenuIcon from "@mui/icons-material/Menu";
+import { useAppSelector } from "@/store/hook";
 
 export default function ProviderLayout({
   children,
@@ -26,6 +27,10 @@ export default function ProviderLayout({
 }) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { isAuthenticated, isAuthInitialized } = useAppSelector(
+    (state) => state.auth,
+  );
+  const pathname = usePathname();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const isMenuOpen = Boolean(anchorEl);
 
@@ -43,6 +48,16 @@ export default function ProviderLayout({
     router.push("/login");
     handleMenuClose();
   };
+
+  useEffect(() => {
+    if (isAuthInitialized && !isAuthenticated) {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [isAuthInitialized, isAuthenticated, pathname, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
   const renderMenu = (
     <Menu
       anchorEl={anchorEl}

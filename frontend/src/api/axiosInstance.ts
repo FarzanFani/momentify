@@ -61,7 +61,7 @@ axiosInstance.interceptors.response.use(
     if (!refreshToken) {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      window.location.href = "/login";
+      // window.location.href = "/login";
       return Promise.reject(error);
     }
 
@@ -102,7 +102,7 @@ axiosInstance.interceptors.response.use(
       processQueue(refreshError as AxiosError, null);
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      window.location.href = "/login";
+      // window.location.href = "/login";
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

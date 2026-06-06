@@ -10,7 +10,7 @@ import { theme } from "@/theme";
 import { SnackbarProvider } from "@/contexts/SnackbarContext";
 import { useDispatch } from "react-redux";
 import axiosInstance from "@/api/axiosInstance";
-import { setUser } from "@/store/authSlice";
+import { finishAuthLoading, logout, setUser } from "@/store/authSlice";
 import { ApiResponse } from "@/types/general";
 import { User } from "@/services/auth.service";
 
@@ -24,6 +24,7 @@ function AuthBootstrap() {
         Boolean(localStorage.getItem("refresh_token")));
 
     if (!hasAuthToken) {
+      dispatch(finishAuthLoading());
       return;
     }
 
@@ -33,9 +34,13 @@ function AuthBootstrap() {
           await axiosInstance.get<ApiResponse<User>>("/api/accounts/me/");
         if (data.success && data.data) {
           dispatch(setUser(data.data));
+        } else {
+          dispatch(logout());
         }
       } catch {
-        // Ignore here; auth/redirect behavior is handled in axios interceptor.
+        dispatch(logout());
+      } finally {
+        dispatch(finishAuthLoading());
       }
     };
 

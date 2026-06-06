@@ -19,6 +19,7 @@ interface InputFieldProps {
   rows?: number;
   fullWidth?: boolean;
   disabled?: boolean;
+  onEnterPressed?: () => void;
 }
 
 export default function InputField({
@@ -33,6 +34,7 @@ export default function InputField({
   multiline = false,
   rows = 3,
   disabled,
+  onEnterPressed,
 }: InputFieldProps) {
   const hasValue = value !== "" && value !== null && value !== undefined;
 
@@ -54,6 +56,11 @@ export default function InputField({
         multiline={multiline}
         rows={multiline ? rows : undefined}
         sx={getOutlinedInputStyles(hasValue, multiline ? "auto" : INPUT_HEIGHT)}
+        onKeyUp={(event) => {
+          if (event.key === "Enter") {
+            onEnterPressed?.();
+          }
+        }}
       />
       {helperText && (
         <FormHelperText error={error}>{helperText}</FormHelperText>

@@ -14,11 +14,13 @@ interface UserInfo {
 interface AuthState {
   user: UserInfo | null;
   isAuthenticated: boolean;
+  isAuthInitialized: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
+  isAuthInitialized: false,
 };
 
 const authSlice = createSlice({
@@ -28,17 +30,22 @@ const authSlice = createSlice({
     setUser(state, action: PayloadAction<UserInfo>) {
       state.user = action.payload;
       state.isAuthenticated = true;
+      state.isAuthInitialized = true;
     },
     logout(state) {
       state.user = null;
       state.isAuthenticated = false;
+      state.isAuthInitialized = true;
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
       }
     },
+    finishAuthLoading(state) {
+      state.isAuthInitialized = true;
+    },
   },
 });
 
-export const { setUser, logout } = authSlice.actions;
+export const { setUser, logout, finishAuthLoading } = authSlice.actions;
 export default authSlice.reducer;
