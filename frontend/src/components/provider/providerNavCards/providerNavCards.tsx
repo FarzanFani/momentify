@@ -5,6 +5,7 @@ import {
   DashboardCustomize,
   Business,
   MiscellaneousServices,
+  EventNote,
   Settings,
   Insights,
 } from "@mui/icons-material";
@@ -30,6 +31,12 @@ const navItems = [
     icon: <MiscellaneousServices fontSize="large" />,
     link: "/provider/services",
     bgcolor: "#0B3A5A",
+  },
+  {
+    title: "Bookings",
+    icon: <EventNote fontSize="large" />,
+    link: "/provider/bookings",
+    bgcolor: "#0F766E",
   },
   {
     title: "Insight",
