@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, OutlinedInput, IconButton, InputAdornment, FormHelperText } from "@mui/material";
+import {
+  Box,
+  Typography,
+  OutlinedInput,
+  IconButton,
+  InputAdornment,
+  FormHelperText,
+} from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import "./style.css";
 
@@ -12,6 +19,7 @@ interface PasswordFieldProps {
   placeholder?: string;
   error?: boolean;
   helperText?: string;
+  onEnterPressed?: () => void;
 }
 
 export default function PasswordField({
@@ -21,6 +29,7 @@ export default function PasswordField({
   placeholder = "Enter your password",
   error = false,
   helperText,
+  onEnterPressed,
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -43,10 +52,17 @@ export default function PasswordField({
         className="password-field"
         type={showPassword ? "text" : "password"}
         error={error}
+        onKeyUp={(event) => {
+          if (event.key === "Enter") {
+            onEnterPressed?.();
+          }
+        }}
         endAdornment={
           <InputAdornment position="end">
             <IconButton
-              aria-label={showPassword ? "hide the password" : "display the password"}
+              aria-label={
+                showPassword ? "hide the password" : "display the password"
+              }
               onClick={handleClickShowPassword}
               onMouseDown={handleMouseDown}
               edge="end"

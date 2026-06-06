@@ -5,11 +5,18 @@ import {
   postCustomerBooking,
   cancelCustomerBooking,
   getCustomerHistoryBookingList,
+  updateCustomerBooking,
 } from "@/services/customer/booking";
 
 export const usePostCustomerBooking = () => {
   return useMutation({
     mutationFn: postCustomerBooking,
+  });
+};
+
+export const useUpdateCustomerBooking = () => {
+  return useMutation({
+    mutationFn: updateCustomerBooking,
   });
 };
 

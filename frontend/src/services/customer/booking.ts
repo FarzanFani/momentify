@@ -61,6 +61,25 @@ export const postCustomerBooking = async (
   return data.data as Booking;
 };
 
+export const updateCustomerBooking = async ({
+  bookingId,
+  bookingData,
+}: {
+  bookingId: string;
+  bookingData: CustomerBookingPayload;
+}) => {
+  const { data } = await axiosInstance.patch<ApiResponse<Booking>>(
+    `/api/customer/bookings/${bookingId}/`,
+    bookingData,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as Booking;
+};
+
 export const getCustomerSingleBooking = async (
   bookingId: string,
 ): Promise<Booking> => {

@@ -8,6 +8,7 @@ import {
   CalendarMonthRounded,
   CancelRounded,
   CategoryRounded,
+  EditRounded,
   EmailRounded,
   EventRounded,
   GroupsRounded,
@@ -70,7 +71,9 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
 
   if (!booking) return <></>;
 
-  const isCancelled = booking.status.toLowerCase() === "cancelled";
+  const bookingStatus = booking.status.toLowerCase();
+  const isCancelled = bookingStatus === "cancelled";
+  const isPending = bookingStatus === "pending";
 
   const handleCloseCancelDialog = () => {
     if (isCancelling) return;
@@ -97,8 +100,11 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
           setCancellationReason("");
           refetchBooking();
         },
-        onError: (error: any) => {
-          showSnackbar(extractApiError(error), "error");
+        onError: (error) => {
+          showSnackbar(
+            extractApiError(error as Parameters<typeof extractApiError>[0]),
+            "error",
+          );
         },
       },
     );
@@ -134,27 +140,59 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
             />
           </Box>
 
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackRounded />}
-            onClick={() => router.push("/customer/booking")}
-            sx={{
-              borderRadius: 3,
-              px: 3,
-              py: 1.1,
-              fontWeight: 800,
-              textTransform: "none",
-              color: "#0B3D91",
-              borderColor: "rgba(11, 61, 145, 0.28)",
-              backgroundColor: "rgba(11, 61, 145, 0.04)",
-              "&:hover": {
-                borderColor: "#0B3D91",
-                backgroundColor: "rgba(11, 61, 145, 0.08)",
-              },
-            }}
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            width={{ xs: "100%", sm: "auto" }}
           >
-            Back
-          </Button>
+            {isPending && (
+              <Button
+                variant="contained"
+                startIcon={<EditRounded />}
+                onClick={() => router.push(`/customer/booking/${uuid}/edit`)}
+                sx={{
+                  borderRadius: 3,
+                  px: 3,
+                  py: 1.1,
+                  fontWeight: 900,
+                  textTransform: "none",
+                  color: "#fff",
+                  background:
+                    "linear-gradient(135deg, #0B3D91 0%, #2F5FB3 65%, #C9A227 100%)",
+                  boxShadow: "0 10px 22px rgba(11, 61, 145, 0.28)",
+                  "&:hover": {
+                    background:
+                      "linear-gradient(135deg, #072a63 0%, #0B3D91 60%, #8C6A12 100%)",
+                    boxShadow: "0 12px 26px rgba(11, 61, 145, 0.34)",
+                  },
+                }}
+              >
+                Edit
+              </Button>
+            )}
+
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackRounded />}
+              onClick={() => router.push("/customer/booking")}
+              sx={{
+                borderRadius: 3,
+                px: 3,
+                py: 1.1,
+                fontWeight: 800,
+                textTransform: "none",
+                color: "#0B3D91",
+                borderColor: "rgba(11, 61, 145, 0.28)",
+                backgroundColor: "rgba(11, 61, 145, 0.04)",
+                "&:hover": {
+                  borderColor: "#0B3D91",
+                  backgroundColor: "rgba(11, 61, 145, 0.08)",
+                },
+              }}
+            >
+              Back
+            </Button>
+          </Stack>
         </Stack>
 
         <Grid container spacing={3} alignItems="flex-start">
