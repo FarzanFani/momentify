@@ -159,7 +159,7 @@ class BookingSerializer(serializers.ModelSerializer):
         return obj.company.name
 
     def get_customer_name(self, obj):
-        return obj.customer.first_name + obj.customer.last_name
+        return obj.customer.first_name + " " + obj.customer.last_name
 
     def get_service_name(self, obj):
         return obj.service.name
@@ -199,4 +199,30 @@ class BookingCancelSerializer(serializers.ModelSerializer):
     def validate_cancellation_reason(self, value):
         if not value:
             raise serializers.ValidationError("Cancellation reason is required")
+        return value
+
+
+class BookingApprovedDeclinedProviderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Booking
+        fields = ["status"]
+
+    def update(self, instance, validated_data):
+        current_status = instance.status
+        if current_status != Booking.VerificationStatus.PENDING:
+            raise serializers.ValidationError(
+                "Only pending bookings can be confirmed or rejected."
+            )
+        instance.status = validated_data.get("status")
+        instance.save(update_fields=["status", "updated_at"])
+        return instance
+
+    def validate_status(self, value):
+        if value not in [
+            Booking.VerificationStatus.REJECTED,
+            Booking.VerificationStatus.CONFIRMED,
+        ]:
+            raise serializers.ValidationError(
+                "Status can only be changed to confirmed or rejected."
+            )
         return value
