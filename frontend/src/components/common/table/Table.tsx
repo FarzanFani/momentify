@@ -22,7 +22,6 @@ interface TableProps {
   columns: TableColumn[];
   data: TableRowDataType[];
   rowsPerPageOptions?: number[];
-  defaultRowsPerPage?: number;
   isLoading?: boolean;
   emptyMessage?: string;
   inOneLineWhenCompact?: boolean;
@@ -39,7 +38,6 @@ export default function TableComponent({
   columns,
   data = [],
   rowsPerPageOptions = [5, 10, 25],
-  defaultRowsPerPage = 10,
   isLoading = false,
   emptyMessage = "No result found",
   inOneLineWhenCompact = true,
@@ -246,9 +244,6 @@ export default function TableComponent({
       </Box>
     );
   };
-  function MyFirstPageIcon() {
-    return <span style={{ fontSize: 18 }}>First</span>;
-  }
 
   return (
     <Box
