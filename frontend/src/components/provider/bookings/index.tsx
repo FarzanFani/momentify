@@ -339,7 +339,7 @@ export default function ProviderBookings() {
                 setPageSize={onPageSizeChange}
                 rowsPerPageOptions={[5, 10, 25]}
                 emptyMessage="No bookings match this view"
-                inOneLineWhenCompact={false}
+                inOneLineWhenCompact={true}
               />
             </Stack>
           </CardContent>

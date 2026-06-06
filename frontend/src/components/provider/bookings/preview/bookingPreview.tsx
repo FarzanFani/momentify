@@ -218,6 +218,7 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
               border: "1px solid rgba(11, 61, 145, 0.12)",
               boxShadow: "0 12px 32px rgba(7, 42, 99, 0.1)",
               py: 2,
+              px: { xs: 1, sm: 2 },
             }}
           >
             <Stack
