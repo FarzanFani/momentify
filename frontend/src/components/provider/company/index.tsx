@@ -9,19 +9,18 @@ import {
   IconButton,
   Typography,
   Menu,
-  Chip,
 } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Company } from "@/services/provider/company";
 import TableComponent from "@/components/common/table/Table";
 import { Add, MoreVert } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import SearchInput from "@/components/common/searchInput/SearchInput";
+import { getStatusChip } from "@/components/common/statusChip/statusChip";
 
 export default function ProviderCompaies() {
   const router = useRouter();
 
-  const [companiesState, setCompaniesState] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
   const [paginationPage, setPaginationPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -37,11 +36,7 @@ export default function ProviderCompaies() {
     null,
   );
 
-  useEffect(() => {
-    if (companies) {
-      setCompaniesState(companies.results);
-    }
-  }, [companies]);
+  const companiesState: Company[] = companies?.results ?? [];
 
   const provierTableHeader: TableColumn[] = [
     { id: "name", label: "Name", minWidth: 100, align: "left" },
@@ -82,12 +77,7 @@ export default function ProviderCompaies() {
           >
             <Typography>{company.name}</Typography>
             {!company.is_profile_complete && (
-              <Chip
-                label="Not Complete"
-                size="small"
-                color="warning"
-                variant="outlined"
-              />
+              getStatusChip("NOT_COMPLETE", { variant: "outlined" })
             )}
           </Box>
         ),

@@ -1,12 +1,12 @@
 import axiosInstance from "@/api/axiosInstance";
 import { ApiResponse } from "@/types/general";
 
-export type GeneralListType<T> = {
+export type GeneralListType<T, Extra = {}> = {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
-};
+} & Extra;
 
 export type CategoryServices = {
   id: number;

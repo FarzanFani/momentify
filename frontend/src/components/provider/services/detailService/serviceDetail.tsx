@@ -26,6 +26,7 @@ import {
 import { formatDuration, formatPrice } from "@/utils/helperFunctions";
 import { CompanyServices } from "@/services/provider/services";
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
+import { getStatusChip } from "@/components/common/statusChip/statusChip";
 import { useGetSingleProviderService } from "@/hooks/service";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -101,17 +102,9 @@ function ServiceDetailMainView({ service }: { service: CompanyServices }) {
                   flexWrap="wrap"
                   useFlexGap
                 >
-                  <Chip
-                    label={service.is_active ? "Active" : "Inactive"}
-                    size="small"
-                    sx={{
-                      fontWeight: 800,
-                      color: service.is_active ? "#073b1f" : "#333",
-                      backgroundColor: service.is_active
-                        ? "rgba(143, 245, 183, 0.95)"
-                        : "rgba(230,230,230,0.95)",
-                    }}
-                  />
+                  {getStatusChip(service.is_active ? "ACTIVE" : "INACTIVE", {
+                    sx: { fontWeight: 800 },
+                  })}
 
                   <Chip
                     label={service.category_name}

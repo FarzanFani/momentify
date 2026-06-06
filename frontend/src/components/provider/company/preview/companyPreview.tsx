@@ -7,7 +7,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Divider,
   Grid,
@@ -28,16 +27,11 @@ import {
   Percent,
   PriorityHigh,
 } from "@mui/icons-material";
+import { getStatusChip } from "@/components/common/statusChip/statusChip";
 
 interface CompanyPreviewProps {
   companyId: string;
 }
-
-const verificationColor: Record<string, "warning" | "success" | "error"> = {
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "error",
-};
 
 function InfoRow({
   icon,
@@ -131,14 +125,7 @@ export default function CompanyPreview({ companyId }: CompanyPreviewProps) {
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Chip
-                label={company.verification_status}
-                color={
-                  verificationColor[company.verification_status] ?? "default"
-                }
-                size="medium"
-                sx={{ fontWeight: 600 }}
-              />
+              {getStatusChip(company.verification_status, { size: "medium" })}
 
               <Button
                 variant="contained"

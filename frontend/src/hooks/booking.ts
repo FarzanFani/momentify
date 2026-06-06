@@ -7,6 +7,12 @@ import {
   getCustomerHistoryBookingList,
   updateCustomerBooking,
 } from "@/services/customer/booking";
+import {
+  getProviderBookingsList,
+  getProviderSingleBooking,
+  ProviderBookingListParams,
+  updateProviderBookingStatus,
+} from "@/services/provider/booking";
 
 export const usePostCustomerBooking = () => {
   return useMutation({
@@ -50,5 +56,27 @@ export const useGetCustomerHistoryBookingList = () => {
   return useQuery({
     queryKey: ["history-boooking-list"],
     queryFn: () => getCustomerHistoryBookingList(),
+  });
+};
+
+export const useGetProviderBookingList = (
+  params: ProviderBookingListParams,
+) => {
+  return useQuery({
+    queryKey: ["provider-booking-list", params],
+    queryFn: () => getProviderBookingsList(params),
+  });
+};
+
+export const useGetSingleProviderBooking = (bookingId: string) => {
+  return useQuery({
+    queryKey: ["provider-booking", bookingId],
+    queryFn: () => getProviderSingleBooking(bookingId),
+  });
+};
+
+export const useUpdateProviderBookingStatus = () => {
+  return useMutation({
+    mutationFn: updateProviderBookingStatus,
   });
 };

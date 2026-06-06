@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Divider,
   Grid,
   Skeleton,
@@ -33,15 +32,14 @@ import {
   formatDate,
   formatPaymentOption,
   formatPrice,
-  formatStatus,
   formatTime,
-  getStatusColor,
 } from "@/utils/helperFunctions";
 import {
   useGetCustomerBookingList,
   useGetCustomerHistoryBookingList,
 } from "@/hooks/booking";
 import { Booking } from "@/services/customer/booking";
+import { getStatusChip } from "@/components/common/statusChip/statusChip";
 
 export default function CustomerBookingsPage() {
   const { data: bookingsList, isLoading } = useGetCustomerBookingList();
@@ -317,16 +315,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               </Stack>
             </Box>
 
-            <Chip
-              label={formatStatus(booking.status)}
-              size="small"
-              sx={{
-                fontWeight: 900,
-                textTransform: "capitalize",
-                backgroundColor: getStatusColor(booking.status),
-                color: "#fff",
-              }}
-            />
+            {getStatusChip(booking.status)}
           </Stack>
 
           <Divider />
