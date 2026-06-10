@@ -15,3 +15,12 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY . /app/
+
+# Create a non-root user
+RUN addgroup --system app && adduser --system --ingroup app app
+
+# Give the app user ownership of the app directory
+RUN chown -R app:app /app
+
+# Run containers as non-root
+USER app

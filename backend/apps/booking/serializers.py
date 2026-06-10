@@ -125,7 +125,12 @@ class BookingSerializer(serializers.ModelSerializer):
                 if request and request.user and request.user.is_authenticated:
                     overlapping_bookings = Booking.objects.filter(
                         customer=request.user, service=service, event_date=event_date
-                    ).exclude(status__in=["cancelled", "rejected"])
+                    ).exclude(
+                        status__in=[
+                            Booking.VerificationStatus.CANCELLED,
+                            Booking.VerificationStatus.REJECTED,
+                        ]
+                    )
 
                     if self.instance:
                         overlapping_bookings = overlapping_bookings.exclude(

@@ -24,7 +24,7 @@ services:
       POSTGRES_DB: event_db
       POSTGRES_USER: event_user
       POSTGRES_PASSWORD: event_pass
-      POSTGRES_HOST: db      # must match service name
+      POSTGRES_HOST: db
       POSTGRES_PORT: 5432
     volumes:
       - ./backend:/app
@@ -35,6 +35,44 @@ services:
     depends_on:
       - db
       - redis
+
+  celery:
+    build: ./backend
+    container_name: momentify_celery
+    command: celery -A config worker -l info
+    environment:
+      POSTGRES_DB: event_db
+      POSTGRES_USER: event_user
+      POSTGRES_PASSWORD: event_pass
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+      - db
+
+  celery-beat:
+    build: ./backend
+    container_name: momentify_celery_beat
+    command: celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      POSTGRES_DB: event_db
+      POSTGRES_USER: event_user
+      POSTGRES_PASSWORD: event_pass
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - backend
+      - redis
+      - db
 
 volumes:
   postgres_data:
