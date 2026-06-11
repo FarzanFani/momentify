@@ -26,6 +26,7 @@ import {
   GroupsRounded,
   CategoryRounded,
   PaymentRounded,
+  RateReviewRounded,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import {
@@ -247,7 +248,10 @@ function BookingsMainView({
                   <Grid container spacing={2}>
                     {completedBookings.map((booking) => (
                       <Grid key={booking.id} size={{ xs: 12, md: 6, xl: 4 }}>
-                        <BookingCard booking={booking} />
+                        <BookingCard
+                          booking={booking}
+                          showReviewButton={booking.status === "COMPLETED"}
+                        />
                       </Grid>
                     ))}
                   </Grid>
@@ -263,7 +267,13 @@ function BookingsMainView({
   );
 }
 
-function BookingCard({ booking }: { booking: Booking }) {
+function BookingCard({
+  booking,
+  showReviewButton = false,
+}: {
+  booking: Booking;
+  showReviewButton?: boolean;
+}) {
   const router = useRouter();
 
   return (
@@ -440,29 +450,53 @@ function BookingCard({ booking }: { booking: Booking }) {
             </Grid>
           </Box>
 
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<VisibilityRounded />}
-            onClick={() =>
-              router.push(`/customer/booking/${booking.id}/preview`)
-            }
-            sx={{
-              borderRadius: 3,
-              py: 1.15,
-              fontWeight: 800,
-              textTransform: "none",
-              color: "#0B3D91",
-              borderColor: "rgba(11, 61, 145, 0.28)",
-              backgroundColor: "rgba(11, 61, 145, 0.04)",
-              "&:hover": {
-                borderColor: "#0B3D91",
-                backgroundColor: "rgba(11, 61, 145, 0.08)",
-              },
-            }}
-          >
-            View Booking
-          </Button>
+          <Stack direction="row" spacing={1.2}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<VisibilityRounded />}
+              onClick={() =>
+                router.push(`/customer/booking/${booking.id}/preview`)
+              }
+              sx={{
+                borderRadius: 3,
+                py: 1.15,
+                fontWeight: 800,
+                textTransform: "none",
+                color: "#0B3D91",
+                borderColor: "rgba(11, 61, 145, 0.28)",
+                backgroundColor: "rgba(11, 61, 145, 0.04)",
+                "&:hover": {
+                  borderColor: "#0B3D91",
+                  backgroundColor: "rgba(11, 61, 145, 0.08)",
+                },
+              }}
+            >
+              View Booking
+            </Button>
+
+            {showReviewButton && (
+              <Button
+                fullWidth
+                variant="contained"
+                startIcon={<RateReviewRounded />}
+                onClick={() => {}}
+                sx={{
+                  borderRadius: 3,
+                  py: 1.15,
+                  fontWeight: 800,
+                  textTransform: "none",
+                  color: "#fff",
+                  backgroundColor: "#0B3D91",
+                  "&:hover": {
+                    backgroundColor: "#072a63",
+                  },
+                }}
+              >
+                Review
+              </Button>
+            )}
+          </Stack>
         </Stack>
       </CardContent>
     </Card>

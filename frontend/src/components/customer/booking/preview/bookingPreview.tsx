@@ -16,6 +16,7 @@ import {
   NotesRounded,
   PersonRounded,
   PhoneRounded,
+  RateReviewRounded,
   ReceiptLongRounded,
   ReplayRounded,
 } from "@mui/icons-material";
@@ -24,6 +25,7 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -31,7 +33,9 @@ import {
   DialogContentText,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Grid,
+  Rating,
   Stack,
   Typography,
 } from "@mui/material";
@@ -55,6 +59,9 @@ import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
 import InputField from "@/components/common/input/InputField";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { extractApiError } from "@/utils/extractApiError";
+import { CustomerReviewPayload } from "@/services/customer/review";
+import { usePostCustomerReview } from "@/hooks/review";
+import BookingReviewCard from "@/components/common/review/BookingReviewCard";
 
 export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
   const router = useRouter();
@@ -62,6 +69,9 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancellationReason, setCancellationReason] = useState("");
+  const [reviewRating, setReviewRating] = useState<number | null>(0);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [isReviewAnonymous, setIsReviewAnonymous] = useState(false);
 
   const { data: booking, refetch: refetchBooking } =
     useGetSingleCustomerBooking(uuid);
@@ -69,11 +79,15 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
   const { mutate: cancelBooking, isPending: isCancelling } =
     useCancelCustomerBooking();
 
+  const { mutate: postReview, isPending: isPostReviewPending } =
+    usePostCustomerReview();
+
   if (!booking) return <></>;
 
   const bookingStatus = booking.status.toLowerCase();
   const isCancelled = bookingStatus === "cancelled";
   const isPending = bookingStatus === "pending";
+  const isCompleted = bookingStatus === "completed";
 
   const handleCloseCancelDialog = () => {
     if (isCancelling) return;
@@ -108,6 +122,31 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
         },
       },
     );
+  };
+
+  const handleSubmitReview = () => {
+    if (!reviewRating) return;
+    if (reviewMessage.trim() === "") return;
+
+    const payload: CustomerReviewPayload = {
+      is_ananymous: isReviewAnonymous,
+      comments: reviewMessage,
+      booking: uuid,
+      rating: reviewRating,
+    };
+
+    postReview(payload, {
+      onSuccess: () => {
+        showSnackbar("Review submitted", "success");
+        refetchBooking();
+      },
+      onError: (error) => {
+        showSnackbar(
+          extractApiError(error as Parameters<typeof extractApiError>[0]),
+          "error",
+        );
+      },
+    });
   };
 
   return (
@@ -342,6 +381,150 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
                   </Grid>
                 </PreviewSectionCard>
               )}
+
+              {isCompleted && (
+                <PreviewSectionCard
+                  icon={<RateReviewRounded />}
+                  title="Review service"
+                  subtitle="Share your experience with this completed booking."
+                >
+                  {booking.review ? (
+                    <BookingReviewCard review={booking.review} showYouLabel />
+                  ) : (
+                    <Box
+                      component="form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        handleSubmitReview();
+                      }}
+                    >
+                      <Stack spacing={2.5}>
+                        <Box>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              color: "#1f2937",
+                              fontWeight: 900,
+                              mb: 1,
+                            }}
+                          >
+                            Rating
+                          </Typography>
+
+                          <Rating
+                            value={reviewRating}
+                            onChange={(_, value) => setReviewRating(value)}
+                            size="large"
+                            sx={{
+                              color: "#C9A227",
+                              "& .MuiRating-iconEmpty": {
+                                color: "rgba(11, 61, 145, 0.18)",
+                              },
+                            }}
+                          />
+                        </Box>
+
+                        <InputField
+                          value={reviewMessage}
+                          label="Review message"
+                          placeholder="Write your review..."
+                          multiline
+                          rows={4}
+                          onChange={(value) =>
+                            setReviewMessage(`${value ?? ""}`)
+                          }
+                        />
+
+                        <Box>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={isReviewAnonymous}
+                                onChange={(event) =>
+                                  setIsReviewAnonymous(event.target.checked)
+                                }
+                                sx={{
+                                  color: "rgba(11, 61, 145, 0.55)",
+                                  "&.Mui-checked": {
+                                    color: "#0B3D91",
+                                  },
+                                }}
+                              />
+                            }
+                            label={
+                              <Typography
+                                sx={{
+                                  color: "#1f2937",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                Anonymous review
+                              </Typography>
+                            }
+                          />
+
+                          {isReviewAnonymous && (
+                            <Box
+                              sx={{
+                                mt: 1,
+                                p: 2,
+                                borderRadius: 3,
+                                border: "1px solid rgba(11, 61, 145, 0.12)",
+                                background:
+                                  "linear-gradient(135deg, rgba(11, 61, 145, 0.05) 0%, rgba(201, 162, 39, 0.1) 100%)",
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontWeight: 700,
+                                  lineHeight: 1.7,
+                                }}
+                              >
+                                With check anonymous review, company owner and
+                                staff does not see your name and email. But
+                                information is still visible for administrators
+                                in case they need to reach you for more details.
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+
+                        <Box display="flex" justifyContent="flex-end">
+                          <Button
+                            type="submit"
+                            variant="contained"
+                            startIcon={<RateReviewRounded />}
+                            disabled={isPostReviewPending}
+                            sx={{
+                              borderRadius: 3,
+                              px: 3,
+                              py: 1.15,
+                              fontWeight: 900,
+                              textTransform: "none",
+                              color: "#fff",
+                              background:
+                                "linear-gradient(135deg, #0B3D91 0%, #2F5FB3 65%, #C9A227 100%)",
+                              boxShadow: "0 10px 22px rgba(11, 61, 145, 0.28)",
+                              "&:hover": {
+                                background:
+                                  "linear-gradient(135deg, #072a63 0%, #0B3D91 60%, #8C6A12 100%)",
+                                boxShadow:
+                                  "0 12px 26px rgba(11, 61, 145, 0.34)",
+                              },
+                            }}
+                          >
+                            {isPostReviewPending
+                              ? "Submitting..."
+                              : "Submit review"}
+                          </Button>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  )}
+                </PreviewSectionCard>
+              )}
             </Stack>
           </Grid>
 
@@ -351,7 +534,7 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
 
               <PaymentSummaryCard booking={booking} />
 
-              {!isCancelled && (
+              {!isCancelled && booking.status !== "COMPLETED" && (
                 <CancelBookingCard
                   isCancelling={isCancelling}
                   onOpen={() => setCancelDialogOpen(true)}

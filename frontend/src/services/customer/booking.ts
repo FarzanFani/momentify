@@ -1,6 +1,7 @@
 import axiosInstance from "@/api/axiosInstance";
 import { ApiResponse } from "@/types/general";
 import { GeneralListType } from "../provider/services";
+import { CustomerReview } from "./review";
 
 export type CustomerBookingPayload = {
   service: string;
@@ -44,6 +45,7 @@ export type Booking = {
   service_name: string;
   customer_name: string;
   total_price: number;
+  review: CustomerReview | null;
 };
 
 export const postCustomerBooking = async (

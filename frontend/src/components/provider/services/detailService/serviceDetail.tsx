@@ -31,6 +31,8 @@ import { useGetSingleProviderService } from "@/hooks/service";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import { useRouter } from "next/navigation";
+import { useGetProviderBookingList } from "@/hooks/booking";
+import { ProviderBookingListParams } from "@/services/provider/booking";
 
 export default function ServiceDetailPage({ uuid }: { uuid: string }) {
   const { data: service, isLoading: isServiceLoading } =
@@ -260,7 +262,7 @@ function ServiceDetailMainView({ service }: { service: CompanyServices }) {
 
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               {activeTab === 0 && <ServiceDetailsTab service={service} />}
-              {activeTab === 1 && <BookingHistoryTab />}
+              {activeTab === 1 && <BookingHistoryTab uuid={service.id} />}
             </CardContent>
           </Card>
         </Stack>
@@ -447,7 +449,13 @@ function DetailInfoCard({
   );
 }
 
-function BookingHistoryTab() {
+function BookingHistoryTab({ uuid }: { uuid: string }) {
+  const params: ProviderBookingListParams = {
+    service: uuid,
+    page_size: 5,
+    page: 1,
+  };
+  const { data: providerBookingList } = useGetProviderBookingList(params);
   return (
     <Box
       sx={{

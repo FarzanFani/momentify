@@ -17,6 +17,7 @@ import {
   PaymentsRounded,
   PersonRounded,
   PhoneRounded,
+  RateReviewRounded,
   ReceiptLongRounded,
   ReplayRounded,
 } from "@mui/icons-material";
@@ -53,6 +54,9 @@ import {
 } from "@/utils/helperFunctions";
 import { extractApiError } from "@/utils/extractApiError";
 import type { ApiResponse } from "@/types/general";
+import BookingReviewCard from "@/components/common/review/BookingReviewCard";
+import { usePostProviderReviewReply } from "@/hooks/review";
+import { ProviderReplyPayload } from "@/services/customer/review";
 
 function getBookingCustomerName(booking: Booking) {
   return (
@@ -76,8 +80,12 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
   const { mutate: updateStatus, isPending: isUpdating } =
     useUpdateProviderBookingStatus();
 
+  const { mutate: postReply, isPending: isPostReplyPending } =
+    usePostProviderReviewReply();
+
   const isPending = booking?.status === "PENDING";
   const isCancelled = booking?.status === "CANCELLED";
+  const isCompleted = booking?.status === "COMPLETED";
 
   const handleCloseConfirmDialog = () => {
     if (isUpdating) return;
@@ -131,6 +139,23 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
         },
       },
     );
+  };
+
+  const handleSubmitReply = (message: string) => {
+    const replyPayload: ProviderReplyPayload = {
+      review: booking?.review?.id ?? "",
+      message: message,
+    };
+
+    postReply(replyPayload, {
+      onSuccess: () => {
+        showSnackbar("Repy Post successfully", "success");
+        refetch();
+      },
+      onError: (error: any) => {
+        showSnackbar(extractApiError(error), "error");
+      },
+    });
   };
 
   if (isLoading) {
@@ -381,6 +406,37 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
                       />
                     </Grid>
                   </Grid>
+                </PreviewSectionCard>
+              )}
+
+              {isCompleted && (
+                <PreviewSectionCard
+                  icon={<RateReviewRounded />}
+                  title="Review & Reply"
+                  subtitle="Customer feedback and provider reply for this completed booking."
+                >
+                  {booking.review ? (
+                    <BookingReviewCard
+                      review={booking.review}
+                      showReplyButton
+                      handleReplyPost={handleSubmitReply}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        border: "1px dashed rgba(11, 61, 145, 0.22)",
+                        backgroundColor: "rgba(255,255,255,0.72)",
+                        textAlign: "center",
+                      }}
+                    >
+                      <Typography color="text.secondary" fontWeight={800}>
+                        No customer review has been submitted for this booking
+                        yet.
+                      </Typography>
+                    </Box>
+                  )}
                 </PreviewSectionCard>
               )}
             </Stack>

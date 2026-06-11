@@ -8,6 +8,7 @@ export type ProviderBookingListParams = {
   status?: string;
   page_size: number;
   page: number;
+  service: string;
 };
 
 export type BookingList = GeneralListType<
