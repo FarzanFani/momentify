@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 
+from apps.reviews.models import Review
+from apps.reviews.serializers import PublicReviewSerializer
 from django.forms import ValidationError
 from django.utils import timezone
 from rest_framework import serializers
@@ -12,6 +14,7 @@ class BookingSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     service_name = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
+    review = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -45,6 +48,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "event_end_time",
             "is_paid",
             "deposit_amount",
+            "review",
         ]
         read_only_fields = [
             "id",
@@ -168,6 +172,14 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def get_service_name(self, obj):
         return obj.service.name
+
+    def get_review(self, obj):
+        if obj.status != Booking.VerificationStatus.COMPLETED:
+            return None
+        try:
+            return PublicReviewSerializer(obj.review).data
+        except Review.DoesNotExist:
+            return None
 
     def create(self, validated_data):
         request = self.context["request"]

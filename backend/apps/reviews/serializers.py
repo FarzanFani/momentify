@@ -4,7 +4,7 @@ from .models import Review, ReviewReply
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    customer_name = serializers.SerializerMethodField
+    customer_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -34,9 +34,11 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class ReviewReplySerializer(serializers.ModelSerializer):
+    user_name = serializers.SerializerMethodField()
+
     class Meta:
         model = ReviewReply
-        fields = ["review", "user", "message", "created_at"]
+        fields = ["review", "user", "message", "created_at", "user_name"]
         read_only_fields = ["user", "created_at"]
 
     def validate_comments(self, value):
@@ -44,9 +46,13 @@ class ReviewReplySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Comment cannot be empty.")
         return value
 
+    def get_user_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
+
 
 class PublicReviewSerializer(serializers.ModelSerializer):
     reply = ReviewReplySerializer(read_only=True)
+    customer_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -60,4 +66,10 @@ class PublicReviewSerializer(serializers.ModelSerializer):
             "is_anonymous",
             "reply",
             "created_at",
+            "customer_name",
         ]
+
+    def get_customer_name(self, obj):
+        if obj.is_anonymous:
+            return "Anonymous"
+        return obj.customer.first_name + " " + obj.customer.last_name

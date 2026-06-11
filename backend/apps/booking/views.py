@@ -82,7 +82,7 @@ class ProviderBookingViewSet(ModelViewSet):
         "customer__email",
         "service__name",
     ]
-    filterset_fields = ["status"]
+    filterset_fields = ["status", "service__id"]
 
     filter_backends = [SearchFilter, DjangoFilterBackend]
 

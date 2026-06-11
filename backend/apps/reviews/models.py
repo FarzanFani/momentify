@@ -52,7 +52,7 @@ class ReviewReply(models.Model):
         User, on_delete=models.CASCADE, related_name="review_replies"
     )
     message = models.TextField()
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
