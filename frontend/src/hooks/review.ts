@@ -1,6 +1,10 @@
 import { PostCustomerReview } from "@/services/customer/review";
-import { PostProviderReply } from "@/services/provider/review";
-import { useMutation } from "@tanstack/react-query";
+import {
+  getProviderServiceReply,
+  postProviderReply,
+  ProviderServiceReviewPayload,
+} from "@/services/provider/review";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const usePostCustomerReview = () => {
   return useMutation({
@@ -12,6 +16,17 @@ export const usePostCustomerReview = () => {
 export const usePostProviderReviewReply = () => {
   return useMutation({
     mutationKey: ["post-reply"],
-    mutationFn: PostProviderReply,
+    mutationFn: postProviderReply,
+  });
+};
+
+export const useGetProviderServiceReview = (
+  params: ProviderServiceReviewPayload,
+) => {
+  return useQuery({
+    queryKey: ["service-review", params],
+    queryFn: () => getProviderServiceReply(params),
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 };

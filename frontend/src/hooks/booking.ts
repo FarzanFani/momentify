@@ -65,6 +65,8 @@ export const useGetProviderBookingList = (
   return useQuery({
     queryKey: ["provider-booking-list", params],
     queryFn: () => getProviderBookingsList(params),
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
   });
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -30,9 +30,9 @@ import { getStatusChip } from "@/components/common/statusChip/statusChip";
 import { useGetSingleProviderService } from "@/hooks/service";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import { useRouter } from "next/navigation";
-import { useGetProviderBookingList } from "@/hooks/booking";
-import { ProviderBookingListParams } from "@/services/provider/booking";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import BookingHistoryTab from "./bookingHistoryTab";
+import BookingReview from "./bookingReview";
 
 export default function ServiceDetailPage({ uuid }: { uuid: string }) {
   const { data: service, isLoading: isServiceLoading } =
@@ -48,8 +48,26 @@ export default function ServiceDetailPage({ uuid }: { uuid: string }) {
 }
 
 function ServiceDetailMainView({ service }: { service: CompanyServices }) {
-  const [activeTab, setActiveTab] = useState(0);
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const tabName = searchParams.get("tab");
+
+  const [activeTab, setActiveTab] = useState(() => {
+    if (tabName === "history") return 1;
+    if (tabName === "review") return 2;
+    return 0;
+  });
   const router = useRouter();
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (activeTab === 1) params.set("tab", "history");
+    if (activeTab === 2) params.set("tab", "review");
+    if (activeTab === 0) params.set("tab", "details");
+    router.replace(`${pathname}?${params.toString()}`, {
+      scroll: false,
+    });
+  }, [activeTab]);
 
   return (
     <>
@@ -257,12 +275,14 @@ function ServiceDetailMainView({ service }: { service: CompanyServices }) {
               >
                 <Tab label="Service Details" />
                 <Tab label="Booking History" />
+                <Tab label="Booking Review" />
               </Tabs>
             </Box>
 
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               {activeTab === 0 && <ServiceDetailsTab service={service} />}
               {activeTab === 1 && <BookingHistoryTab uuid={service.id} />}
+              {activeTab === 2 && <BookingReview uuid={service.id} />}
             </CardContent>
           </Card>
         </Stack>
@@ -443,48 +463,6 @@ function DetailInfoCard({
           }}
         >
           {value}
-        </Typography>
-      </Stack>
-    </Box>
-  );
-}
-
-function BookingHistoryTab({ uuid }: { uuid: string }) {
-  const params: ProviderBookingListParams = {
-    service: uuid,
-    page_size: 5,
-    page: 1,
-  };
-  const { data: providerBookingList } = useGetProviderBookingList(params);
-  return (
-    <Box
-      sx={{
-        minHeight: 260,
-        borderRadius: 3,
-        border: "1px dashed rgba(11, 61, 145, 0.25)",
-        background:
-          "linear-gradient(135deg, rgba(11, 61, 145, 0.04) 0%, rgba(201, 162, 39, 0.08) 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        p: 3,
-      }}
-    >
-      <Stack spacing={1}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 900,
-            color: "primary.main",
-          }}
-        >
-          No booking history yet
-        </Typography>
-
-        <Typography variant="body2" color="text.secondary">
-          Booking history will appear here once customers start booking this
-          service.
         </Typography>
       </Stack>
     </Box>
