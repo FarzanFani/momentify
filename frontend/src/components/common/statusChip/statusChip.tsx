@@ -14,6 +14,7 @@ type StatusChipOptions = {
   size?: ChipProps["size"];
   variant?: ChipProps["variant"];
   sx?: ChipProps["sx"];
+  onClick?: () => {};
 };
 
 const statusChipConfig: Record<string, StatusChipConfig> = {

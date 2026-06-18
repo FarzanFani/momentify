@@ -17,20 +17,9 @@ export type CustomerBookingPayload = {
   payment_option: string;
 };
 
-export type Booking = {
+export interface Booking extends CustomerBookingPayload {
   id: string;
-  service: string;
-  location: string;
-  special_request: string;
-  contact_detail_full_name: string;
-  contact_detail_email: string;
-  contact_detail_phone_number: string;
-  guest_numbers: number;
-  event_type: string;
-  event_date: string;
-  event_time: string;
   event_end_time: string;
-  payment_option: string;
   cancellation_reason?: string;
   cancelled_at?: string;
   refund_amount?: number;
@@ -46,7 +35,7 @@ export type Booking = {
   customer_name: string;
   total_price: number;
   review: CustomerReview | null;
-};
+}
 
 export const postCustomerBooking = async (
   bookingData: CustomerBookingPayload,

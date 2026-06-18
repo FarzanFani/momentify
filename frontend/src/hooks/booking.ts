@@ -9,6 +9,7 @@ import {
 } from "@/services/customer/booking";
 import {
   getProviderBookingsList,
+  getProviderBookingSummaey,
   getProviderSingleBooking,
   ProviderBookingListParams,
   updateProviderBookingStatus,
@@ -65,6 +66,15 @@ export const useGetProviderBookingList = (
   return useQuery({
     queryKey: ["provider-booking-list", params],
     queryFn: () => getProviderBookingsList(params),
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useGetProviderBookingSummary = () => {
+  return useQuery({
+    queryKey: ["provider-booking-summary"],
+    queryFn: getProviderBookingSummaey,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
