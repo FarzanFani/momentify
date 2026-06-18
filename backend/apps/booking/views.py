@@ -1,13 +1,16 @@
-from decimal import Decimal
+from datetime import datetime
+
+from rest_framework.exceptions import ValidationError
 
 from apps.accounts.permissions import IsCustomer, IsProvider
-from django.db.models import Case, Count, IntegerField, Q, Sum, When
+from django.db.models import Case, Count, IntegerField, Q, Sum, When, Value
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from utils.response import success_response
 
@@ -16,6 +19,7 @@ from .serializers import (
     BookingApprovedDeclinedProviderSerializer,
     BookingCancelSerializer,
     BookingSerializer,
+    BookingsListSerializer,
 )
 
 
@@ -104,6 +108,44 @@ class ProviderBookingViewSet(ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        if start_date:
+            try:
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValidationError({"start_date": "Invalid date format"})
+
+            queryset = queryset.filter(event_date__gte=start_date)
+
+        if end_date:
+            try:
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            except ValueError:
+                raise ValidationError({"end_date": "Invalid date format"})
+
+            queryset = queryset.filter(event_date__lte=end_date)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(queryset, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return BookingApprovedDeclinedProviderSerializer
+        elif self.action == "list":
+            return BookingsListSerializer
+        return BookingSerializer
+
+    @action(detail=False, methods=["get"], url_path="summary")
+    def summary(self, request):
+        queryset = self.get_queryset()
+
         summary = queryset.aggregate(
             total_price=Coalesce(
                 Sum(
@@ -115,31 +157,20 @@ class ProviderBookingViewSet(ModelViewSet):
                         ]
                     ),
                 ),
-                Decimal("0.00"),
+                Value(0),
+                output_field=IntegerField(),
             ),
             total_booking_count=Count("id"),
             pending_count=Count(
-                "id",
-                filter=Q(status=Booking.VerificationStatus.PENDING),
+                "id", filter=Q(status=Booking.VerificationStatus.PENDING)
             ),
             confirmed_count=Count(
-                "id",
-                filter=Q(status=Booking.VerificationStatus.CONFIRMED),
+                "id", filter=Q(status=Booking.VerificationStatus.CONFIRMED)
             ),
             completed_count=Count(
-                "id", filter=Q(status=Booking.VerificationStatus.COMPLETED)
+                "id",
+                filter=Q(status=Booking.VerificationStatus.COMPLETED),
             ),
         )
-        response = super().list(request, *args, **kwargs)
-        response.data["total_price"] = summary["total_price"]
-        response.data["total_booking_count"] = summary["total_booking_count"]
-        response.data["pending_count"] = summary["pending_count"]
-        response.data["confirmed_count"] = summary["confirmed_count"]
-        response.data["completed_count"] = summary["completed_count"]
 
-        return response
-
-    def get_serializer_class(self):
-        if self.action in "partial_update":
-            return BookingApprovedDeclinedProviderSerializer
-        return BookingSerializer
+        return Response(summary)
