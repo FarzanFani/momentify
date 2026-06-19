@@ -29,6 +29,8 @@ class BookingsListSerializer(serializers.ModelSerializer):
             "customer_name",
             "contact_detail_email",
             "guest_numbers",
+            "contact_detail_full_name",
+            "contact_detail_phone_number",
         ]
 
     def get_category_name(self, obj):
