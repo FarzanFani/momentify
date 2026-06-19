@@ -28,6 +28,7 @@ class BookingsListSerializer(serializers.ModelSerializer):
             "event_end_time",
             "customer_name",
             "contact_detail_email",
+            "guest_numbers",
         ]
 
     def get_category_name(self, obj):
@@ -181,8 +182,8 @@ class BookingSerializer(serializers.ModelSerializer):
                         )
 
                         if (
-                                event_datetime < existing_end
-                                and event_end_datetime > existing_start
+                            event_datetime < existing_end
+                            and event_end_datetime > existing_start
                         ):
                             raise ValidationError(
                                 {
@@ -228,9 +229,7 @@ class BookingSerializer(serializers.ModelSerializer):
 class BookingCancelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = [
-            "cancellation_reason"
-        ]
+        fields = ["cancellation_reason"]
 
     def update(self, instance, validated_data):
         instance.status = Booking.VerificationStatus.CANCELED
@@ -255,9 +254,7 @@ class BookingCancelSerializer(serializers.ModelSerializer):
 class BookingApprovedDeclinedProviderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = [
-            "status"
-        ]
+        fields = ["status"]
 
     def update(self, instance, validated_data):
         current_status = instance.status
@@ -266,10 +263,7 @@ class BookingApprovedDeclinedProviderSerializer(serializers.ModelSerializer):
                 "Only pending bookings can be confirmed or rejected."
             )
         instance.status = validated_data.get("status")
-        instance.save(update_fields=[
-            "status",
-            "updated_at"
-        ])
+        instance.save(update_fields=["status", "updated_at"])
         return instance
 
     def validate_status(self, value):

@@ -25,10 +25,11 @@ import SearchInput from "@/components/common/searchInput/SearchInput";
 import { BookingList } from "@/services/provider/booking";
 import { useRouter } from "next/navigation";
 import ListTableView from "./List/tableView";
-import ListCalendarView from "./List/calendarView";
+import ListCalendarView from "./List/calendarView/calendarView";
 import { statusFilterOptions } from "@/utils/constants";
 import StatusFilterChips from "@/components/common/statusFilterChips/statusFilterChips";
 import { useGetProviderBookingSummary } from "@/hooks/booking";
+import QuickManageView from "./List/quickManageView/quickManageView";
 
 export default function ProviderBookings({
   bookingResponse,
@@ -182,6 +183,7 @@ export default function ProviderBookings({
         {activeTab === 1 && (
           <ListTableView search={search} statusFilter={statusFilter} />
         )}
+        {activeTab === 2 && <QuickManageView search={search} />}
       </Stack>
     </Box>
   );
