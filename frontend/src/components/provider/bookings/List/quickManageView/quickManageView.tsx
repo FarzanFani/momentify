@@ -1,10 +1,12 @@
 import { getStatusChip } from "@/components/common/statusChip/statusChip";
-import { useGetProviderBookingList } from "@/hooks/booking";
+import {
+  useGetProviderBookingList,
+  useUpdateProviderBookingStatus,
+} from "@/hooks/booking";
 import { ProviderBookingListParams } from "@/services/provider/booking";
 import { formatPrice } from "@/utils/helperFunctions";
 import {
   Card,
-  CardHeader,
   Box,
   Grid,
   Typography,
@@ -16,20 +18,30 @@ import {
   QuickManageViewSkeleton,
   QuickManageViewEmpty,
 } from "./quckManageHelperView";
+import { extractApiError } from "@/utils/extractApiError";
+import { useSnackbar } from "@/contexts/SnackbarContext";
+import { useRouter } from "next/navigation";
 
 export default function QuickManageView({
   search,
 }: {
   search: string | undefined;
 }) {
+  const router = useRouter();
   const [params, setParams] = useState<ProviderBookingListParams>({
     page: 1,
     page_size: 10,
     search: search?.trim() || undefined,
     status: "PENDING",
   });
-  const { data: bookingList, isLoading: isBookingListLoading } =
-    useGetProviderBookingList(params);
+  const {
+    data: bookingList,
+    isLoading: isBookingListLoading,
+    refetch,
+  } = useGetProviderBookingList(params);
+
+  const { mutate: updateBookingStatus, isPending: isUpdateBookingStatus } =
+    useUpdateProviderBookingStatus();
 
   useEffect(() => {
     setParams((prev) => ({
@@ -38,9 +50,29 @@ export default function QuickManageView({
     }));
   }, [search]);
 
+  const { showSnackbar } = useSnackbar();
+
   if (isBookingListLoading) {
     return <QuickManageViewSkeleton />;
   }
+
+  const handleUpdateBookingStatus = (
+    bookingId: string,
+    status: "CONFIRMED" | "REJECTED",
+  ) => {
+    updateBookingStatus(
+      { bookingId, status },
+      {
+        onSuccess: () => {
+          showSnackbar("Status updated successfully", "success");
+          refetch();
+        },
+        onError: (error: any) => {
+          showSnackbar(extractApiError(error), "error");
+        },
+      },
+    );
+  };
 
   if (!bookingList) {
     return (
@@ -151,6 +183,9 @@ export default function QuickManageView({
                         bgcolor: "primary.main",
                       },
                     }}
+                    onClick={() =>
+                      handleUpdateBookingStatus(booking.id, "CONFIRMED")
+                    }
                   >
                     Approve
                   </Button>
@@ -174,6 +209,9 @@ export default function QuickManageView({
                         borderColor: "error.main",
                       },
                     }}
+                    onClick={() =>
+                      handleUpdateBookingStatus(booking.id, "REJECTED")
+                    }
                   >
                     Reject
                   </Button>
@@ -197,6 +235,9 @@ export default function QuickManageView({
                         borderColor: "primary.main",
                       },
                     }}
+                    onClick={() =>
+                      router.push(`/provider/bookings/${booking.id}/preview`)
+                    }
                   >
                     Preview
                   </Button>
