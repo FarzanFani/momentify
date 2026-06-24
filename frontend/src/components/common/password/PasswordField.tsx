@@ -10,7 +10,8 @@ import {
   FormHelperText,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import "./style.css";
+import styles from "./PasswordField.module.css";
+import { getOutlinedInputStyles } from "../inputStyles";
 
 interface PasswordFieldProps {
   value: string;
@@ -32,6 +33,7 @@ export default function PasswordField({
   onEnterPressed,
 }: PasswordFieldProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const hasValue = value !== "" && value !== null && value !== undefined;
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -39,8 +41,8 @@ export default function PasswordField({
   };
 
   return (
-    <Box className="password-field-wrapper">
-      <Typography variant="body1" className="password-field-label">
+    <Box className={styles["password-field-wrapper"]}>
+      <Typography variant="body1" className={styles["password-field-label"]}>
         {label}
       </Typography>
       <OutlinedInput
@@ -49,9 +51,9 @@ export default function PasswordField({
         size="medium"
         placeholder={placeholder}
         fullWidth
-        className="password-field"
         type={showPassword ? "text" : "password"}
         error={error}
+        sx={getOutlinedInputStyles(hasValue)}
         onKeyUp={(event) => {
           if (event.key === "Enter") {
             onEnterPressed?.();

@@ -5,7 +5,7 @@ import {
   getOutlinedInputStyles,
   INPUT_HEIGHT,
 } from "@/components/common/inputStyles";
-import "./style.css";
+import styles from "./InputField.module.css";
 
 interface InputFieldProps {
   value: string | number | null;
@@ -33,23 +33,26 @@ export default function InputField({
   fullWidth = true,
   multiline = false,
   rows = 3,
-  disabled,
+  disabled = false,
   onEnterPressed,
 }: InputFieldProps) {
   const hasValue = value !== "" && value !== null && value !== undefined;
 
   return (
-    <Box className="input-field-wrapper">
-      <Typography variant="body1" className="input-field-label">
+    <Box className={styles["input-field-wrapper"]}>
+      <Typography variant="body1" className={styles["input-field-label"]}>
         {label}
       </Typography>
+
       <OutlinedInput
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         size="medium"
         placeholder={placeholder}
         fullWidth={fullWidth}
-        className={`input-field ${multiline ? "input-field-multiline" : ""}`}
+        className={`${styles["input-field"]} ${
+          multiline ? styles["input-field-multiline"] : ""
+        }`}
         type={type}
         disabled={disabled}
         error={error}
@@ -62,6 +65,7 @@ export default function InputField({
           }
         }}
       />
+
       {helperText && (
         <FormHelperText error={error}>{helperText}</FormHelperText>
       )}
