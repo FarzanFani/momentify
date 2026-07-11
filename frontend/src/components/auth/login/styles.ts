@@ -17,7 +17,7 @@ export const card: SxProps<Theme> = {
   borderRadius: 8,
   WebkitBackdropFilter: "blur(20px)",
   width: "100%",
-  maxWidth: "550px",
+  maxWidth: "800px",
   background: `linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.55))`,
   border: "1px solid rgba(255, 255, 255, 0.3)",
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",

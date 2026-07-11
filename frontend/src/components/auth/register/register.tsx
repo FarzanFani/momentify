@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Container, Typography, Box } from "@mui/material";
+import { Button, Container, Typography, Box, Grid } from "@mui/material";
 import * as styles from "@/components/auth/login/styles";
 import Link from "next/link";
 import InputField from "@/components/common/input/InputField";
@@ -67,8 +67,10 @@ export default function Register() {
 
   return (
     <Box sx={styles.pageContainer}>
-      <Container maxWidth="sm">
+      <Container sx={{ justifyContent: "center", display: "flex" }}>
         <Box
+          component="form"
+          onSubmit={handleSubmit(onSubmit)}
           display="flex"
           flexDirection="column"
           alignItems="center"
@@ -79,128 +81,143 @@ export default function Register() {
             <Typography variant="body2" sx={styles.subtitle}>
               Welcome to
             </Typography>
+
             <Typography variant="h4" color="primary.dark" sx={styles.title}>
               Momentify
             </Typography>
           </Box>
 
-          <Controller
-            name="firstName"
-            control={control}
-            rules={{ required: "First name is required" }}
-            render={({ field }) => (
-              <InputField
-                value={field.value}
-                onChange={field.onChange}
-                label="First Name"
-                placeholder="Enter your first name"
-                error={!!errors.firstName}
-                helperText={errors.firstName?.message}
+          <Grid container spacing={2} sx={{ width: "100%" }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="firstName"
+                control={control}
+                rules={{ required: "First name is required" }}
+                render={({ field }) => (
+                  <InputField
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="First Name"
+                    placeholder="Enter your first name"
+                    error={!!errors.firstName}
+                    helperText={errors.firstName?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
 
-          <Controller
-            name="lastName"
-            control={control}
-            rules={{ required: "Last name is required" }}
-            render={({ field }) => (
-              <InputField
-                value={field.value}
-                onChange={field.onChange}
-                label="Last Name"
-                placeholder="Enter your last name"
-                error={!!errors.lastName}
-                helperText={errors.lastName?.message}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{ required: "Last name is required" }}
+                render={({ field }) => (
+                  <InputField
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Last Name"
+                    placeholder="Enter your last name"
+                    error={!!errors.lastName}
+                    helperText={errors.lastName?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
 
-          <Controller
-            name="email"
-            control={control}
-            rules={{
-              required: "Email is required",
-              pattern: {
-                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                message: "Enter a valid email address",
-              },
-            }}
-            render={({ field }) => (
-              <InputField
-                value={field.value}
-                onChange={field.onChange}
-                label="Email"
-                placeholder="Enter your email"
-                type="email"
-                error={!!errors.email}
-                helperText={errors.email?.message}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="email"
+                control={control}
+                rules={{
+                  required: "Email is required",
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Enter a valid email address",
+                  },
+                }}
+                render={({ field }) => (
+                  <InputField
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Email"
+                    placeholder="Enter your email"
+                    type="email"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
 
-          <Controller
-            name="phoneNumber"
-            control={control}
-            render={({ field }) => (
-              <InputField
-                value={field.value}
-                onChange={field.onChange}
-                label="Phone Number"
-                placeholder="Enter your phone number"
-                type="tel"
-                error={!!errors.phoneNumber}
-                helperText={errors.phoneNumber?.message}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="phoneNumber"
+                control={control}
+                render={({ field }) => (
+                  <InputField
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Phone Number"
+                    placeholder="Enter your phone number"
+                    type="tel"
+                    error={!!errors.phoneNumber}
+                    helperText={errors.phoneNumber?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
 
-          <Controller
-            name="password"
-            control={control}
-            rules={{
-              required: "Password is required",
-              minLength: {
-                value: 8,
-                message: "Password must be at least 8 characters",
-              },
-            }}
-            render={({ field }) => (
-              <PasswordField
-                value={field.value}
-                onChange={field.onChange}
-                error={!!errors.password}
-                helperText={errors.password?.message}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="password"
+                control={control}
+                rules={{
+                  required: "Password is required",
+                  minLength: {
+                    value: 8,
+                    message: "Password must be at least 8 characters",
+                  },
+                }}
+                render={({ field }) => (
+                  <PasswordField
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.password}
+                    helperText={errors.password?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
 
-          <Controller
-            name="confirmPassword"
-            control={control}
-            rules={{
-              required: "Please confirm your password",
-              validate: (value) =>
-                value === password || "Passwords do not match",
-            }}
-            render={({ field }) => (
-              <PasswordField
-                value={field.value}
-                onChange={field.onChange}
-                label="Confirm Password"
-                placeholder="Confirm your password"
-                error={!!errors.confirmPassword}
-                helperText={errors.confirmPassword?.message}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Controller
+                name="confirmPassword"
+                control={control}
+                rules={{
+                  required: "Please confirm your password",
+                  validate: (value) =>
+                    value === password || "Passwords do not match",
+                }}
+                render={({ field }) => (
+                  <PasswordField
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Confirm Password"
+                    placeholder="Confirm your password"
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword?.message}
+                  />
+                )}
               />
-            )}
-          />
+            </Grid>
+          </Grid>
 
           <Button
+            type="submit"
             variant="contained"
             color="primary"
             disabled={isPending}
             sx={styles.registerButton}
-            onClick={handleSubmit(onSubmit)}
           >
             {isPending ? "Registering..." : "Register"}
           </Button>
