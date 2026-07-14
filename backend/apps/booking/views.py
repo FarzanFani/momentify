@@ -103,7 +103,7 @@ class ProviderBookingViewSet(ModelViewSet):
                     output_field=IntegerField(),
                 )
             )
-            .order_by("status_order", "event_date")
+            .order_by("status_order", "starts_at")
         )
 
     def list(self, request, *args, **kwargs):
@@ -115,21 +115,30 @@ class ProviderBookingViewSet(ModelViewSet):
             try:
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
             except ValueError:
-                raise ValidationError({"start_date": "Invalid date format"})
+                raise ValidationError(
+                    {"start_date": "Invalid date format. Use YYYY-MM-DD."}
+                )
 
-            queryset = queryset.filter(event_date__gte=start_date)
+            queryset = queryset.filter(
+                starts_at__date__gte=start_date,
+            )
 
         if end_date:
             try:
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
             except ValueError:
-                raise ValidationError({"end_date": "Invalid date format"})
+                raise ValidationError(
+                    {"end_date": "Invalid date format. Use YYYY-MM-DD."}
+                )
 
-            queryset = queryset.filter(event_date__lte=end_date)
+            queryset = queryset.filter(
+                starts_at__date__lte=end_date,
+            )
 
         page = self.paginate_queryset(queryset)
+
         if page is not None:
-            serializer = self.get_serializer(queryset, many=True)
+            serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)

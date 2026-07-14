@@ -7,6 +7,8 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Booking
+from ..companies.models import Company
+from ..services.models import Service
 
 
 class BookingsListSerializer(serializers.ModelSerializer):
@@ -16,6 +18,7 @@ class BookingsListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
+
         fields = [
             "id",
             "service_name",
@@ -23,18 +26,19 @@ class BookingsListSerializer(serializers.ModelSerializer):
             "status",
             "location",
             "total_price",
-            "event_date",
-            "event_time",
-            "event_end_time",
             "customer_name",
             "contact_detail_email",
             "guest_numbers",
             "contact_detail_full_name",
             "contact_detail_phone_number",
+            "starts_at",
+            "ends_at",
         ]
 
     def get_category_name(self, obj):
-        return obj.category.name
+        if obj.service.category:
+            return obj.service.category.name
+        return None
 
     def get_service_name(self, obj):
         return obj.service.name
@@ -68,27 +72,24 @@ class BookingSerializer(serializers.ModelSerializer):
             "contact_detail_email",
             "contact_detail_phone_number",
             "guest_numbers",
-            "category",
             "company_name",
             "category_name",
             "service_name",
             "customer_name",
             "created_at",
             "updated_at",
-            "event_date",
-            "event_time",
             "payment_option",
             "event_type",
-            "event_end_time",
             "is_paid",
             "deposit_amount",
             "review",
+            "starts_at",
+            "ends_at",
         ]
         read_only_fields = [
             "id",
             "company",
             "customer",
-            "category",
             "updated_at",
             "status",
             "created_at",
@@ -97,106 +98,100 @@ class BookingSerializer(serializers.ModelSerializer):
             "cancellation_reason",
             "total_price",
             "event_type",
-            "event_end_time",
             "is_paid",
             "deposit_amount",
+            "ends_at",
         ]
 
     def validate(self, attrs):
-        guest_numbers = attrs.get("guest_numbers")
-        service = attrs.get("service")
-        event_time = attrs.get("event_time")
-        event_date = attrs.get("event_date")
+        guest_numbers = attrs.get(
+            "guest_numbers",
+            getattr(self.instance, "guest_numbers", None),
+        )
+        service = attrs.get(
+            "service",
+            getattr(self.instance, "service", None),
+        )
+        starts_at = attrs.get(
+            "starts_at",
+            getattr(self.instance, "starts_at", None),
+        )
+        ends_at = attrs.get(
+            "ends_at",
+            getattr(self.instance, "ends_at", None),
+        )
 
-        if self.instance:
-            guest_numbers = (
-                guest_numbers
-                if guest_numbers is not None
-                else self.instance.guest_numbers
-            )
-            service = service if service is not None else self.instance.service
-            event_time = (
-                event_time if event_time is not None else self.instance.event_time
-            )
-            event_date = (
-                event_date if event_date is not None else self.instance.event_date
-            )
+        errors = {}
 
+        # Validate guest count.
         if guest_numbers is not None:
-            if guest_numbers < 0:
-                raise serializers.ValidationError(
-                    {
-                        "guest_numbers": "Guest number must be greater than or equal to 0."
-                    }
+            if guest_numbers < 1:
+                errors["guest_numbers"] = (
+                    "Guest number must be greater than or equal to 1."
+                )
+            elif service and guest_numbers > service.max_capacity:
+                errors["guest_numbers"] = (
+                    f"Guest number must be between 1 and " f"{service.max_capacity}."
                 )
 
-            if service and guest_numbers > service.max_capacity:
-                raise serializers.ValidationError(
-                    {
-                        "guest_numbers": f"Guest number must be between 0 and {service.max_capacity}."
-                    }
+        # Validate the booking start time.
+        if starts_at is not None and starts_at < timezone.now():
+            errors["starts_at"] = "Event date and time cannot be in the past."
+
+        # Calculate the end time using the service duration.
+        if starts_at is not None and service is not None:
+            calculated_ends_at = starts_at + timedelta(minutes=service.duration_minutes)
+
+            # The backend controls ends_at.
+            ends_at = calculated_ends_at
+            attrs["ends_at"] = calculated_ends_at
+
+        # Validate the datetime order.
+        if starts_at is not None and ends_at is not None and ends_at <= starts_at:
+            errors["ends_at"] = "Event end time must be later than the start time."
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        # Check for overlapping bookings.
+        if starts_at is not None and ends_at is not None and service is not None:
+            request = self.context.get("request")
+
+            if request and request.user and request.user.is_authenticated:
+                overlapping_bookings = Booking.objects.filter(
+                    customer=request.user,
+                    service=service,
+                    starts_at__lt=ends_at,
+                    ends_at__gt=starts_at,
+                ).exclude(
+                    status__in=[
+                        Booking.VerificationStatus.CANCELLED,
+                        Booking.VerificationStatus.REJECTED,
+                    ]
                 )
 
-        if event_time and event_date:
-            event_datetime = datetime.combine(event_date, event_time)
-
-            if event_datetime < datetime.now():
-                raise serializers.ValidationError(
-                    {"event_time": "Event date and time cannot be in the past"}
-                )
-
-        if event_time and event_date:
-            event_datetime = datetime.combine(event_date, event_time)
-
-            if event_datetime < datetime.now():
-                raise serializers.ValidationError(
-                    {"event_time": "Event date and time cannot be in the past"}
-                )
-
-            duration = getattr(service, "duration_minutes", None)
-
-            if duration is not None:
-                event_end_datetime = event_datetime + timedelta(minutes=duration)
-                attrs["event_end_time"] = event_end_datetime.time()
-
-                request = self.context.get("request")
-                if request and request.user and request.user.is_authenticated:
-                    overlapping_bookings = Booking.objects.filter(
-                        customer=request.user, service=service, event_date=event_date
-                    ).exclude(
-                        status__in=[
-                            Booking.VerificationStatus.CANCELLED,
-                            Booking.VerificationStatus.REJECTED,
-                        ]
+                # Do not compare an updated booking with itself.
+                if self.instance is not None:
+                    overlapping_bookings = overlapping_bookings.exclude(
+                        pk=self.instance.pk
                     )
 
-                    if self.instance:
-                        overlapping_bookings = overlapping_bookings.exclude(
-                            id=self.instance.id
-                        )
-
-                    for booking in overlapping_bookings:
-                        existing_start = datetime.combine(
-                            booking.event_date, booking.event_time
-                        )
-                        existing_end = datetime.combine(
-                            booking.event_date, booking.event_end_time
-                        )
-
-                        if (
-                            event_datetime < existing_end
-                            and event_end_datetime > existing_start
-                        ):
-                            raise ValidationError(
-                                {
-                                    "event_time": "You already have booking for this sevice during this time duration."
-                                }
+                if overlapping_bookings.exists():
+                    raise serializers.ValidationError(
+                        {
+                            "starts_at": (
+                                "You already have a booking for this service "
+                                "during this time."
                             )
+                        }
+                    )
 
         return attrs
 
     def get_category_name(self, obj):
-        return obj.category.name
+        if obj.service.category:
+            return obj.service.category.name
+        return None
 
     def get_company_name(self, obj):
         return obj.company.name
@@ -221,9 +216,11 @@ class BookingSerializer(serializers.ModelSerializer):
 
         validated_data["customer"] = request.user
         validated_data["company"] = service.company
-        validated_data["category"] = service.category
         validated_data["total_price"] = service.price
-        validated_data["event_type"] = service.category.name
+        validated_data["event_type"] = service.category.name if service.category else ""
+        auto_approve_booking = service.company.auto_approve_booking
+        if auto_approve_booking:
+            validated_data["status"] = Booking.VerificationStatus.CONFIRMED
 
         return super().create(validated_data)
 
@@ -234,7 +231,7 @@ class BookingCancelSerializer(serializers.ModelSerializer):
         fields = ["cancellation_reason"]
 
     def update(self, instance, validated_data):
-        instance.status = Booking.VerificationStatus.CANCELED
+        instance.status = Booking.VerificationStatus.CANCELLED
         instance.cancelled_at = timezone.now()
         instance.cancellation_reason = validated_data.get("cancellation_reason")
         instance.save(
