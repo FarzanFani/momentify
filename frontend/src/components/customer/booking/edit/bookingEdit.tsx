@@ -14,6 +14,11 @@ import { useGetSinglePublicService } from "@/hooks/service";
 import type { Booking } from "@/services/customer/booking";
 import { extractApiError } from "@/utils/extractApiError";
 import {
+  combineDateAndTime,
+  getDateInputValue,
+  getTimeInputValue,
+} from "@/utils/helperFunctions";
+import {
   CustomerBookingFormValues,
   CustomerBookingPageLayout,
 } from "../../checkout/bookingForm";
@@ -69,8 +74,8 @@ function CustomerBookingEditForm({
         contact_detail_phone_number: booking.contact_detail_phone_number ?? "",
         guest_numbers: booking.guest_numbers,
         event_type: booking.event_type ?? "",
-        event_date: booking.event_date ?? "",
-        event_time: booking.event_time?.slice(0, 5) ?? "",
+        start_date: getDateInputValue(booking.starts_at),
+        start_time: getTimeInputValue(booking.starts_at),
         payment_option: booking.payment_option ?? "REQUEST_BOOKING_FIRST",
       },
     });
@@ -85,18 +90,21 @@ function CustomerBookingEditForm({
       contact_detail_phone_number: booking.contact_detail_phone_number ?? "",
       guest_numbers: booking.guest_numbers,
       event_type: booking.event_type ?? "",
-      event_date: booking.event_date ?? "",
-      event_time: booking.event_time?.slice(0, 5) ?? "",
+      start_date: getDateInputValue(booking.starts_at),
+      start_time: getTimeInputValue(booking.starts_at),
       payment_option: booking.payment_option ?? "REQUEST_BOOKING_FIRST",
     });
   }, [booking, reset]);
 
   const handleUpdateBooking = (data: CustomerBookingFormValues) => {
+    const { start_date, start_time, ...bookingData } = data;
+
     updateBooking(
       {
         bookingId: uuid,
         bookingData: {
-          ...data,
+          ...bookingData,
+          starts_at: combineDateAndTime(start_date, start_time),
           service: booking.service,
         },
       },

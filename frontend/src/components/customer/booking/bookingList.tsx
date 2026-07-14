@@ -335,7 +335,7 @@ function BookingCard({
               <BookingInfoItem
                 icon={<CalendarMonthRounded />}
                 label="Event date"
-                value={formatDate(booking.event_date)}
+                value={formatDate(booking.starts_at)}
               />
             </Grid>
 
@@ -343,8 +343,8 @@ function BookingCard({
               <BookingInfoItem
                 icon={<AccessTimeRounded />}
                 label="Time"
-                value={`${formatTime(booking.event_time)} - ${formatTime(
-                  booking.event_end_time,
+                value={`${formatTime(booking.starts_at)} - ${formatTime(
+                  booking.ends_at,
                 )}`}
               />
             </Grid>

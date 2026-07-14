@@ -282,7 +282,7 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
                     <PreviewItem
                       icon={<CalendarMonthRounded />}
                       label="Event date"
-                      value={formatDate(booking.event_date)}
+                      value={formatDate(booking.starts_at)}
                     />
                   </Grid>
 
@@ -290,8 +290,8 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
                     <PreviewItem
                       icon={<AccessTimeRounded />}
                       label="Event time"
-                      value={`${formatTime(booking.event_time)} - ${formatTime(
-                        booking.event_end_time,
+                      value={`${formatTime(booking.starts_at)} - ${formatTime(
+                        booking.ends_at,
                       )}`}
                     />
                   </Grid>

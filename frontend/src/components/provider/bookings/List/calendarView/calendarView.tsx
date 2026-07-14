@@ -28,7 +28,7 @@ import {
 import { ProviderBookingListParams } from "@/services/provider/booking";
 import { format } from "date-fns";
 import { Booking } from "@/services/customer/booking";
-import { formatDate, formatPrice } from "@/utils/helperFunctions";
+import { formatDate, formatPrice, formatTime } from "@/utils/helperFunctions";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { extractApiError } from "@/utils/extractApiError";
 
@@ -64,6 +64,13 @@ const DayCellContent = (info: DayCellContentArg) => {
 const getEventDurationMinutes = (startTime?: string, endTime?: string) => {
   if (!startTime || !endTime) return 0;
 
+  const startDate = new Date(startTime);
+  const endDate = new Date(endTime);
+
+  if (!Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())) {
+    return (endDate.getTime() - startDate.getTime()) / 60000;
+  }
+
   const [startHour, startMinute] = startTime.split(":").map(Number);
   const [endHour, endMinute] = endTime.split(":").map(Number);
 
@@ -79,8 +86,8 @@ const BookingEventContent = (eventInfo: EventContentArg) => {
   const status = event.extendedProps.status;
   const serviceName = event.extendedProps.service_name;
   const categoryName = event.extendedProps.category_name;
-  const startTime = event.extendedProps.event_time;
-  const endTime = event.extendedProps.event_end_time;
+  const startTime = event.extendedProps.starts_at;
+  const endTime = event.extendedProps.ends_at;
 
   const isWeekView = view.type === "timeGridWeek";
   const durationMinutes = getEventDurationMinutes(startTime, endTime);
@@ -150,7 +157,7 @@ const BookingEventContent = (eventInfo: EventContentArg) => {
             flexGrow: 1,
           }}
         >
-          {startTime}
+          {formatTime(startTime)}
         </Typography>
       </Box>
 
@@ -297,13 +304,15 @@ const BookingDetailsContent = ({
           </Typography>
 
           <Stack spacing={1.2}>
-            <DetailRow label="Date" value={formatDate(booking.event_date)} />
+            <DetailRow label="Date" value={formatDate(booking.starts_at)} />
             <DetailRow
               label="Time"
               value={
-                booking.event_time && booking.event_end_time
-                  ? `${booking.event_time} - ${booking.event_end_time}`
-                  : booking.event_time
+                booking.starts_at && booking.ends_at
+                  ? `${formatTime(booking.starts_at)} - ${formatTime(
+                      booking.ends_at,
+                    )}`
+                  : formatTime(booking.starts_at)
               }
             />
             <DetailRow label="Location" value={booking.location} />
@@ -397,25 +406,22 @@ export default function BookingCalendarView({
   const events = bookingResponse?.results.map((booking) => {
     const title = booking.service_name || booking.customer_name || "Booking";
 
-    const start = `${booking.event_date}T${booking.event_time}`;
-    const end = `${booking.event_date}T${booking.event_end_time}`;
-
     return {
       id: String(booking.id),
       title,
-      start,
-      end,
+      start: booking.starts_at,
+      end: booking.ends_at,
 
       extendedProps: {
+        booking,
         status: booking.status,
         contact_detail_full_name: booking.customer_name,
         contact_detail_phone_number: booking.contact_detail_phone_number,
         contact_detail_email: booking.contact_detail_email,
         service_name: booking.service_name,
         category_name: booking.category_name,
-        event_date: booking.event_date,
-        event_time: booking.event_time,
-        event_end_time: booking.event_end_time,
+        starts_at: booking.starts_at,
+        ends_at: booking.ends_at,
         location: booking.location,
         guest_numbers: booking.guest_numbers,
         total_price: booking.total_price,
@@ -491,7 +497,7 @@ export default function BookingCalendarView({
             dayMaxEvents={1}
             fixedWeekCount={false}
             eventClick={(info) => {
-              setSelectedBooking(info.event.extendedProps as Booking);
+              setSelectedBooking(info.event.extendedProps.booking as Booking);
             }}
           />
         </Box>

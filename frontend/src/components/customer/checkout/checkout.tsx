@@ -9,6 +9,7 @@ import { usePostCustomerBooking } from "@/hooks/booking";
 import { useGetSinglePublicService } from "@/hooks/service";
 import { useAppSelector } from "@/store/hook";
 import { extractApiError } from "@/utils/extractApiError";
+import { combineDateAndTime } from "@/utils/helperFunctions";
 import {
   CustomerBookingFormValues,
   CustomerBookingPageLayout,
@@ -52,8 +53,8 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
         contact_detail_full_name: "",
         contact_detail_email: "",
         contact_detail_phone_number: "",
-        event_date: "",
-        event_time: "",
+        start_date: "",
+        start_time: "",
         event_type: "",
         payment_option: "REQUEST_BOOKING_FIRST",
       },
@@ -62,8 +63,14 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
   const handleSubmitBooking = (data: CustomerBookingFormValues) => {
     if (!service) return;
 
+    const { start_date, start_time, ...bookingData } = data;
+
     createBooking(
-      { ...data, service: service.id },
+      {
+        ...bookingData,
+        starts_at: combineDateAndTime(start_date, start_time),
+        service: service.id,
+      },
       {
         onSuccess: (data) => {
           showSnackbar("Checkout Succesfull", "success");

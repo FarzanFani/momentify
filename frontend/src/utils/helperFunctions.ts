@@ -43,6 +43,17 @@ export function formatDate(date: string) {
 export function formatTime(time: string) {
   if (!time) return "Not selected";
 
+  if (time.includes("T") || /^\d{4}-\d{2}-\d{2}/.test(time)) {
+    const date = new Date(time);
+
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    }
+  }
+
   const [hours, minutes] = time.split(":");
 
   if (!hours || !minutes) return time;
@@ -55,6 +66,38 @@ export function formatTime(time: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+export function getDateInputValue(dateTime?: string | null) {
+  if (!dateTime) return "";
+
+  if (dateTime.includes("T")) {
+    return dateTime.split("T")[0] ?? "";
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateTime)) {
+    return dateTime.slice(0, 10);
+  }
+
+  return "";
+}
+
+export function getTimeInputValue(dateTime?: string | null) {
+  if (!dateTime) return "";
+
+  const timePart = dateTime.includes("T")
+    ? dateTime.split("T")[1]
+    : dateTime.includes(" ")
+      ? dateTime.split(" ")[1]
+      : dateTime;
+
+  return timePart?.slice(0, 5) ?? "";
+}
+
+export function combineDateAndTime(date: string, time: string) {
+  if (!date || !time) return "";
+
+  return `${date}T${time}`;
 }
 
 export function formatDateTime(date: string) {

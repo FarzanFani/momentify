@@ -8,7 +8,7 @@ import {
   TableColumn,
   TableRowDataType,
 } from "@/types/general";
-import { formatPrice } from "@/utils/helperFunctions";
+import { formatDate, formatPrice, formatTime } from "@/utils/helperFunctions";
 import {
   Avatar,
   Stack,
@@ -142,11 +142,13 @@ export default function ListTableView({
                 <Stack spacing={0.5}>
                   <IconText
                     icon={<CalendarMonthRounded />}
-                    text={booking.event_date}
+                    text={formatDate(booking.starts_at)}
                   />
                   <IconText
                     icon={<AccessTimeRounded />}
-                    text={`${booking.event_time} - ${booking.event_end_time}`}
+                    text={`${formatTime(booking.starts_at)} - ${formatTime(
+                      booking.ends_at,
+                    )}`}
                   />
                 </Stack>
               ),

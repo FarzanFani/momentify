@@ -12,14 +12,13 @@ export type CustomerBookingPayload = {
   contact_detail_phone_number: string;
   guest_numbers: number;
   event_type: string;
-  event_date: string;
-  event_time: string;
+  starts_at: string;
   payment_option: string;
 };
 
 export interface Booking extends CustomerBookingPayload {
   id: string;
-  event_end_time: string;
+  ends_at: string;
   cancellation_reason?: string;
   cancelled_at?: string;
   refund_amount?: number;

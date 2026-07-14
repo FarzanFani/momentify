@@ -227,7 +227,7 @@ function BookingHistoryCard({ booking }: { booking: Booking }) {
             <BookingHistoryInfo
               icon={<CalendarMonthRounded />}
               label="Date"
-              value={formatDate(booking.event_date)}
+              value={formatDate(booking.starts_at)}
             />
           </Grid>
 
@@ -235,8 +235,8 @@ function BookingHistoryCard({ booking }: { booking: Booking }) {
             <BookingHistoryInfo
               icon={<AccessTimeRounded />}
               label="Time"
-              value={`${formatTime(booking.event_time)} - ${formatTime(
-                booking.event_end_time,
+              value={`${formatTime(booking.starts_at)} - ${formatTime(
+                booking.ends_at,
               )}`}
             />
           </Grid>

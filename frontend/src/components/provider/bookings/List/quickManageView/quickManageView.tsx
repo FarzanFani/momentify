@@ -4,7 +4,7 @@ import {
   useUpdateProviderBookingStatus,
 } from "@/hooks/booking";
 import { ProviderBookingListParams } from "@/services/provider/booking";
-import { formatPrice } from "@/utils/helperFunctions";
+import { formatDate, formatPrice, formatTime } from "@/utils/helperFunctions";
 import {
   Card,
   Box,
@@ -154,8 +154,9 @@ export default function QuickManageView({
                 fontSize={14}
                 sx={{ mb: 0.75, lineHeight: 1.5 }}
               >
-                {booking.event_date} · {booking.event_time} -{" "}
-                {booking.event_end_time}. {booking.location}
+                {formatDate(booking.starts_at)} ·{" "}
+                {formatTime(booking.starts_at)} - {formatTime(booking.ends_at)}.{" "}
+                {booking.location}
               </Typography>
 
               <Typography

@@ -37,9 +37,11 @@ import { formatDuration, formatPrice } from "@/utils/helperFunctions";
 
 export type CustomerBookingFormValues = Omit<
   CustomerBookingPayload,
-  "service"
+  "service" | "starts_at"
 > & {
   service?: string;
+  start_date: string;
+  start_time: string;
 };
 
 export const paymentOptions: DropdownOptionItem[] = [
@@ -83,7 +85,7 @@ export function CustomerBookingFormFields({
           <Grid size={{ xs: 12, sm: 6 }}>
             <Controller
               control={control}
-              name="event_date"
+              name="start_date"
               rules={{ required: "Event date is required" }}
               render={({ field, fieldState }) => (
                 <InputField
@@ -101,7 +103,7 @@ export function CustomerBookingFormFields({
           <Grid size={{ xs: 12, sm: 6 }}>
             <Controller
               control={control}
-              name="event_time"
+              name="start_time"
               rules={{ required: "Start time is required" }}
               render={({ field, fieldState }) => (
                 <InputField
