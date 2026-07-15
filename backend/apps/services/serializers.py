@@ -4,6 +4,8 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from .models import Service, ServiceCategory
+from ..reviews.models import Review
+from ..reviews.serializers import ReviewSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +24,7 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 class ServiceSerializer(serializers.ModelSerializer):
     company_name = serializers.SerializerMethodField()
     category_name = serializers.SerializerMethodField()
+    review = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
@@ -39,6 +42,7 @@ class ServiceSerializer(serializers.ModelSerializer):
             "is_active",
             "company_name",
             "category_name",
+            "review",
         ]
 
         read_only_fields = ["id", "company"]
@@ -60,3 +64,10 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     def get_category_name(self, obj):
         return obj.category.name
+
+    def get_review(self, obj):
+        try:
+            queryset = Review.objects.filter(service=obj)
+            return ReviewSerializer(queryset, many=True).data
+        except Review.DoesNotExist:
+            return None
