@@ -53,6 +53,8 @@ class BookingSerializer(serializers.ModelSerializer):
     service_name = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
     review = serializers.SerializerMethodField()
+    buffer_before = serializers.SerializerMethodField()
+    buffer_after = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -85,6 +87,8 @@ class BookingSerializer(serializers.ModelSerializer):
             "review",
             "starts_at",
             "ends_at",
+            "buffer_before",
+            "buffer_after",
         ]
         read_only_fields = [
             "id",
@@ -186,6 +190,30 @@ class BookingSerializer(serializers.ModelSerializer):
                         }
                     )
 
+        # Check for overlap with other customer booking in case of auto approve
+        if service is not None and service.company.auto_approve_booking == True:
+            request = self.context.get("request")
+            if request and request.user and request.user.is_authenticated:
+                overlapping_bookings = Booking.objects.filter(
+                    service=service,
+                    starts_at__lt=ends_at,
+                    ends_at__gt=starts_at,
+                ).exclude(
+                    status__in=[
+                        Booking.VerificationStatus.CANCELLED,
+                        Booking.VerificationStatus.REJECTED,
+                    ]
+                )
+                if self.instance is not None:
+                    overlapping_bookings = overlapping_bookings.exclude(
+                        pk=self.instance.pk
+                    )
+
+                if overlapping_bookings.exists():
+                    raise serializers.ValidationError(
+                        {"starts_at": "Choose another time. Selected time is full"}
+                    )
+
         return attrs
 
     def get_category_name(self, obj):
@@ -209,6 +237,12 @@ class BookingSerializer(serializers.ModelSerializer):
             return PublicReviewSerializer(obj.review).data
         except Review.DoesNotExist:
             return None
+
+    def get_buffer_before(self, obj):
+        return obj.service.buffer_before_minutes
+
+    def get_buffer_after(self, obj):
+        return obj.service.buffer_after_minutes
 
     def create(self, validated_data):
         request = self.context["request"]
