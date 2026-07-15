@@ -45,6 +45,7 @@ export const useGetSinglePublicService = (serviceUuid: string) => {
   return useQuery({
     queryKey: ["service", serviceUuid],
     queryFn: () => retrievePublicService(serviceUuid),
+    refetchOnWindowFocus: false,
   });
 };
 

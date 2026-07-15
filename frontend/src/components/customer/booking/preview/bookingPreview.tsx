@@ -21,6 +21,8 @@ import {
   ReplayRounded,
 } from "@mui/icons-material";
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Card,
@@ -276,6 +278,33 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
                       value={`${booking.guest_numbers} guest${
                         booking.guest_numbers === 1 ? "" : "s"
                       }`}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Alert
+                      severity="warning"
+                      variant="outlined"
+                      sx={{ borderRadius: 4 }}
+                    >
+                      <AlertTitle>Important: Buffer Time</AlertTitle>
+                      Buffer time is separate from your booked ceremony time and
+                      may overlap with buffer periods for other bookings. Please
+                      use this time for final preparation and coordination with
+                      the ceremony organizers.
+                    </Alert>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <PreviewItem
+                      icon={<AccessTimeRounded />}
+                      label="Buffer Before"
+                      value={booking.buffer_before}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <PreviewItem
+                      icon={<AccessTimeRounded />}
+                      label="Buffer After"
+                      value={booking.buffer_after}
                     />
                   </Grid>
 

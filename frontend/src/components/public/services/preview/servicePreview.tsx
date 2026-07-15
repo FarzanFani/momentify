@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import {
+  Alert,
+  AlertTitle,
   Box,
   Button,
   Card,
@@ -24,6 +26,7 @@ import {
   ArrowBackRounded,
   CalendarMonthRounded,
   LoginRounded,
+  AccessTimeRounded,
 } from "@mui/icons-material";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -32,9 +35,6 @@ import { useRouter } from "next/navigation";
 import { formatDuration, formatPrice } from "@/utils/helperFunctions";
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
 import { CompanyServices } from "@/services/provider/services";
-
-// Replace this with your real public/customer hook
-// Example:
 import { useGetSinglePublicService } from "@/hooks/service";
 import { useAppSelector } from "@/store/hook";
 
@@ -436,12 +436,33 @@ function BookingInfoTab({ service }: { service: CompanyServices }) {
         </Typography>
       </Box>
 
+      <Alert severity="warning" variant="outlined" sx={{ borderRadius: 4 }}>
+        <AlertTitle>Important: Buffer Time</AlertTitle>
+        Buffer time is separate from your booked ceremony time and may overlap
+        with buffer periods for other bookings. Please use this time for final
+        preparation and coordination with the ceremony organizers.
+      </Alert>
+
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <DetailInfoCard
             icon={<AccessTime />}
             label="Duration"
             value={formatDuration(service.duration_minutes)}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <DetailInfoCard
+            icon={<AccessTimeRounded />}
+            label="Buffer before"
+            value={service.buffer_before_minutes}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <DetailInfoCard
+            icon={<AccessTimeRounded />}
+            label="Buffer after"
+            value={service.buffer_after_minutes}
           />
         </Grid>
 

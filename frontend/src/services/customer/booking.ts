@@ -34,6 +34,8 @@ export interface Booking extends CustomerBookingPayload {
   customer_name: string;
   total_price: number;
   review: CustomerReview | null;
+  buffer_before: number;
+  buffer_after: number;
 }
 
 export const postCustomerBooking = async (

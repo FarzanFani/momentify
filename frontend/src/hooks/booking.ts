@@ -31,6 +31,7 @@ export const useGetSingleCustomerBooking = (bookingId: string) => {
   return useQuery({
     queryKey: ["customer-booking", bookingId],
     queryFn: () => getCustomerSingleBooking(bookingId),
+    refetchOnWindowFocus: false,
   });
 };
 
