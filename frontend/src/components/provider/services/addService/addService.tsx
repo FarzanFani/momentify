@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import ServiceForm from "../serviceForm/serviceFrom";
 
 export default function AddServiceForm() {
@@ -56,6 +56,10 @@ export default function AddServiceForm() {
       price: undefined,
       is_active: true,
       description: "",
+      price_per_guest: undefined,
+      guest_count_policy: "variable",
+      fixed_guest_count: undefined,
+      minimum_billable_guest: undefined,
     },
   });
 

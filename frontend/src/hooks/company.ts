@@ -63,6 +63,7 @@ export const useGetCompanyTinyList = () => {
   return useQuery({
     queryKey: ["company-tiny-list"],
     queryFn: getProviderCompanyTinyList,
+    refetchOnWindowFocus: false,
   });
 };
 

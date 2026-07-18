@@ -320,27 +320,69 @@ function ServiceDetailsTab({ service }: { service: CompanyServices }) {
       <Divider />
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <DetailInfoCard
-            icon={<AccessTime />}
-            label="Duration"
-            value={formatDuration(service.duration_minutes)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <DetailInfoCard
-            icon={<Groups />}
-            label="Maximum Capacity"
-            value={`${service.max_capacity} guests`}
-          />
-        </Grid>
+        {service.guest_count_policy === "fixed" ? (
+          <>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Capacity (fixed)"
+                value={`${service.fixed_guest_count} guests`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Price"
+                value={`${service.price}`}
+              />
+            </Grid>
+          </>
+        ) : (
+          <>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Maximum Capacity"
+                value={`${service.max_capacity} guests`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Minimum Billable Guest"
+                value={`${service.minimum_billable_guest}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Base Price"
+                value={`${service.price}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <DetailInfoCard
+                icon={<Groups />}
+                label="Price Per Guest"
+                value={`${service.price_per_guest}`}
+              />
+            </Grid>
+          </>
+        )}
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <DetailInfoCard
             icon={<Category />}
             label="Category"
-            value={service.category}
+            value={service.category_name}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <DetailInfoCard
+            icon={<AccessTime />}
+            label="Duration"
+            value={formatDuration(service.duration_minutes)}
           />
         </Grid>
 
@@ -364,7 +406,7 @@ function ServiceDetailsTab({ service }: { service: CompanyServices }) {
           <DetailInfoCard
             icon={<Business />}
             label="Company"
-            value={service.company}
+            value={service.company_name}
           />
         </Grid>
       </Grid>

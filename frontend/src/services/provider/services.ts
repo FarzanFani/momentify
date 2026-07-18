@@ -30,6 +30,10 @@ export type CompanyServicesFormValues = {
   buffer_after_minutes: number;
   price: number;
   is_active: boolean;
+  minimum_billable_guest: number;
+  fixed_guest_count: number;
+  guest_count_policy: "variable" | "fixed";
+  price_per_guest: number;
 };
 
 export type CompanyServicesPayload = {
