@@ -56,13 +56,15 @@ function CustomerBookingEditForm({
 }) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const { data: service, isLoading, isError } = useGetSinglePublicService(
-    booking.service,
-  );
+  const {
+    data: service,
+    isLoading,
+    isError,
+  } = useGetSinglePublicService(booking.service);
   const { mutate: updateBooking, isPending: isUpdatingBooking } =
     useUpdateCustomerBooking();
 
-  const { control, handleSubmit, reset, formState } =
+  const { control, handleSubmit, reset, formState, setValue } =
     useForm<CustomerBookingFormValues>({
       mode: "onChange",
       defaultValues: {
@@ -146,6 +148,7 @@ function CustomerBookingEditForm({
       isSubmitting={isUpdatingBooking}
       submitIcon={<SaveRounded />}
       footerNote="Only pending bookings can be edited. The provider will review the updated request."
+      setValue={setValue}
     />
   );
 }

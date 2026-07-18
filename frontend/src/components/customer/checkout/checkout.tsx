@@ -139,6 +139,7 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
       footerNote="You are not charged at this stage. The provider will review your request and confirm availability."
       useRegisterContactInfo={useRegisterContactInfo}
       onUseRegisterContactInfoChange={setRegisterContactInfo}
+      setValue={setValue}
     />
   );
 }

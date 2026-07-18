@@ -26,7 +26,12 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Control, Controller, FormState } from "react-hook-form";
+import {
+  Control,
+  Controller,
+  FormState,
+  UseFormSetValue,
+} from "react-hook-form";
 
 import SelectDropdown from "@/components/common/dropdown/Dropdown";
 import InputField from "@/components/common/input/InputField";
@@ -34,6 +39,7 @@ import { CustomerBookingPayload } from "@/services/customer/booking";
 import { CompanyServices } from "@/services/provider/services";
 import { DropdownOptionItem } from "@/types/general";
 import { formatDuration, formatPrice } from "@/utils/helperFunctions";
+import { useEffect } from "react";
 
 export type CustomerBookingFormValues = Omit<
   CustomerBookingPayload,
@@ -57,6 +63,7 @@ type CustomerBookingFormFieldsProps = {
   service: CompanyServices;
   useRegisterContactInfo?: boolean;
   onUseRegisterContactInfoChange?: (value: boolean) => void;
+  setValue: UseFormSetValue<CustomerBookingFormValues>;
 };
 
 export function CustomerBookingFormFields({
@@ -64,7 +71,20 @@ export function CustomerBookingFormFields({
   service,
   useRegisterContactInfo = false,
   onUseRegisterContactInfoChange,
+  setValue,
 }: CustomerBookingFormFieldsProps) {
+  const isFixedGuestNumber = service.guest_count_policy === "fixed";
+
+  useEffect(() => {
+    if (isFixedGuestNumber) {
+      setValue("guest_numbers", Number(service.fixed_guest_count), {
+        shouldValidate: true,
+        shouldDirty: false,
+        shouldTouch: false,
+      });
+    }
+  }, [isFixedGuestNumber, service.fixed_guest_count, setValue]);
+
   return (
     <Stack spacing={3}>
       <CheckoutSectionCard
@@ -133,22 +153,27 @@ export function CustomerBookingFormFields({
               render={({ field, fieldState }) => (
                 <InputField
                   label="Number of Guests"
-                  value={field.value}
+                  value={
+                    isFixedGuestNumber ? service.fixed_guest_count : field.value
+                  }
                   onChange={field.onChange}
                   type="number"
                   placeholder="Number of guests"
                   error={fieldState.invalid}
+                  disabled={isFixedGuestNumber}
                   helperText={
-                    fieldState.invalid
-                      ? fieldState.error?.message
-                      : `Maximum capacity: ${service.max_capacity} guests`
+                    isFixedGuestNumber
+                      ? ""
+                      : fieldState.invalid
+                        ? fieldState.error?.message
+                        : `Maximum capacity: ${service.max_capacity} guests`
                   }
                 />
               )}
             />
           </Grid>
 
-          <Grid size={{ xs: 12 }} mt={"-20px"}>
+          <Grid size={{ xs: 12 }} mt={!isFixedGuestNumber ? "-20px" : ""}>
             <Controller
               control={control}
               name="location"
@@ -340,6 +365,7 @@ export function CustomerBookingPageLayout({
   footerNote,
   useRegisterContactInfo,
   onUseRegisterContactInfoChange,
+  setValue,
 }: CustomerBookingPageLayoutProps) {
   return (
     <Box
@@ -404,6 +430,7 @@ export function CustomerBookingPageLayout({
               service={service}
               useRegisterContactInfo={useRegisterContactInfo}
               onUseRegisterContactInfoChange={onUseRegisterContactInfoChange}
+              setValue={setValue}
             />
           </Grid>
 
@@ -440,7 +467,9 @@ export function CustomerBookingPageLayout({
                   },
                 }}
               >
-                {isSubmitting && submittingLabel ? submittingLabel : submitLabel}
+                {isSubmitting && submittingLabel
+                  ? submittingLabel
+                  : submitLabel}
               </Button>
 
               <Typography
@@ -591,8 +620,12 @@ function ServiceSummaryCard({ service }: { service: CompanyServices }) {
 
           <SummaryRow
             icon={<GroupsRounded />}
-            label="Capacity"
-            value={`Up to ${service.max_capacity} guests`}
+            label="Capacity (Fixed)"
+            value={
+              service.guest_count_policy === "fixed"
+                ? `${service.fixed_guest_count} guests`
+                : `Up to ${service.max_capacity} guests`
+            }
           />
 
           <SummaryRow
