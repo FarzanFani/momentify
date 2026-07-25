@@ -20,6 +20,7 @@ import {
   CardContent,
   Checkbox,
   Chip,
+  CircularProgress,
   Divider,
   FormControlLabel,
   Grid,
@@ -347,6 +348,8 @@ type CustomerBookingPageLayoutProps = CustomerBookingFormFieldsProps & {
   isSubmitting?: boolean;
   submitIcon?: React.ReactNode;
   footerNote: string;
+  price: number;
+  isPriceLoading: boolean;
 };
 
 export function CustomerBookingPageLayout({
@@ -366,6 +369,8 @@ export function CustomerBookingPageLayout({
   useRegisterContactInfo,
   onUseRegisterContactInfoChange,
   setValue,
+  price,
+  isPriceLoading,
 }: CustomerBookingPageLayoutProps) {
   return (
     <Box
@@ -438,7 +443,11 @@ export function CustomerBookingPageLayout({
             <Stack spacing={2.5} sx={{ position: { lg: "sticky" }, top: 24 }}>
               <ServiceSummaryCard service={service} />
 
-              <PriceSummaryCard service={service} />
+              <PriceSummaryCard
+                service={service}
+                price={price}
+                isPriceLoading={isPriceLoading}
+              />
 
               <Button
                 fullWidth
@@ -624,7 +633,7 @@ function ServiceSummaryCard({ service }: { service: CompanyServices }) {
             value={
               service.guest_count_policy === "fixed"
                 ? `${service.fixed_guest_count} guests`
-                : `Up to ${service.max_capacity} guests`
+                : `Up to ${service.max_capacity} guests - Base price is for ${service.minimum_billable_guest} guest`
             }
           />
 
@@ -639,7 +648,15 @@ function ServiceSummaryCard({ service }: { service: CompanyServices }) {
   );
 }
 
-function PriceSummaryCard({ service }: { service: CompanyServices }) {
+function PriceSummaryCard({
+  service,
+  price,
+  isPriceLoading,
+}: {
+  service: CompanyServices;
+  price: number;
+  isPriceLoading: boolean;
+}) {
   return (
     <Card
       sx={{
@@ -689,9 +706,11 @@ function PriceSummaryCard({ service }: { service: CompanyServices }) {
           <Stack spacing={1.2}>
             <Stack direction="row" justifyContent="space-between" spacing={2}>
               <Typography color="text.secondary">Service price</Typography>
-              <Typography fontWeight={900}>
-                {formatPrice(service.price)}
-              </Typography>
+              {isPriceLoading ? (
+                <CircularProgress />
+              ) : (
+                <Typography fontWeight={900}>{formatPrice(price)}</Typography>
+              )}
             </Stack>
 
             <Stack direction="row" justifyContent="space-between" spacing={2}>

@@ -1,24 +1,13 @@
 "use client";
 
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
-import SelectDropdown from "@/components/common/dropdown/Dropdown";
-import InputField from "@/components/common/input/InputField";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { useGetCompanyTinyList } from "@/hooks/company";
 import { useGetCategoryTinyList, usePostService } from "@/hooks/service";
 import { CompanyServicesFormValues } from "@/services/provider/services";
 import { extractApiError } from "@/utils/extractApiError";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  FormControlLabel,
-  Grid,
-  Switch,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import ServiceForm from "../serviceForm/serviceFrom";

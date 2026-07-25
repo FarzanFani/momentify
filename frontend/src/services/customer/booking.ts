@@ -129,3 +129,22 @@ export const getCustomerHistoryBookingList = async (): Promise<
 
   return data.data as GeneralListType<Booking>;
 };
+
+type CalculatedPriceResponse = {
+  calculated_price: number;
+};
+
+export const postCalculatedPriceForBookingService = async (payload: {
+  service: string;
+  guest_count: number;
+}): Promise<CalculatedPriceResponse> => {
+  const { data } = await axiosInstance.post<
+    ApiResponse<CalculatedPriceResponse>
+  >("api/services/price", payload);
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as CalculatedPriceResponse;
+};

@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { usePostCustomerBooking } from "@/hooks/booking";
-import { useGetSinglePublicService } from "@/hooks/service";
+import {
+  useGetSinglePublicService,
+  usePostServiceCalculatePrice,
+} from "@/hooks/service";
 import { useAppSelector } from "@/store/hook";
 import { extractApiError } from "@/utils/extractApiError";
 import { combineDateAndTime } from "@/utils/helperFunctions";
@@ -35,6 +38,8 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
   const { showSnackbar } = useSnackbar();
   const [useRegisterContactInfo, setRegisterContactInfo] = useState(false);
 
+  const [price, setPrice] = useState(0);
+
   const {
     data: service,
     isLoading,
@@ -43,6 +48,9 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
 
   const { mutate: createBooking, isPending: isBookingCreateLoading } =
     usePostCustomerBooking();
+
+  const { mutate: calculateBookingPrice, isPending: isPriceLoading } =
+    usePostServiceCalculatePrice();
 
   const { control, handleSubmit, setValue, clearErrors, formState } =
     useForm<CustomerBookingFormValues>({
@@ -115,6 +123,59 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
     clearErrors,
   ]);
 
+  const guestNumbers = useWatch({
+    control,
+    name: "guest_numbers",
+  });
+
+  useEffect(() => {
+    if (service?.guest_count_policy === "variable") {
+      setPrice(service.price);
+    } else {
+      setPrice(service?.price ?? 0);
+    }
+  }, [service?.guest_count_policy, service?.price]);
+
+  useEffect(() => {
+    const parsedGuestNumbers = Number(guestNumbers);
+
+    if (
+      !service ||
+      !Number.isFinite(parsedGuestNumbers) ||
+      parsedGuestNumbers <= 0 ||
+      service.guest_count_policy == "fixed"
+    ) {
+      return;
+    }
+
+    if (guestNumbers < service.minimum_billable_guest) {
+      setPrice(service.price);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      calculateBookingPrice(
+        {
+          service: service.id,
+          guest_count: parsedGuestNumbers,
+        },
+        {
+          onSuccess: (data) => {
+            setPrice(data.calculated_price);
+          },
+          onError: (error) => {
+            showSnackbar(
+              extractApiError(error as Parameters<typeof extractApiError>[0]),
+              "error",
+            );
+          },
+        },
+      );
+    }, 600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [guestNumbers, service, service?.id, calculateBookingPrice, showSnackbar]);
+
   if (isLoading) {
     return <CheckoutPageSkeleton />;
   }
@@ -140,6 +201,8 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
       useRegisterContactInfo={useRegisterContactInfo}
       onUseRegisterContactInfoChange={setRegisterContactInfo}
       setValue={setValue}
+      price={price}
+      isPriceLoading={isPriceLoading}
     />
   );
 }

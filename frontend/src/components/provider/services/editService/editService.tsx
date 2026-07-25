@@ -7,6 +7,7 @@ import {
   useEditServices,
   useGetCategoryTinyList,
   useGetSingleProviderService,
+  usePostServiceCalculatePrice,
 } from "@/hooks/service";
 import { CompanyServicesFormValues } from "@/services/provider/services";
 import { extractApiError } from "@/utils/extractApiError";

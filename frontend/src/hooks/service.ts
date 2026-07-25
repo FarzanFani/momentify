@@ -1,3 +1,4 @@
+import { postCalculatedPriceForBookingService } from "@/services/customer/booking";
 import {
   CompanyServicesPayload,
   getProviderServicesList,
@@ -60,5 +61,11 @@ export const useGetPublicServices = (params: PublicServicesPayload = {}) => {
     queryKey: ["public-services", params],
     queryFn: () => getPublicServices(params),
     refetchOnWindowFocus: false,
+  });
+};
+
+export const usePostServiceCalculatePrice = () => {
+  return useMutation({
+    mutationFn: postCalculatedPriceForBookingService,
   });
 };

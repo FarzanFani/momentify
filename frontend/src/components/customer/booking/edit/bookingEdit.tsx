@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SaveRounded } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import {
   useGetSingleCustomerBooking,
   useUpdateCustomerBooking,
 } from "@/hooks/booking";
-import { useGetSinglePublicService } from "@/hooks/service";
+import {
+  useGetSinglePublicService,
+  usePostServiceCalculatePrice,
+} from "@/hooks/service";
 import type { Booking } from "@/services/customer/booking";
 import { extractApiError } from "@/utils/extractApiError";
 import {
@@ -56,13 +59,19 @@ function CustomerBookingEditForm({
 }) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { mutate: calculatePrice, isPending: isPriceLoading } =
+    usePostServiceCalculatePrice();
+
   const {
     data: service,
     isLoading,
     isError,
   } = useGetSinglePublicService(booking.service);
+
   const { mutate: updateBooking, isPending: isUpdatingBooking } =
     useUpdateCustomerBooking();
+
+  const [price, setPrice] = useState(0);
 
   const { control, handleSubmit, reset, formState, setValue } =
     useForm<CustomerBookingFormValues>({
@@ -96,7 +105,53 @@ function CustomerBookingEditForm({
       start_time: getTimeInputValue(booking.starts_at),
       payment_option: booking.payment_option ?? "REQUEST_BOOKING_FIRST",
     });
+    setPrice(booking.total_price);
   }, [booking, reset]);
+
+  const guestNumbers = useWatch({
+    control,
+    name: "guest_numbers",
+  });
+
+  useEffect(() => {
+    const parsedGuestNumbers = Number(guestNumbers);
+
+    if (
+      !service ||
+      !Number.isFinite(parsedGuestNumbers) ||
+      parsedGuestNumbers <= 0 ||
+      service.guest_count_policy == "fixed"
+    ) {
+      return;
+    }
+
+    if (guestNumbers < service.minimum_billable_guest) {
+      setPrice(service.price);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      calculatePrice(
+        {
+          service: booking.service,
+          guest_count: parsedGuestNumbers,
+        },
+        {
+          onSuccess: (data) => {
+            setPrice(data.calculated_price);
+          },
+          onError: (error) => {
+            showSnackbar(
+              extractApiError(error as Parameters<typeof extractApiError>[0]),
+              "error",
+            );
+          },
+        },
+      );
+    }, 600);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [guestNumbers, service, booking.service, calculatePrice, showSnackbar]);
 
   const handleUpdateBooking = (data: CustomerBookingFormValues) => {
     const { start_date, start_time, ...bookingData } = data;
@@ -149,6 +204,8 @@ function CustomerBookingEditForm({
       submitIcon={<SaveRounded />}
       footerNote="Only pending bookings can be edited. The provider will review the updated request."
       setValue={setValue}
+      price={price}
+      isPriceLoading={isPriceLoading}
     />
   );
 }
