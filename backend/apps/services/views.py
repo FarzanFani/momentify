@@ -1,7 +1,9 @@
 import uuid
 from decimal import Decimal, InvalidOperation
 
-from apps.accounts.permissions import IsAdmin, IsProvider
+from rest_framework.views import APIView
+
+from apps.accounts.permissions import IsAdmin, IsProvider, IsCustomer
 from apps.companies.models import Company
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
@@ -12,7 +14,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Service, ServiceCategory
-from .serializers import ServiceCategorySerializer, ServiceSerializer
+from .serializers import (
+    ServiceCategorySerializer,
+    ServiceSerializer,
+    PriceCalculationSerializer,
+)
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -157,3 +163,15 @@ class ServiceCategoryTinyListViewSet(viewsets.ViewSet):
         categories = ServiceCategory.objects.filter(is_active=True).order_by("name")
         serializer = ServiceCategorySerializer(categories, many=True)
         return Response(serializer.data)
+
+
+class CalculatedPriceApiView(APIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def post(self, request):
+        serializer = PriceCalculationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response(
+            {"calculated_price": serializer.validated_data["calculated_price"]}
+        )

@@ -2,13 +2,11 @@ from datetime import datetime, timedelta
 
 from apps.reviews.models import Review
 from apps.reviews.serializers import PublicReviewSerializer
-from django.forms import ValidationError
+from apps.services.models import Service
 from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Booking
-from ..companies.models import Company
-from ..services.models import Service
 
 
 class BookingsListSerializer(serializers.ModelSerializer):
@@ -135,8 +133,15 @@ class BookingSerializer(serializers.ModelSerializer):
                 )
             elif service and guest_numbers > service.max_capacity:
                 errors["guest_numbers"] = (
-                    f"Guest number must be between 1 and " f"{service.max_capacity}."
+                    f"Guest number must be between 1 and {service.max_capacity}."
                 )
+
+            if service.guest_count_policy == Service.GuestCountPolicy.VARIABLE:
+                attrs["total_price"] = service.calculate_price(
+                    guest_count=guest_numbers
+                )
+            else:
+                attrs["total_price"] = service.price
 
         # Validate the booking start time.
         if starts_at is not None and starts_at < timezone.now():
@@ -250,7 +255,6 @@ class BookingSerializer(serializers.ModelSerializer):
 
         validated_data["customer"] = request.user
         validated_data["company"] = service.company
-        validated_data["total_price"] = service.price
         validated_data["event_type"] = service.category.name if service.category else ""
         auto_approve_booking = service.company.auto_approve_booking
         if auto_approve_booking:

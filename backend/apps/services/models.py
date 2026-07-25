@@ -179,7 +179,7 @@ class Service(models.Model):
 
     def calculate_price(self, guest_count) -> Decimal:
         additional_guest = max(0, guest_count - self.minimum_billable_guest)
-        return self.price + (additional_guest * self.fixed_guest_count)
+        return self.price + (additional_guest * self.price_per_guest)
 
     def __str__(self):
         return f"{self.name} - {self.company}"

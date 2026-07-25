@@ -7,6 +7,7 @@ from .views import (
     ServiceCategoryTinyListViewSet,
     ServiceCategoryViewSet,
     ServiceViewSet,
+    CalculatedPriceApiView,
 )
 
 router = DefaultRouter()
@@ -43,5 +44,6 @@ urlpatterns = [
         service_category_tiny_list,
         name="services-category-tiny-list",
     ),
+    path("services/price", CalculatedPriceApiView.as_view(), name="services-price"),
     path("", include(router.urls)),
 ]

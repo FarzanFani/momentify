@@ -4,6 +4,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from .models import Service, ServiceCategory
+from .. import services
 from ..reviews.models import Review
 from ..reviews.serializers import ReviewSerializer
 
@@ -134,3 +135,29 @@ class ServiceSerializer(serializers.ModelSerializer):
     def get_review(self, obj):
         queryset = Review.objects.filter(service=obj)
         return ReviewSerializer(queryset, many=True).data
+
+
+class PriceCalculationSerializer(serializers.Serializer):
+    service = serializers.PrimaryKeyRelatedField(queryset=Service.objects.all())
+    guest_count = serializers.IntegerField(min_value=1)
+    calculated_price = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+    )
+
+    def validate(self, attrs):
+        service = attrs["service"]
+        guest_count = attrs["guest_count"]
+
+        if service is None:
+            raise serializers.ValidationError("Service must be provided.")
+
+        if service.guest_count_policy != Service.GuestCountPolicy.VARIABLE:
+            raise serializers.ValidationError(
+                "Service Must be Variable to have Dynamic Price."
+            )
+
+        attrs["calculated_price"] = service.calculate_price(guest_count=guest_count)
+
+        return attrs
