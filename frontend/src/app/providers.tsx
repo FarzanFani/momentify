@@ -13,6 +13,8 @@ import axiosInstance from "@/api/axiosInstance";
 import { finishAuthLoading, logout, setUser } from "@/store/authSlice";
 import { ApiResponse } from "@/types/general";
 import { User } from "@/services/auth.service";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 function AuthBootstrap() {
   const dispatch = useDispatch();
@@ -59,11 +61,11 @@ export default function Providers({ children }: { children: ReactNode }) {
         <ReduxProvider store={store}>
           <ThemeProvider theme={theme}>
             <CssBaseline />
-            <AuthBootstrap />
-            <SnackbarProvider>
-              <CssBaseline />
-              {children}
-            </SnackbarProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <AuthBootstrap />
+
+              <SnackbarProvider>{children}</SnackbarProvider>
+            </LocalizationProvider>
           </ThemeProvider>
         </ReduxProvider>
       </QueryClientProvider>

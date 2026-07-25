@@ -41,6 +41,7 @@ import { CompanyServices } from "@/services/provider/services";
 import { DropdownOptionItem } from "@/types/general";
 import { formatDuration, formatPrice } from "@/utils/helperFunctions";
 import { useEffect } from "react";
+import FormDateCalendar from "@/components/common/datePicker/DateCalnedar";
 
 export type CustomerBookingFormValues = Omit<
   CustomerBookingPayload,
@@ -109,13 +110,16 @@ export function CustomerBookingFormFields({
               name="start_date"
               rules={{ required: "Event date is required" }}
               render={({ field, fieldState }) => (
-                <InputField
-                  label="Event Date"
+                <FormDateCalendar
                   value={field.value}
                   onChange={field.onChange}
-                  error={fieldState.invalid}
-                  helperText={fieldState.error?.message}
-                  type="date"
+                  onBlur={field.onBlur}
+                  label="Event date"
+                  error={Boolean(fieldState.error)}
+                  helperText={
+                    fieldState.error?.message ?? "Choose the event date"
+                  }
+                  disablePast
                 />
               )}
             />
