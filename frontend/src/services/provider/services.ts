@@ -48,6 +48,43 @@ export interface CompanyServices extends CompanyServicesFormValues {
   company_name: string;
 }
 
+export interface CompanyServicesTinyList {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export type ServiceTypeInPackagesPatyload = {
+  service: string;
+  service_name?: string;
+  price?: number;
+  quantity: number;
+  required: boolean;
+};
+
+export type ServicePackagesPayload = {
+  name: string;
+  description: string;
+  category: string;
+  company: string;
+  pricing_method: string;
+  fixed_discount?: number;
+  percentage_discount?: number;
+  fixed_price?: number;
+  allow_full_payment: boolean;
+  installment_amount?: number;
+  deposit_percentage?: number;
+  installment_interval?: string;
+  allow_scheduling_late: boolean;
+  services: ServiceTypeInPackagesPatyload[];
+};
+
+export interface ServicePackage extends ServicePackagesPayload {
+  id: string;
+  company_name: string;
+  category_name: string;
+}
+
 export const getProviderServicesList = async (
   params: CompanyServicesPayload,
 ): Promise<GeneralListType<CompanyServices>> => {
@@ -60,6 +97,23 @@ export const getProviderServicesList = async (
   }
 
   return data.data as GeneralListType<CompanyServices>;
+};
+
+export const getProviderServicesTinyList = async (
+  company_id: string,
+  category_id: string,
+) => {
+  const { data } = await axiosInstance.get<
+    ApiResponse<CompanyServicesTinyList[]>
+  >(`/api/companies/${company_id}/services/tiny-list/`, {
+    params: { category_id },
+  });
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as CompanyServicesTinyList[];
 };
 
 export const getServicesCategoryTinyList = async (): Promise<
@@ -108,6 +162,68 @@ export const putProviderService = async ({
   }
 
   return data.data as CompanyServices;
+};
+
+export const postProviderPackage = async (
+  payload: ServicePackagesPayload,
+): Promise<ServicePackage> => {
+  const { data } = await axiosInstance.post<ApiResponse<ServicePackage>>(
+    `/api/companies/${payload.company}/packages/`,
+    payload,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as ServicePackage;
+};
+
+export const getProviderPackagesList = async (
+  companyId: string,
+): Promise<GeneralListType<ServicePackage>> => {
+  const { data } = await axiosInstance.get<
+    ApiResponse<GeneralListType<ServicePackage>>
+  >(`/api/companies/${companyId}/packages/`);
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as GeneralListType<ServicePackage>;
+};
+
+export const retrieveProviderPackage = async (
+  packageUuid: string,
+): Promise<ServicePackage> => {
+  const { data } = await axiosInstance.get<ApiResponse<ServicePackage>>(
+    `/api/provider/packages/${packageUuid}/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as ServicePackage;
+};
+
+export const putProviderPackage = async ({
+  id,
+  servicePackage,
+}: {
+  id: string;
+  servicePackage: ServicePackagesPayload;
+}): Promise<ServicePackage> => {
+  const { data } = await axiosInstance.put<ApiResponse<ServicePackage>>(
+    `/api/companies/${servicePackage.company}/packages/${id}/`,
+    servicePackage,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as ServicePackage;
 };
 
 export const retrieveProviderService = async (

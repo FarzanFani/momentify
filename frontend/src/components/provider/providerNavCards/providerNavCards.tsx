@@ -5,6 +5,7 @@ import {
   DashboardCustomize,
   Business,
   MiscellaneousServices,
+  Inventory2,
   EventNote,
   Settings,
   Insights,
@@ -31,6 +32,12 @@ const navItems = [
     icon: <MiscellaneousServices fontSize="large" />,
     link: "/provider/services",
     bgcolor: "#0B3A5A",
+  },
+  {
+    title: "Packages",
+    icon: <Inventory2 fontSize="large" />,
+    link: "/provider/packages",
+    bgcolor: "#B45309",
   },
   {
     title: "Bookings",

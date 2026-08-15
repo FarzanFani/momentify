@@ -4,9 +4,11 @@
 //   label: string,
 // ) => {};
 
-export function mapApiResponseToDropdownOptions<
-  T extends Record<string, unknown>,
->(list: T[], key: keyof T, label: keyof T) {
+export function mapApiResponseToDropdownOptions<T extends object>(
+  list: T[],
+  key: keyof T,
+  label: keyof T,
+) {
   return list.map((item) => ({
     label: String(item[label]),
     value: String(item[key]),

@@ -4,8 +4,13 @@ import {
   getProviderServicesList,
   getServicesCategoryTinyList,
   postProviderService,
+  postProviderPackage,
+  getProviderPackagesList,
+  retrieveProviderPackage,
+  putProviderPackage,
   retrieveProviderService,
   putProviderService,
+  getProviderServicesTinyList,
 } from "@/services/provider/services";
 import {
   getPublicServices,
@@ -18,6 +23,19 @@ export const useGetProviderServices = (params: CompanyServicesPayload) => {
   return useQuery({
     queryKey: ["services", params],
     queryFn: () => getProviderServicesList(params),
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useGetProviderServicesTinyList = (
+  company: string,
+  categoryId: string,
+) => {
+  return useQuery({
+    queryKey: ["services-tiny-list", company],
+    queryFn: () => getProviderServicesTinyList(company, categoryId),
+    enabled: company !== "" && categoryId !== "",
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -32,6 +50,34 @@ export const useGetCategoryTinyList = () => {
 export const usePostService = () => {
   return useMutation({
     mutationFn: postProviderService,
+  });
+};
+
+export const usePostPackage = () => {
+  return useMutation({
+    mutationFn: postProviderPackage,
+  });
+};
+
+export const useGetProviderPackagesList = (companyId: string) => {
+  return useQuery({
+    queryKey: ["packages", companyId],
+    queryFn: () => getProviderPackagesList(companyId),
+    enabled: companyId !== "",
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useGetSingleProviderPackage = (packageUuid: string) => {
+  return useQuery({
+    queryKey: ["package", packageUuid],
+    queryFn: () => retrieveProviderPackage(packageUuid),
+  });
+};
+
+export const useEditPackage = () => {
+  return useMutation({
+    mutationFn: putProviderPackage,
   });
 };
 
