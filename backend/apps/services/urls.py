@@ -3,11 +3,13 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     ProviderServiceViewSet,
+    ProviderPackageViewSet,
     PublicServiceViewSet,
     ServiceCategoryTinyListViewSet,
     ServiceCategoryViewSet,
     ServiceViewSet,
     CalculatedPriceApiView,
+    ServicePackageApiView,
 )
 
 router = DefaultRouter()
@@ -20,7 +22,14 @@ router.register(r"public/services", PublicServiceViewSet, basename="public-servi
 router.register(
     r"provider/services", ProviderServiceViewSet, basename="provider-service"
 )
-
+router.register(
+    r"companies/(?P<company_id>[^/.]+)/packages",
+    ServicePackageApiView,
+    basename="packages",
+)
+router.register(
+    r"provider/packages", ProviderPackageViewSet, basename="provider-package"
+)
 
 service_category_list = ServiceCategoryViewSet.as_view(
     {"get": "list", "post": "create"}

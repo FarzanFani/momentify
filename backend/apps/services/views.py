@@ -1,23 +1,25 @@
 import uuid
 from decimal import Decimal, InvalidOperation
 
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin, IsProvider, IsCustomer
 from apps.companies.models import Company
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Service, ServiceCategory
+from .models import Service, ServiceCategory, ServicePackages
 from .serializers import (
     ServiceCategorySerializer,
     ServiceSerializer,
     PriceCalculationSerializer,
+    ServicePackageSerializer,
+    ServiceTinySerializer,
 )
 
 
@@ -44,6 +46,16 @@ class ServiceViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         company = self.get_company()
         serializer.save(company=company)
+
+    @action(detail=False, methods=["get"], url_path="tiny-list")
+    def tiny_list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().filter(
+            category__id=request.query_params.get("category_id")
+        )
+        serializer = ServiceTinySerializer(
+            queryset, many=True, context=self.get_serializer_context()
+        )
+        return Response(serializer.data)
 
 
 class ProviderServiceViewSet(viewsets.ReadOnlyModelViewSet):
@@ -175,3 +187,46 @@ class CalculatedPriceApiView(APIView):
         return Response(
             {"calculated_price": serializer.validated_data["calculated_price"]}
         )
+
+
+class ProviderPackageViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ServicePackageSerializer
+    permission_classes = [IsAuthenticated, IsProvider]
+
+    def get_queryset(self):
+        queryset = ServicePackages.objects.select_related(
+            "company", "category"
+        ).filter(company__owner=self.request.user)
+
+        company_id = self.request.query_params.get("company_id")
+        if company_id:
+            try:
+                uuid.UUID(company_id)
+            except ValueError:
+                raise ValidationError({"company_id": "Enter a valid company UUID."})
+            queryset = queryset.filter(company_id=company_id)
+
+        return queryset
+
+
+class ServicePackageApiView(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, IsProvider]
+    serializer_class = ServicePackageSerializer
+
+    def get_company(self):
+        return get_object_or_404(
+            Company,
+            id=self.kwargs["company_id"],
+            owner=self.request.user,
+        )
+
+    def get_queryset(self):
+        return ServicePackages.objects.filter(company=self.get_company())
+
+    def perform_create(self, serializer):
+        serializer.save(company=self.get_company())
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["company"] = self.get_company()
+        return context
