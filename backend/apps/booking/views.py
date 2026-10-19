@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from utils.response import success_response
 
-from .models import Booking
+from .models import Booking, PackageBooking
 from .serializers import (
     BookingApprovedDeclinedProviderSerializer,
     BookingCancelSerializer,
@@ -39,6 +39,20 @@ class BookingViewSet(ModelViewSet):
             )
 
         return quesyset
+
+    def get_object(self):
+        booking = super().get_object()
+        # Services booked through a package can't be changed one by one.
+        if booking.package_booking_id and self.action in (
+            "update",
+            "partial_update",
+            "destroy",
+            "cancel",
+        ):
+            raise ValidationError(
+                {"booking": "This booking is part of a package and cannot be changed."}
+            )
+        return booking
 
     @action(detail=True, methods=["patch"])
     def cancel(self, request, pk=None):
@@ -181,5 +195,13 @@ class ProviderBookingViewSet(ModelViewSet):
                 filter=Q(status=Booking.VerificationStatus.COMPLETED),
             ),
         )
+
+        # Package revenue is stored on the package booking, not its services.
+        package_revenue = PackageBooking.objects.filter(
+            company__owner=request.user
+        ).exclude(status=PackageBooking.Status.REJECTED).aggregate(
+            total=Coalesce(Sum("total_price"), Value(0), output_field=IntegerField())
+        )["total"]
+        summary["total_price"] += package_revenue
 
         return Response(summary)

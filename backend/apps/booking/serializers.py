@@ -13,6 +13,9 @@ class BookingsListSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     service_name = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
+    package_name = serializers.CharField(
+        source="package_booking.package.name", read_only=True, default=None
+    )
 
     class Meta:
         model = Booking
@@ -31,6 +34,8 @@ class BookingsListSerializer(serializers.ModelSerializer):
             "contact_detail_phone_number",
             "starts_at",
             "ends_at",
+            "package_booking",
+            "package_name",
         ]
 
     def get_category_name(self, obj):
@@ -53,6 +58,9 @@ class BookingSerializer(serializers.ModelSerializer):
     review = serializers.SerializerMethodField()
     buffer_before = serializers.SerializerMethodField()
     buffer_after = serializers.SerializerMethodField()
+    package_name = serializers.CharField(
+        source="package_booking.package.name", read_only=True, default=None
+    )
 
     class Meta:
         model = Booking
@@ -87,9 +95,12 @@ class BookingSerializer(serializers.ModelSerializer):
             "ends_at",
             "buffer_before",
             "buffer_after",
+            "package_booking",
+            "package_name",
         ]
         read_only_fields = [
             "id",
+            "package_booking",
             "company",
             "customer",
             "updated_at",
@@ -294,6 +305,11 @@ class BookingApprovedDeclinedProviderSerializer(serializers.ModelSerializer):
         fields = ["status"]
 
     def update(self, instance, validated_data):
+        if instance.package_booking_id:
+            raise serializers.ValidationError(
+                "This booking is part of a package. Confirm or reject the "
+                "package booking instead."
+            )
         current_status = instance.status
         if current_status != Booking.VerificationStatus.PENDING:
             raise serializers.ValidationError(
