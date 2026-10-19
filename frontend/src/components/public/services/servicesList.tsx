@@ -13,6 +13,7 @@ import type { FilterOptions, FilterValueRecord } from "@/types/general";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
 import {
   Box,
+  Button,
   Divider,
   Grid,
   Typography,
@@ -298,6 +299,14 @@ export default function ServicesListPage() {
                     />
                   </Box>
                 </Box>
+
+                <Button
+                  variant="outlined"
+                  sx={{ textTransform: "none", height: 45, borderRadius: "10px" }}
+                  onClick={() => router.push("/packages")}
+                >
+                  Browse packages
+                </Button>
 
                 <Divider />
               </Box>
