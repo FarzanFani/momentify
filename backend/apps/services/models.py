@@ -1,7 +1,7 @@
 import uuid
 from datetime import timedelta
 from decimal import Decimal
-from django.db.models import Sum, Q
+from django.db.models import Q
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
@@ -213,11 +213,24 @@ class ServicePackages(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     description = models.TextField()
+    cover_image = models.ImageField(
+        upload_to="packages/covers/",
+        null=True,
+        blank=True,
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive packages are hidden from customers.",
+    )
     services = models.ManyToManyField(
         Service, through="ServicePackageItem", related_name="package"
     )
     category = models.ForeignKey(
-        ServiceCategory, on_delete=models.PROTECT, related_name="package"
+        ServiceCategory,
+        on_delete=models.PROTECT,
+        related_name="package",
+        help_text="Category the package is listed under. "
+        "Included services may belong to any category.",
     )
     company = models.ForeignKey(
         Company,
@@ -257,6 +270,19 @@ class ServicePackages(models.Model):
         help_text="Final package price, regardless of included service prices.",
     )
 
+    included_guests = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        help_text="Number of guests covered by the package price.",
+    )
+    price_per_extra_guest = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text="Price charged for each guest above the included guests.",
+    )
+
     allow_full_payment = models.BooleanField(default=True)
     deposit_percentage = models.DecimalField(
         max_digits=10,
@@ -272,17 +298,13 @@ class ServicePackages(models.Model):
             "Example: enter 20 for a 20% deposit."
         ),
     )
-    installment_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
+    installment_count = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
-        validators=[
-            MinValueValidator(Decimal("0.01")),
-        ],
+        validators=[MinValueValidator(2), MaxValueValidator(52)],
         help_text=(
-            "Amount of each installment. Leave empty if installments "
-            "are not available."
+            "Number of installments the total is split into. Leave empty if "
+            "installments are not available."
         ),
     )
     installment_interval = models.CharField(
@@ -292,11 +314,23 @@ class ServicePackages(models.Model):
         blank=True,
         help_text=(
             "Frequency of installment payments. Required when an "
-            "installment amount is configured."
+            "installment count is configured."
         ),
     )
 
-    allow_scheduling_late = models.BooleanField(default=False)
+    allow_scheduling_late = models.BooleanField(
+        default=False,
+        help_text="Customers may buy the package and schedule its services later.",
+    )
+    scheduling_deadline_days = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(365)],
+        help_text=(
+            "Days after booking within which every service must be scheduled. "
+            "Required when late scheduling is allowed."
+        ),
+    )
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -312,7 +346,7 @@ class ServicePackages(models.Model):
                 check=(
                     Q(allow_full_payment=True)
                     | Q(deposit_percentage__isnull=False)
-                    | Q(installment_amount__isnull=False)
+                    | Q(installment_count__isnull=False)
                 ),
                 name="service_package_has_payment_plan",
             ),
@@ -327,150 +361,172 @@ class ServicePackages(models.Model):
                 ),
                 name="service_package_valid_deposit_percentage",
             ),
-            # Installment amount and interval must be set together.
+            # Installment count and interval must be set together.
             models.CheckConstraint(
                 check=(
                     Q(
-                        installment_amount__isnull=True,
+                        installment_count__isnull=True,
                         installment_interval__isnull=True,
                     )
                     | Q(
-                        installment_amount__gt=Decimal("0.00"),
+                        installment_count__gte=2,
                         installment_interval__isnull=False,
                     )
                 ),
                 name="service_package_valid_installment_configuration",
+            ),
+            models.CheckConstraint(
+                check=Q(included_guests__gte=1),
+                name="service_package_included_guests_gte_1",
             ),
         ]
 
     def __str__(self):
         return self.name
 
+    @classmethod
+    def calculate_breakdown(
+        cls,
+        *,
+        pricing_method,
+        lines,
+        fixed_price=None,
+        fixed_discount=None,
+        percentage_discount=None,
+    ):
+        """
+        Price a package from its item lines.
+
+        `lines` is an iterable of (price, quantity, required) tuples. Required
+        items form the base subtotal the pricing method applies to; optional
+        items are add-ons priced on top and are not discounted.
+        """
+        subtotal = Decimal("0.00")
+        addons_subtotal = Decimal("0.00")
+        for price, quantity, required in lines:
+            line_total = Decimal(price) * quantity
+            if required:
+                subtotal += line_total
+            else:
+                addons_subtotal += line_total
+
+        if pricing_method == cls.PricingMethod.FIXED_PRICE:
+            total = fixed_price or Decimal("0.00")
+        elif pricing_method == cls.PricingMethod.PERCENTAGE_DISCOUNT:
+            discount = (
+                subtotal * (percentage_discount or Decimal("0.00")) / Decimal("100")
+            )
+            total = subtotal - discount
+        elif pricing_method == cls.PricingMethod.FIXED_DISCOUNT:
+            total = subtotal - (fixed_discount or Decimal("0.00"))
+        else:
+            total = subtotal
+
+        total = max(Decimal("0.00"), total).quantize(Decimal("0.01"))
+
+        return {
+            "services_subtotal": subtotal.quantize(Decimal("0.01")),
+            "addons_subtotal": addons_subtotal.quantize(Decimal("0.01")),
+            "total_price": total,
+            "savings": max(Decimal("0.00"), subtotal - total).quantize(
+                Decimal("0.01")
+            ),
+        }
+
+    def _item_lines(self):
+        return [(item.price, item.quantity, item.required) for item in self.items.all()]
+
+    @property
+    def price_breakdown(self):
+        return self.calculate_breakdown(
+            pricing_method=self.pricing_method,
+            lines=self._item_lines(),
+            fixed_price=self.fixed_price,
+            fixed_discount=self.fixed_discount,
+            percentage_discount=self.percentage_discount,
+        )
+
     @property
     def services_subtotal(self):
-        return self.services.aggregate(total=Sum("price"))["total"]
+        return self.price_breakdown["services_subtotal"]
 
     @property
     def total_price(self):
-        subtotal = self.services_subtotal
+        return self.price_breakdown["total_price"]
 
-        if self.pricing_method == self.PricingMethod.SERVICE_TOTAL:
-            return subtotal
+    @property
+    def max_guests(self):
+        capacities = [item.service.max_capacity for item in self.items.all()]
+        return min(capacities) if capacities else None
 
-        if self.pricing_method == self.PricingMethod.FIXED_PRICE:
-            return self.fixed_price or 0
+    @property
+    def installment_amount(self):
+        if not self.installment_count:
+            return None
+        return (self.total_price / self.installment_count).quantize(Decimal("0.01"))
 
-        if self.pricing_method == self.PricingMethod.PERCENTAGE_DISCOUNT:
-            discount = (
-                subtotal
-                * (self.percentage_discount or Decimal("0.00"))
-                / Decimal("100")
-            )
-            return max(0, subtotal - discount).quantize(Decimal("0.01"))
+    def calculate_price(self, guest_count, addon_item_ids=()):
+        """Final price for a guest count and a selection of optional items."""
+        breakdown = self.price_breakdown
+        extra_guests = max(0, guest_count - self.included_guests)
+        extra_guests_price = (extra_guests * self.price_per_extra_guest).quantize(
+            Decimal("0.01")
+        )
 
-        if self.pricing_method == self.PricingMethod.FIXED_DISCOUNT:
-            return max(
-                subtotal, (self.fixed_discount or Decimal("0.00")), Decimal("0.00")
-            )
+        addon_item_ids = {str(item_id) for item_id in addon_item_ids}
+        addons_price = sum(
+            (
+                item.price * item.quantity
+                for item in self.items.all()
+                if not item.required and str(item.id) in addon_item_ids
+            ),
+            Decimal("0.00"),
+        )
 
-        return subtotal
+        return {
+            "package_price": breakdown["total_price"],
+            "extra_guests": extra_guests,
+            "extra_guests_price": extra_guests_price,
+            "addons_price": addons_price.quantize(Decimal("0.01")),
+            "total_price": (
+                breakdown["total_price"] + extra_guests_price + addons_price
+            ).quantize(Decimal("0.01")),
+        }
 
     def clean(self):
         super().clean()
 
         errors = {}
 
-        # Pricing method validation
-        if self.pricing_method == self.PricingMethod.SERVICE_TOTAL:
-            if self.fixed_price is not None:
-                errors["fixed_price"] = (
-                    "Fixed price must be empty when pricing method is service total."
+        required_value_field = {
+            self.PricingMethod.FIXED_PRICE: "fixed_price",
+            self.PricingMethod.PERCENTAGE_DISCOUNT: "percentage_discount",
+            self.PricingMethod.FIXED_DISCOUNT: "fixed_discount",
+        }.get(self.pricing_method)
+
+        for field in ("fixed_price", "percentage_discount", "fixed_discount"):
+            value = getattr(self, field)
+            if field == required_value_field:
+                if value is None or value <= Decimal("0.00"):
+                    errors[field] = (
+                        f"{field.replace('_', ' ').capitalize()} must be greater "
+                        "than zero for this pricing method."
+                    )
+            elif value is not None:
+                errors[field] = (
+                    f"{field.replace('_', ' ').capitalize()} must be empty for "
+                    "this pricing method."
                 )
 
-            if self.fixed_discount is not None:
-                errors["fixed_discount"] = (
-                    "Fixed discount must be empty when pricing method is service total."
-                )
-
-            if self.percentage_discount is not None:
-                errors["percentage_discount"] = (
-                    "Percentage discount must be empty when pricing method is service total."
-                )
-
-        elif self.pricing_method == self.PricingMethod.FIXED_PRICE:
-            if self.fixed_price is None:
-                errors["fixed_price"] = (
-                    "Fixed price is required when pricing method is fixed price."
-                )
-
-            if self.fixed_discount is not None:
-                errors["fixed_discount"] = (
-                    "Fixed discount must be empty when pricing method is fixed price."
-                )
-
-            if self.percentage_discount is not None:
-                errors["percentage_discount"] = (
-                    "Percentage discount must be empty when pricing method is fixed price."
-                )
-
-        elif self.pricing_method == self.PricingMethod.PERCENTAGE_DISCOUNT:
-            if self.percentage_discount is None:
-                errors["percentage_discount"] = (
-                    "Percentage discount is required for this pricing method."
-                )
-            elif self.percentage_discount <= Decimal("0.00"):
-                errors["percentage_discount"] = (
-                    "Percentage discount must be greater than zero."
-                )
-
-            if self.fixed_price is not None:
-                errors["fixed_price"] = (
-                    "Fixed price must be empty when using percentage discount."
-                )
-
-            if self.fixed_discount is not None:
-                errors["fixed_discount"] = (
-                    "Fixed discount must be empty when using percentage discount."
-                )
-
-        elif self.pricing_method == self.PricingMethod.FIXED_DISCOUNT:
-            if self.fixed_discount is None:
-                errors["fixed_discount"] = (
-                    "Fixed discount is required for this pricing method."
-                )
-            elif self.fixed_discount <= Decimal("0.00"):
-                errors["fixed_discount"] = "Fixed discount must be greater than zero."
-
-            if self.fixed_price is not None:
-                errors["fixed_price"] = (
-                    "Fixed price must be empty when using fixed discount."
-                )
-
-            if self.percentage_discount is not None:
-                errors["percentage_discount"] = (
-                    "Percentage discount must be empty when using fixed discount."
-                )
-
-        # Payment plan validation
-        installment_amount_is_set = self.installment_amount is not None
-        installment_interval_is_set = self.installment_interval is not None
-
-        if installment_amount_is_set and not installment_interval_is_set:
-            errors["installment_interval"] = (
-                "Installment interval is required when an installment "
-                "amount is provided."
-            )
-
-        if installment_interval_is_set and not installment_amount_is_set:
-            errors["installment_amount"] = (
-                "Installment amount is required when an installment "
-                "interval is selected."
+        if (self.installment_count is None) != (self.installment_interval is None):
+            errors["installment_count"] = (
+                "Installment count and interval must be set together."
             )
 
         if (
             not self.allow_full_payment
             and self.deposit_percentage is None
-            and self.installment_amount is None
+            and self.installment_count is None
         ):
             errors["allow_full_payment"] = (
                 "At least one payment plan must be available."
@@ -491,10 +547,14 @@ class ServicePackageItem(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text="service-specific price. Empty means use the service's normal price.",
+        help_text="Price of one unit of the service inside this package.",
     )
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
-    required = models.BooleanField(default=False)
+    required = models.BooleanField(
+        default=True,
+        help_text="Required items are always included. Optional items are "
+        "add-ons the customer may choose.",
+    )
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -505,6 +565,10 @@ class ServicePackageItem(models.Model):
                 name="unique_service_per_package",
             ),
         ]
+
+    @property
+    def line_total(self):
+        return self.price * self.quantity
 
     def __str__(self):
         return f"{self.package.name} - {self.service.name}"

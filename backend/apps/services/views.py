@@ -6,21 +6,38 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin, IsProvider, IsCustomer
 from apps.companies.models import Company
+from django.db.models import Prefetch, ProtectedError
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Service, ServiceCategory, ServicePackages
+from .models import Service, ServiceCategory, ServicePackageItem, ServicePackages
 from .serializers import (
     ServiceCategorySerializer,
     ServiceSerializer,
     PriceCalculationSerializer,
+    PackageCoverImageSerializer,
+    PackagePriceCalculationSerializer,
     ServicePackageSerializer,
     ServiceTinySerializer,
 )
+
+
+def package_queryset():
+    return ServicePackages.objects.select_related(
+        "company", "category"
+    ).prefetch_related(
+        Prefetch(
+            "items",
+            queryset=ServicePackageItem.objects.select_related(
+                "service", "service__category"
+            ).order_by("-required", "created_at"),
+        )
+    )
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -47,11 +64,36 @@ class ServiceViewSet(viewsets.ModelViewSet):
         company = self.get_company()
         serializer.save(company=company)
 
+    def destroy(self, request, *args, **kwargs):
+        service = self.get_object()
+        try:
+            service.delete()
+        except ProtectedError:
+            package_names = list(
+                ServicePackages.objects.filter(items__service=service)
+                .values_list("name", flat=True)
+                .distinct()
+            )
+            if package_names:
+                message = (
+                    f"This service is used in {len(package_names)} package(s): "
+                    f"{', '.join(package_names)}. Remove it from those packages "
+                    "or deactivate the service instead."
+                )
+            else:
+                message = (
+                    "This service has bookings and cannot be deleted. "
+                    "Deactivate it instead."
+                )
+            raise ValidationError({"service": message})
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=False, methods=["get"], url_path="tiny-list")
     def tiny_list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().filter(
-            category__id=request.query_params.get("category_id")
-        )
+        queryset = self.get_queryset().filter(is_active=True)
+        category_id = request.query_params.get("category_id")
+        if category_id:
+            queryset = queryset.filter(category__id=category_id)
         serializer = ServiceTinySerializer(
             queryset, many=True, context=self.get_serializer_context()
         )
@@ -194,9 +236,7 @@ class ProviderPackageViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated, IsProvider]
 
     def get_queryset(self):
-        queryset = ServicePackages.objects.select_related(
-            "company", "category"
-        ).filter(company__owner=self.request.user)
+        queryset = package_queryset().filter(company__owner=self.request.user)
 
         company_id = self.request.query_params.get("company_id")
         if company_id:
@@ -221,7 +261,7 @@ class ServicePackageApiView(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        return ServicePackages.objects.filter(company=self.get_company())
+        return package_queryset().filter(company=self.get_company())
 
     def perform_create(self, serializer):
         serializer.save(company=self.get_company())
@@ -230,3 +270,86 @@ class ServicePackageApiView(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context["company"] = self.get_company()
         return context
+
+    @action(
+        detail=True,
+        methods=["post", "delete"],
+        url_path="cover-image",
+        parser_classes=[MultiPartParser, FormParser],
+    )
+    def cover_image(self, request, *args, **kwargs):
+        package = self.get_object()
+
+        if request.method == "DELETE":
+            if package.cover_image:
+                package.cover_image.delete(save=False)
+            package.cover_image = None
+        else:
+            serializer = PackageCoverImageSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            if package.cover_image:
+                package.cover_image.delete(save=False)
+            package.cover_image = serializer.validated_data["cover_image"]
+
+        package.save(update_fields=["cover_image", "updated_at"])
+
+        return Response(
+            ServicePackageSerializer(
+                package, context=self.get_serializer_context()
+            ).data
+        )
+
+
+class PublicPackageViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ServicePackageSerializer
+    permission_classes = [AllowAny]
+
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["name", "description", "company__name"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        # A package is only sellable while every included service is active.
+        queryset = (
+            package_queryset()
+            .filter(is_active=True)
+            .exclude(items__service__is_active=False)
+        )
+
+        company_id = self.request.query_params.get("company_id")
+        if company_id:
+            try:
+                uuid.UUID(company_id)
+            except ValueError:
+                raise ValidationError({"company_id": "Enter a valid company UUID."})
+            queryset = queryset.filter(company_id=company_id)
+
+        category_id = self.request.query_params.get("category_id")
+        if category_id:
+            category_ids = category_id.split(",")
+            try:
+                [int(id) for id in category_ids]
+            except ValueError:
+                raise ValidationError({"category_id": "Enter a valid category id."})
+            queryset = queryset.filter(category_id__in=category_ids)
+
+        return queryset
+
+    @action(detail=True, methods=["post"], url_path="calculate-price")
+    def calculate_price(self, request, *args, **kwargs):
+        package = self.get_object()
+        serializer = PackagePriceCalculationSerializer(
+            data=request.data, context={"package": package}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        result = package.calculate_price(
+            guest_count=serializer.validated_data["guest_count"],
+            addon_item_ids=serializer.validated_data["addons"],
+        )
+        return Response(
+            {
+                key: str(value) if isinstance(value, Decimal) else value
+                for key, value in result.items()
+            }
+        )

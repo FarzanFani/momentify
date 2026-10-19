@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProviderServiceViewSet,
     ProviderPackageViewSet,
+    PublicPackageViewSet,
     PublicServiceViewSet,
     ServiceCategoryTinyListViewSet,
     ServiceCategoryViewSet,
@@ -30,6 +31,7 @@ router.register(
 router.register(
     r"provider/packages", ProviderPackageViewSet, basename="provider-package"
 )
+router.register(r"public/packages", PublicPackageViewSet, basename="public-package")
 
 service_category_list = ServiceCategoryViewSet.as_view(
     {"get": "list", "post": "create"}
