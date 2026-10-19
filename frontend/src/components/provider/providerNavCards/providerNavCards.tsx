@@ -7,6 +7,7 @@ import {
   MiscellaneousServices,
   Inventory2,
   EventNote,
+  CardGiftcard,
   Settings,
   Insights,
 } from "@mui/icons-material";
@@ -44,6 +45,12 @@ const navItems = [
     icon: <EventNote fontSize="large" />,
     link: "/provider/bookings",
     bgcolor: "#0F766E",
+  },
+  {
+    title: "Package bookings",
+    icon: <CardGiftcard fontSize="large" />,
+    link: "/provider/package-bookings",
+    bgcolor: "#9A3412",
   },
   {
     title: "Insight",

@@ -186,7 +186,7 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
             spacing={1.5}
             width={{ xs: "100%", sm: "auto" }}
           >
-            {isPending && (
+            {isPending && !booking.package_booking && (
               <Button
                 variant="contained"
                 startIcon={<EditRounded />}
@@ -561,9 +561,31 @@ export default function CustomerBookingPreviewPage({ uuid }: { uuid: string }) {
             <Stack spacing={2.5} sx={{ position: { lg: "sticky" }, top: 24 }}>
               <BookingSummaryCard booking={booking} />
 
-              <PaymentSummaryCard booking={booking} />
+              {booking.package_booking ? (
+                <Alert
+                  severity="info"
+                  action={
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        router.push(
+                          `/customer/package-bookings/${booking.package_booking}`,
+                        )
+                      }
+                    >
+                      View package
+                    </Button>
+                  }
+                >
+                  {`Part of the ${booking.package_name} package. Price, payment and approval are managed on the package booking.`}
+                </Alert>
+              ) : (
+                <PaymentSummaryCard booking={booking} />
+              )}
 
-              {!isCancelled && booking.status !== "COMPLETED" && (
+              {!isCancelled &&
+                booking.status !== "COMPLETED" &&
+                !booking.package_booking && (
                 <CancelBookingCard
                   isCancelling={isCancelling}
                   onOpen={() => setCancelDialogOpen(true)}

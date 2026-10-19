@@ -126,7 +126,15 @@ function BookingsMainView({
             width={{ xs: "100%", md: "auto" }}
             display="flex"
             justifyContent="flex-end"
+            gap={1.5}
           >
+            <Button
+              variant="outlined"
+              onClick={() => router.push("/customer/package-bookings")}
+              sx={{ textTransform: "none", fontWeight: 800, borderRadius: 3 }}
+            >
+              Package bookings
+            </Button>
             <Button
               variant="contained"
               startIcon={<ExploreRounded />}

@@ -22,6 +22,7 @@ import {
   ReplayRounded,
 } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -83,7 +84,8 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
   const { mutate: postReply, isPending: isPostReplyPending } =
     usePostProviderReviewReply();
 
-  const isPending = booking?.status === "PENDING";
+  const isPackageBooking = Boolean(booking?.package_booking);
+  const isPending = booking?.status === "PENDING" && !isPackageBooking;
   const isCancelled = booking?.status === "CANCELLED";
   const isCompleted = booking?.status === "COMPLETED";
 
@@ -236,7 +238,26 @@ export default function ProviderBookingPreviewPage({ uuid }: { uuid: string }) {
             Confirm
           </Button>
         </Stack>
-        {!isPending && (
+        {isPackageBooking && booking && (
+          <Alert
+            severity="info"
+            action={
+              <Button
+                size="small"
+                onClick={() =>
+                  router.push(
+                    `/provider/package-bookings/${booking.package_booking}`,
+                  )
+                }
+              >
+                Open package
+              </Button>
+            }
+          >
+            {`Part of the ${booking.package_name} package. Confirm or reject the whole package from the package booking.`}
+          </Alert>
+        )}
+        {!isPending && !isPackageBooking && (
           <Card
             sx={{
               borderRadius: 2,
