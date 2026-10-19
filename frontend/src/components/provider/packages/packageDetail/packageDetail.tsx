@@ -1,16 +1,26 @@
 "use client";
 
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
-import { useGetSingleProviderPackage } from "@/hooks/service";
+import { useSnackbar } from "@/contexts/SnackbarContext";
+import { useDeletePackage, useGetSingleProviderPackage } from "@/hooks/service";
 import { ServicePackage } from "@/services/provider/services";
+import { extractApiError } from "@/utils/extractApiError";
 import { formatPrice } from "@/utils/helperFunctions";
+import {
+  getInstallmentLabel,
+  getPricingValueLabel,
+  PRICING_METHOD_LABEL,
+} from "@/utils/packagePricing";
 import {
   Business,
   Category,
   CalendarMonth,
+  DeleteOutline,
   Edit,
+  Groups,
   Inventory2,
   Payments,
+  Visibility,
 } from "@mui/icons-material";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
@@ -20,6 +30,11 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   Skeleton,
@@ -27,32 +42,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-
-const PRICING_METHOD_LABEL: Record<string, string> = {
-  service_total: "Sum of services",
-  fixed_price: "Fixed price",
-  percentage_discount: "Percentage discount",
-  fixed_discount: "Fixed discount",
-};
-
-function getPricingValueLabel(servicePackage: ServicePackage) {
-  switch (servicePackage.pricing_method) {
-    case "fixed_price":
-      return servicePackage.fixed_price
-        ? formatPrice(servicePackage.fixed_price)
-        : "-";
-    case "percentage_discount":
-      return servicePackage.percentage_discount
-        ? `${servicePackage.percentage_discount}% off`
-        : "-";
-    case "fixed_discount":
-      return servicePackage.fixed_discount
-        ? `${formatPrice(servicePackage.fixed_discount)} off`
-        : "-";
-    default:
-      return "Sum of services";
-  }
-}
+import { useState } from "react";
 
 export default function PackageDetailPage({ uuid }: { uuid: string }) {
   const { data: servicePackage, isLoading: isPackageLoading } =
@@ -73,6 +63,28 @@ function PackageDetailMainView({
   servicePackage: ServicePackage;
 }) {
   const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { mutate: deletePackage, isPending: isDeleting } = useDeletePackage();
+
+  const hasSavings = Number(servicePackage.savings) > 0;
+  const addons = servicePackage.services.filter((item) => !item.required);
+
+  const handleDelete = () => {
+    deletePackage(
+      { id: servicePackage.id, companyId: servicePackage.company },
+      {
+        onSuccess() {
+          showSnackbar("Package deleted", "success");
+          router.push("/provider/packages");
+        },
+        onError(error: any) {
+          showSnackbar(extractApiError(error), "error");
+          setIsDeleteDialogOpen(false);
+        },
+      },
+    );
+  };
 
   return (
     <Box
@@ -84,6 +96,46 @@ function PackageDetailMainView({
         background: "linear-gradient(180deg, #F7FAFF 0%, #ffffff 100%)",
       }}
     >
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle sx={{ color: "error.main", fontWeight: 900 }}>
+          Delete package?
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5}>
+            <DialogContentText>
+              {`"${servicePackage.name}" will be removed. The services inside it are not affected.`}
+            </DialogContentText>
+            <Typography color="error.main" variant="body2" fontWeight={500}>
+              This action cannot be undone. To hide the package temporarily,
+              mark it inactive instead.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setIsDeleteDialogOpen(false)}
+            disabled={isDeleting}
+            sx={{ textTransform: "none", fontWeight: 800 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={isDeleting}
+            onClick={handleDelete}
+            sx={{ textTransform: "none", fontWeight: 900 }}
+          >
+            {isDeleting ? "Deleting..." : "Delete package"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Box sx={{ width: "90%" }}>
         <Typography variant="h4" fontWeight={700} color="primary.main">
           Preview Package
@@ -110,10 +162,11 @@ function PackageDetailMainView({
         >
           <Box
             sx={{
-              minHeight: 190,
+              minHeight: servicePackage.cover_image ? 260 : 190,
               p: { xs: 2.5, sm: 4 },
-              background:
-                "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
+              background: servicePackage.cover_image
+                ? `linear-gradient(180deg, rgba(7, 42, 99, 0.1) 0%, rgba(7, 42, 99, 0.75) 100%), url(${servicePackage.cover_image}) center / cover`
+                : "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
               color: "#fff",
               display: "flex",
               alignItems: "flex-end",
@@ -127,6 +180,17 @@ function PackageDetailMainView({
                 flexWrap="wrap"
                 useFlexGap
               >
+                <Chip
+                  label={servicePackage.is_active ? "Active" : "Inactive"}
+                  size="small"
+                  sx={{
+                    fontWeight: 800,
+                    color: "#fff",
+                    backgroundColor: servicePackage.is_active
+                      ? "rgba(22, 163, 74, 0.85)"
+                      : "rgba(220, 38, 38, 0.85)",
+                  }}
+                />
                 <Chip
                   label={
                     PRICING_METHOD_LABEL[servicePackage.pricing_method] ??
@@ -201,18 +265,37 @@ function PackageDetailMainView({
                   letterSpacing: 0.8,
                 }}
               >
-                Package pricing
+                Package price
               </Typography>
 
-              <Typography
-                variant="h4"
-                sx={{
-                  color: "primary.main",
-                  fontWeight: 900,
-                  lineHeight: 1.1,
-                }}
-              >
-                {getPricingValueLabel(servicePackage)}
+              <Stack direction="row" spacing={1.5} alignItems="baseline">
+                <Typography
+                  variant="h4"
+                  sx={{
+                    color: "primary.main",
+                    fontWeight: 900,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {formatPrice(Number(servicePackage.total_price))}
+                </Typography>
+                {hasSavings && (
+                  <Typography
+                    variant="h6"
+                    color="text.secondary"
+                    sx={{ textDecoration: "line-through" }}
+                  >
+                    {formatPrice(Number(servicePackage.services_subtotal))}
+                  </Typography>
+                )}
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary">
+                {hasSavings
+                  ? `${getPricingValueLabel(servicePackage)} · customers save ${formatPrice(Number(servicePackage.savings))}`
+                  : getPricingValueLabel(servicePackage)}
+                {addons.length > 0 &&
+                  ` · ${addons.length} optional add-on${addons.length === 1 ? "" : "s"} up to ${formatPrice(Number(servicePackage.addons_subtotal))}`}
               </Typography>
             </Box>
 
@@ -242,6 +325,21 @@ function PackageDetailMainView({
                 }}
               >
                 Edit Package
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteOutline />}
+                onClick={() => setIsDeleteDialogOpen(true)}
+                sx={{
+                  borderRadius: 3,
+                  px: 3,
+                  py: 1.2,
+                  fontWeight: 800,
+                  textTransform: "none",
+                }}
+              >
+                Delete
               </Button>
             </Stack>
           </Box>
@@ -301,11 +399,31 @@ function PackageDetailMainView({
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <DetailInfoCard
                     icon={<Payments />}
-                    label="Installment"
+                    label="Installments"
+                    value={getInstallmentLabel(servicePackage) ?? "Not available"}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <DetailInfoCard
+                    icon={<Groups />}
+                    label="Guests"
+                    value={`${servicePackage.included_guests} included${
+                      Number(servicePackage.price_per_extra_guest) > 0
+                        ? ` · +${formatPrice(Number(servicePackage.price_per_extra_guest))} per extra guest`
+                        : ""
+                    }${servicePackage.max_guests ? ` · max ${servicePackage.max_guests}` : ""}`}
+                  />
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <DetailInfoCard
+                    icon={<Visibility />}
+                    label="Visibility"
                     value={
-                      servicePackage.installment_amount
-                        ? `${formatPrice(servicePackage.installment_amount)} / ${servicePackage.installment_interval}`
-                        : "Not available"
+                      servicePackage.is_active
+                        ? "Visible to customers"
+                        : "Hidden from customers"
                     }
                   />
                 </Grid>
@@ -313,10 +431,10 @@ function PackageDetailMainView({
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <DetailInfoCard
                     icon={<CalendarMonth />}
-                    label="Late scheduling"
+                    label="Schedule after purchase"
                     value={
                       servicePackage.allow_scheduling_late
-                        ? "Allowed"
+                        ? `Allowed · within ${servicePackage.scheduling_deadline_days} days`
                         : "Not allowed"
                     }
                   />
@@ -333,7 +451,7 @@ function PackageDetailMainView({
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <DetailInfoCard
                     icon={<Category />}
-                    label="Category"
+                    label="Listed under"
                     value={servicePackage.category_name}
                   />
                 </Grid>
@@ -372,14 +490,16 @@ function PackageDetailMainView({
                             {item.service_name ?? item.service}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Quantity: {item.quantity}
-                            {item.price ? ` · ${formatPrice(item.price)}` : ""}
+                            {item.service_category_name
+                              ? `${item.service_category_name} · `
+                              : ""}
+                            {`${item.quantity} × ${formatPrice(Number(item.price))} = ${formatPrice(Number(item.line_total))}`}
                           </Typography>
                         </Box>
                       </Stack>
 
                       <Chip
-                        label={item.required ? "Required" : "Optional"}
+                        label={item.required ? "Included" : "Optional add-on"}
                         size="small"
                         sx={{
                           fontWeight: 700,

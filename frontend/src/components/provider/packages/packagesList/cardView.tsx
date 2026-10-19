@@ -3,6 +3,12 @@
 import { ServicePackage } from "@/services/provider/services";
 import { formatPrice } from "@/utils/helperFunctions";
 import {
+  getPaymentOptionsLabel,
+  getPricingValueLabel,
+  PRICING_METHOD_LABEL,
+} from "@/utils/packagePricing";
+import {
+  Business,
   CalendarMonth,
   CheckCircle,
   Inventory2,
@@ -56,50 +62,19 @@ const stackLayerSx = (depth: number) => ({
   boxShadow: "0 10px 24px rgba(35, 25, 66, 0.08)",
 });
 
-const PRICING_METHOD_LABEL: Record<string, string> = {
-  service_total: "Sum of services",
-  fixed_price: "Fixed price",
-  percentage_discount: "Percentage discount",
-  fixed_discount: "Fixed discount",
-};
-
-function getPricingValueLabel(servicePackage: ServicePackage) {
-  switch (servicePackage.pricing_method) {
-    case "fixed_price":
-      return servicePackage.fixed_price
-        ? formatPrice(servicePackage.fixed_price)
-        : "-";
-    case "percentage_discount":
-      return servicePackage.percentage_discount
-        ? `${servicePackage.percentage_discount}% off`
-        : "-";
-    case "fixed_discount":
-      return servicePackage.fixed_discount
-        ? `${formatPrice(servicePackage.fixed_discount)} off`
-        : "-";
-    default:
-      return "Sum of services";
-  }
-}
-
-function getPaymentOptionsLabel(servicePackage: ServicePackage) {
-  const options: string[] = [];
-  if (servicePackage.allow_full_payment) options.push("Full payment");
-  if (servicePackage.deposit_percentage) options.push("Deposit");
-  if (servicePackage.installment_amount) options.push("Installments");
-  return options.length > 0 ? options.join(", ") : "-";
-}
-
 export default function PackageCardView({
   servicePackage,
+  isPublic = false,
 }: {
   servicePackage: ServicePackage;
+  isPublic?: boolean;
 }) {
   const router = useRouter();
 
   const serviceCount = servicePackage.services?.length ?? 0;
   const requiredCount =
     servicePackage.services?.filter((item) => item.required).length ?? 0;
+  const hasSavings = Number(servicePackage.savings) > 0;
 
   return (
     <Box sx={{ position: "relative", height: "100%", width: "100%" }}>
@@ -128,11 +103,26 @@ export default function PackageCardView({
         <Box
           sx={{
             height: 110,
-            background:
-              "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
+            background: servicePackage.cover_image
+              ? `linear-gradient(180deg, rgba(7, 42, 99, 0.15) 0%, rgba(7, 42, 99, 0.55) 100%), url(${servicePackage.cover_image}) center / cover`
+              : "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
             position: "relative",
           }}
         >
+          {!servicePackage.is_active && (
+            <Chip
+              label="Inactive"
+              size="small"
+              sx={{
+                position: "absolute",
+                top: 16,
+                left: 16,
+                fontWeight: 700,
+                color: "#fff",
+                backgroundColor: "rgba(220, 38, 38, 0.85)",
+              }}
+            />
+          )}
           <Chip
             label={
               PRICING_METHOD_LABEL[servicePackage.pricing_method] ??
@@ -205,8 +195,8 @@ export default function PackageCardView({
               <Grid size={{ xs: 6 }}>
                 <InfoItem
                   icon={<CheckCircle />}
-                  label="Required services"
-                  value={requiredCount}
+                  label="Required / add-ons"
+                  value={`${requiredCount} / ${serviceCount - requiredCount}`}
                 />
               </Grid>
 
@@ -219,15 +209,23 @@ export default function PackageCardView({
               </Grid>
 
               <Grid size={{ xs: 6 }}>
-                <InfoItem
-                  icon={<CalendarMonth />}
-                  label="Late scheduling"
-                  value={
-                    servicePackage.allow_scheduling_late
-                      ? "Allowed"
-                      : "Not allowed"
-                  }
-                />
+                {isPublic ? (
+                  <InfoItem
+                    icon={<Business />}
+                    label="Provided by"
+                    value={servicePackage.company_name}
+                  />
+                ) : (
+                  <InfoItem
+                    icon={<CalendarMonth />}
+                    label="Schedule later"
+                    value={
+                      servicePackage.allow_scheduling_late
+                        ? "Allowed"
+                        : "Not allowed"
+                    }
+                  />
+                )}
               </Grid>
             </Grid>
 
@@ -245,21 +243,41 @@ export default function PackageCardView({
                 flexDirection: "row-reverse",
               }}
             >
-              <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack alignItems="flex-end">
+                {hasSavings && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ textDecoration: "line-through" }}
+                  >
+                    {formatPrice(Number(servicePackage.services_subtotal))}
+                  </Typography>
+                )}
                 <Typography
                   variant="h6"
                   sx={{
                     fontWeight: 900,
                     color: "primary.main",
+                    lineHeight: 1.1,
                   }}
                 >
-                  {getPricingValueLabel(servicePackage)}
+                  {formatPrice(Number(servicePackage.total_price))}
                 </Typography>
               </Stack>
 
-              <Typography variant="caption" color="secondary.dark">
-                package pricing
-              </Typography>
+              <Stack>
+                <Typography variant="caption" color="secondary.dark">
+                  package price
+                </Typography>
+                {hasSavings && (
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 800, color: "success.main" }}
+                  >
+                    {`${getPricingValueLabel(servicePackage)} · save ${formatPrice(Number(servicePackage.savings))}`}
+                  </Typography>
+                )}
+              </Stack>
             </Box>
           </Stack>
         </CardContent>
@@ -276,7 +294,11 @@ export default function PackageCardView({
             variant="contained"
             sx={primaryButtonSx}
             onClick={() =>
-              router.push(`/provider/packages/${servicePackage.id}/preview`)
+              router.push(
+                isPublic
+                  ? `/packages/${servicePackage.id}`
+                  : `/provider/packages/${servicePackage.id}/preview`,
+              )
             }
           >
             View Details

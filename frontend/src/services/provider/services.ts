@@ -52,37 +52,71 @@ export interface CompanyServicesTinyList {
   id: string;
   name: string;
   price: number;
+  max_capacity: number;
+  category_name: string | null;
 }
 
 export type ServiceTypeInPackagesPatyload = {
   service: string;
   service_name?: string;
-  price?: number;
-  quantity: number;
+  price?: number | string;
+  quantity: number | string;
   required: boolean;
 };
+
+export type PackagePricingMethod =
+  | "service_total"
+  | "fixed_price"
+  | "percentage_discount"
+  | "fixed_discount";
 
 export type ServicePackagesPayload = {
   name: string;
   description: string;
   category: string;
   company: string;
-  pricing_method: string;
-  fixed_discount?: number;
-  percentage_discount?: number;
-  fixed_price?: number;
+  is_active: boolean;
+  pricing_method: PackagePricingMethod;
+  fixed_discount?: number | string | null;
+  percentage_discount?: number | string | null;
+  fixed_price?: number | string | null;
+  included_guests: number | string;
+  price_per_extra_guest: number | string;
   allow_full_payment: boolean;
-  installment_amount?: number;
-  deposit_percentage?: number;
-  installment_interval?: string;
+  installment_count?: number | string | null;
+  deposit_percentage?: number | string | null;
+  installment_interval?: string | null;
   allow_scheduling_late: boolean;
+  scheduling_deadline_days?: number | string | null;
   services: ServiceTypeInPackagesPatyload[];
 };
 
-export interface ServicePackage extends ServicePackagesPayload {
+export type ServicePackageItem = Omit<
+  ServiceTypeInPackagesPatyload,
+  "price" | "quantity"
+> & {
+  id: string;
+  quantity: number;
+  service_name: string;
+  service_price: string;
+  service_category_name: string | null;
+  price: string;
+  line_total: string;
+};
+
+export interface ServicePackage
+  extends Omit<ServicePackagesPayload, "services"> {
   id: string;
   company_name: string;
   category_name: string;
+  cover_image: string | null;
+  services: ServicePackageItem[];
+  services_subtotal: string;
+  addons_subtotal: string;
+  total_price: string;
+  savings: string;
+  installment_amount: string | null;
+  max_guests: number | null;
 }
 
 export const getProviderServicesList = async (
@@ -99,15 +133,10 @@ export const getProviderServicesList = async (
   return data.data as GeneralListType<CompanyServices>;
 };
 
-export const getProviderServicesTinyList = async (
-  company_id: string,
-  category_id: string,
-) => {
+export const getProviderServicesTinyList = async (company_id: string) => {
   const { data } = await axiosInstance.get<
     ApiResponse<CompanyServicesTinyList[]>
-  >(`/api/companies/${company_id}/services/tiny-list/`, {
-    params: { category_id },
-  });
+  >(`/api/companies/${company_id}/services/tiny-list/`);
 
   if (!data.success) {
     throw data;
@@ -217,6 +246,66 @@ export const putProviderPackage = async ({
   const { data } = await axiosInstance.put<ApiResponse<ServicePackage>>(
     `/api/companies/${servicePackage.company}/packages/${id}/`,
     servicePackage,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as ServicePackage;
+};
+
+export const deleteProviderPackage = async ({
+  id,
+  companyId,
+}: {
+  id: string;
+  companyId: string;
+}) => {
+  const { data } = await axiosInstance.delete<ApiResponse<null>>(
+    `/api/companies/${companyId}/packages/${id}/`,
+  );
+
+  // 204 responses have no body.
+  if (data && !data.success) {
+    throw data;
+  }
+};
+
+export const uploadProviderPackageCover = async ({
+  id,
+  companyId,
+  file,
+}: {
+  id: string;
+  companyId: string;
+  file: File;
+}): Promise<ServicePackage> => {
+  const formData = new FormData();
+  formData.append("cover_image", file);
+
+  const { data } = await axiosInstance.post<ApiResponse<ServicePackage>>(
+    `/api/companies/${companyId}/packages/${id}/cover-image/`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as ServicePackage;
+};
+
+export const deleteProviderPackageCover = async ({
+  id,
+  companyId,
+}: {
+  id: string;
+  companyId: string;
+}): Promise<ServicePackage> => {
+  const { data } = await axiosInstance.delete<ApiResponse<ServicePackage>>(
+    `/api/companies/${companyId}/packages/${id}/cover-image/`,
   );
 
   if (!data.success) {

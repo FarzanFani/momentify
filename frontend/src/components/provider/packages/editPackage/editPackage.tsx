@@ -1,5 +1,7 @@
 "use client";
 
+import type { ApiResponse } from "@/types/general";
+import type { AxiosError } from "axios";
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { useGetCompanyTinyList } from "@/hooks/company";
@@ -11,20 +13,25 @@ import {
 import { ServicePackagesPayload } from "@/services/provider/services";
 import { extractApiError } from "@/utils/extractApiError";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
+import { toPackagePayload } from "@/utils/packagePricing";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { PackageUnavailableView } from "../packageDetail/packageDetail";
 import PackageForm from "../packageForm/packageForm";
+import { useCoverImage } from "../packageForm/useCoverImage";
 
 export default function EditPackageForm({ uuid }: { uuid: string }) {
   const { data: categoryResponse } = useGetCategoryTinyList();
   const { data: companyResponse } = useGetCompanyTinyList();
-  const { mutate: editPackage } = useEditPackage();
+  const { mutate: editPackage, isPending } = useEditPackage();
 
   const { data: packageResponse, isLoading: isPackageLoading } =
     useGetSingleProviderPackage(uuid);
+  const { preview, onCoverChange, saveCover } = useCoverImage(
+    packageResponse?.cover_image ?? null,
+  );
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -41,25 +48,32 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
     "name",
   );
 
-  const { control, handleSubmit, reset } = useForm<ServicePackagesPayload>({
-    mode: "onChange",
-    defaultValues: {
-      name: "",
-      description: "",
-      company: "",
-      category: "",
-      pricing_method: "service_total",
-      fixed_discount: undefined,
-      percentage_discount: undefined,
-      fixed_price: undefined,
-      allow_full_payment: false,
-      installment_amount: undefined,
-      deposit_percentage: undefined,
-      installment_interval: "",
-      allow_scheduling_late: false,
-      services: [{ service: "", price: undefined, quantity: 1, required: true }],
-    },
-  });
+  const { control, handleSubmit, reset, setValue } =
+    useForm<ServicePackagesPayload>({
+      mode: "onChange",
+      defaultValues: {
+        name: "",
+        description: "",
+        company: "",
+        category: "",
+        is_active: true,
+        pricing_method: "service_total",
+        fixed_discount: undefined,
+        percentage_discount: undefined,
+        fixed_price: undefined,
+        included_guests: 1,
+        price_per_extra_guest: 0,
+        allow_full_payment: false,
+        installment_count: undefined,
+        deposit_percentage: undefined,
+        installment_interval: "",
+        allow_scheduling_late: false,
+        scheduling_deadline_days: 30,
+        services: [
+          { service: "", price: undefined, quantity: 1, required: true },
+        ],
+      },
+    });
 
   useEffect(() => {
     if (packageResponse) {
@@ -68,26 +82,45 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
         description: packageResponse.description,
         company: packageResponse.company,
         category: String(packageResponse.category),
+        is_active: packageResponse.is_active,
         pricing_method: packageResponse.pricing_method,
-        fixed_discount: packageResponse.fixed_discount,
-        percentage_discount: packageResponse.percentage_discount,
-        fixed_price: packageResponse.fixed_price,
+        fixed_discount: packageResponse.fixed_discount ?? undefined,
+        percentage_discount: packageResponse.percentage_discount ?? undefined,
+        fixed_price: packageResponse.fixed_price ?? undefined,
+        included_guests: packageResponse.included_guests,
+        price_per_extra_guest: packageResponse.price_per_extra_guest,
         allow_full_payment: packageResponse.allow_full_payment,
-        installment_amount: packageResponse.installment_amount,
-        deposit_percentage: packageResponse.deposit_percentage,
-        installment_interval: packageResponse.installment_interval,
+        installment_count: packageResponse.installment_count ?? undefined,
+        deposit_percentage: packageResponse.deposit_percentage ?? undefined,
+        installment_interval: packageResponse.installment_interval ?? undefined,
         allow_scheduling_late: packageResponse.allow_scheduling_late,
-        services: packageResponse.services,
+        scheduling_deadline_days:
+          packageResponse.scheduling_deadline_days ?? 30,
+        services: packageResponse.services.map((item) => ({
+          service: item.service,
+          service_name: item.service_name,
+          price: Number(item.price),
+          quantity: item.quantity,
+          required: item.required,
+        })),
       });
     }
   }, [packageResponse]);
 
   const saveFormHandler = (data: ServicePackagesPayload) => {
     editPackage(
-      { id: uuid, servicePackage: data },
+      { id: uuid, servicePackage: toPackagePayload(data) },
       {
-        onSuccess() {
-          showSnackbar("Package updated successfully", "success");
+        async onSuccess() {
+          try {
+            await saveCover(uuid, data.company);
+            showSnackbar("Package updated successfully", "success");
+          } catch (error) {
+            showSnackbar(
+              `Package saved, but the cover image failed: ${extractApiError(error as AxiosError<ApiResponse<null>>)}`,
+              "error",
+            );
+          }
           router.push(`/provider/packages/${uuid}/preview`);
         },
         onError(error: any) {
@@ -137,6 +170,9 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
 
           <PackageForm
             control={control}
+            setValue={setValue}
+            coverPreview={preview}
+            onCoverChange={onCoverChange}
             companyOptions={companyOptions}
             categoryOptions={categoryOptions}
             inEdit
@@ -146,7 +182,7 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
             }))}
             initialDepositEnabled={Boolean(packageResponse.deposit_percentage)}
             initialInstallmentEnabled={Boolean(
-              packageResponse.installment_amount,
+              packageResponse.installment_count,
             )}
           />
 
@@ -175,6 +211,7 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
                 type="button"
                 variant="contained"
                 color="primary"
+                disabled={isPending}
                 sx={{
                   textTransform: "none",
                   px: 4,
@@ -183,7 +220,7 @@ export default function EditPackageForm({ uuid }: { uuid: string }) {
                 }}
                 onClick={handleSubmit(saveFormHandler)}
               >
-                Save
+                {isPending ? "Saving..." : "Save"}
               </Button>
             </Box>
           </Box>

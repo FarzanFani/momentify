@@ -1,5 +1,7 @@
 "use client";
 
+import type { ApiResponse } from "@/types/general";
+import type { AxiosError } from "axios";
 import Breadcrumb from "@/components/common/breadcrumb/Breadcrumb";
 import { useSnackbar } from "@/contexts/SnackbarContext";
 import { useGetCompanyTinyList } from "@/hooks/company";
@@ -7,10 +9,12 @@ import { useGetCategoryTinyList, usePostPackage } from "@/hooks/service";
 import { ServicePackagesPayload } from "@/services/provider/services";
 import { extractApiError } from "@/utils/extractApiError";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
+import { toPackagePayload } from "@/utils/packagePricing";
 import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import PackageForm from "../packageForm/packageForm";
+import { useCoverImage } from "../packageForm/useCoverImage";
 
 export default function AddPackageForm() {
   const router = useRouter();
@@ -18,7 +22,8 @@ export default function AddPackageForm() {
 
   const { data: companyResponse } = useGetCompanyTinyList();
   const { data: categoryResponse } = useGetCategoryTinyList();
-  const { mutate: createPackage } = usePostPackage();
+  const { mutate: createPackage, isPending } = usePostPackage();
+  const { preview, onCoverChange, saveCover } = useCoverImage();
 
   const companyOptions = mapApiResponseToDropdownOptions(
     companyResponse ?? [],
@@ -32,22 +37,26 @@ export default function AddPackageForm() {
     "name",
   );
 
-  const { control, handleSubmit } = useForm<ServicePackagesPayload>({
+  const { control, handleSubmit, setValue } = useForm<ServicePackagesPayload>({
     mode: "onChange",
     defaultValues: {
       name: "",
       description: "",
       category: "",
       company: "",
+      is_active: true,
       pricing_method: "service_total",
       fixed_discount: undefined,
       percentage_discount: undefined,
       fixed_price: undefined,
-      allow_full_payment: false,
-      installment_amount: undefined,
+      included_guests: 1,
+      price_per_extra_guest: 0,
+      allow_full_payment: true,
+      installment_count: undefined,
       deposit_percentage: undefined,
       installment_interval: undefined,
       allow_scheduling_late: false,
+      scheduling_deadline_days: 30,
       services: [
         { service: "", price: undefined, quantity: 1, required: true },
       ],
@@ -55,10 +64,18 @@ export default function AddPackageForm() {
   });
 
   const saveFormHandler = (data: ServicePackagesPayload) => {
-    createPackage(data, {
-      onSuccess() {
-        showSnackbar("Package created successfully", "success");
-        router.push("/provider/packages");
+    createPackage(toPackagePayload(data), {
+      async onSuccess(created) {
+        try {
+          await saveCover(created.id, data.company);
+          showSnackbar("Package created successfully", "success");
+        } catch (error) {
+          showSnackbar(
+            `Package created, but the cover image failed: ${extractApiError(error as AxiosError<ApiResponse<null>>)}`,
+            "error",
+          );
+        }
+        router.push(`/provider/packages/${created.id}/preview`);
       },
       onError(error: any) {
         showSnackbar(extractApiError(error), "error");
@@ -98,8 +115,11 @@ export default function AddPackageForm() {
 
       <PackageForm
         control={control}
+        setValue={setValue}
         companyOptions={companyOptions}
         categoryOptions={categoryOptions}
+        coverPreview={preview}
+        onCoverChange={onCoverChange}
       />
 
       <Box
@@ -127,6 +147,7 @@ export default function AddPackageForm() {
             type="button"
             variant="contained"
             color="primary"
+            disabled={isPending}
             sx={{
               textTransform: "none",
               px: 4,
@@ -135,7 +156,7 @@ export default function AddPackageForm() {
             }}
             onClick={handleSubmit(saveFormHandler)}
           >
-            Save
+            {isPending ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Box>
