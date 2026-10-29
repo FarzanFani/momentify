@@ -101,32 +101,32 @@ class Service(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                check=models.Q(price__gte=0),
+                condition=models.Q(price__gte=0),
                 name="service_price_gte_0",
             ),
             models.CheckConstraint(
-                check=models.Q(duration_minutes__gte=1),
+                condition=models.Q(duration_minutes__gte=1),
                 name="service_duration_gte_1",
             ),
             models.CheckConstraint(
-                check=models.Q(buffer_before_minutes__gte=0),
+                condition=models.Q(buffer_before_minutes__gte=0),
                 name="service_buffer_before_gte_0",
             ),
             models.CheckConstraint(
-                check=models.Q(buffer_after_minutes__gte=0),
+                condition=models.Q(buffer_after_minutes__gte=0),
                 name="service_buffer_after_gte_0",
             ),
             models.CheckConstraint(
-                check=models.Q(max_capacity__gte=1),
+                condition=models.Q(max_capacity__gte=1),
                 name="service_max_capacity_gte_1",
             ),
             models.CheckConstraint(
-                check=models.Q(minimum_billable_guest__gte=1)
+                condition=models.Q(minimum_billable_guest__gte=1)
                 & models.Q(minimum_billable_guest__lte=models.F("max_capacity")),
                 name="svc_min_billable_valid",
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(
                         guest_count_policy="variable",
                         fixed_guest_count__isnull=True,
@@ -343,7 +343,7 @@ class ServicePackages(models.Model):
         constraints = [
             # At least one payment plan must be available.
             models.CheckConstraint(
-                check=(
+                condition=(
                     Q(allow_full_payment=True)
                     | Q(deposit_percentage__isnull=False)
                     | Q(installment_count__isnull=False)
@@ -352,7 +352,7 @@ class ServicePackages(models.Model):
             ),
             # Deposit must be NULL or between 0 and 100.
             models.CheckConstraint(
-                check=(
+                condition=(
                     Q(deposit_percentage__isnull=True)
                     | (
                         Q(deposit_percentage__gt=Decimal("0.00"))
@@ -363,7 +363,7 @@ class ServicePackages(models.Model):
             ),
             # Installment count and interval must be set together.
             models.CheckConstraint(
-                check=(
+                condition=(
                     Q(
                         installment_count__isnull=True,
                         installment_interval__isnull=True,
@@ -376,7 +376,7 @@ class ServicePackages(models.Model):
                 name="service_package_valid_installment_configuration",
             ),
             models.CheckConstraint(
-                check=Q(included_guests__gte=1),
+                condition=Q(included_guests__gte=1),
                 name="service_package_included_guests_gte_1",
             ),
         ]
