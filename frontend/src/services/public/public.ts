@@ -14,6 +14,7 @@ export type PublicServicesPayload = {
   max_capacity?: number;
   min_price?: number;
   max_price?: number;
+  page?: number;
 };
 
 export const getPublicServices = async (
@@ -48,6 +49,9 @@ export type PublicPackagesPayload = {
   search?: string;
   company_id?: string;
   category_id?: string;
+  min_price?: number;
+  max_price?: number;
+  page?: number;
 };
 
 export type PackagePriceCalculationPayload = {

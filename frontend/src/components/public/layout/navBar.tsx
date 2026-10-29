@@ -31,6 +31,7 @@ const landingNavItems = [
 
 const pageNavItems = [
   { label: "Services", href: "/services" },
+  { label: "Packages", href: "/packages" },
   { label: "Contacts", href: "/contact" },
   { label: "About us", href: "/about" },
 ];

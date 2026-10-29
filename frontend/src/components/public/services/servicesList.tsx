@@ -1,7 +1,8 @@
 "use client";
 
 import ApiErrorResponse from "@/components/common/apiError/apiError";
-import SearchInput from "@/components/common/searchInput/SearchInput";
+import CatalogHeader from "@/components/public/catalogHeader";
+import LoadMoreButton from "@/components/common/loadMoreButton/LoadMoreButton";
 import ServiceCardView from "@/components/common/serviceCard/cardView";
 import ServiceCardSkeleton from "@/components/common/serviceCard/skeletonLoadingView";
 import SideFilter from "@/components/common/filter/sideFilter";
@@ -11,17 +12,8 @@ import type { PublicServicesPayload } from "@/services/public/public";
 import type { CompanyServices } from "@/services/provider/services";
 import type { FilterOptions, FilterValueRecord } from "@/types/general";
 import { mapApiResponseToDropdownOptions } from "@/utils/helperFunctions";
-import {
-  Box,
-  Button,
-  Divider,
-  Grid,
-  Typography,
-  useTheme,
-  useMediaQuery,
-} from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
-import Filter from "@/components/common/filter/Filter";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 
 function getParamsFromSearchParams(
@@ -45,11 +37,7 @@ export default function ServicesListPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const theme = useTheme();
-
-  const isXl = useMediaQuery(theme.breakpoints.up("xl"));
-  const isLg = useMediaQuery(theme.breakpoints.up("lg"));
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
 
   const { data: categories } = useGetCategoryTinyList();
   const { data: companies } = useGetPublicCompanyTinyList();
@@ -79,8 +67,17 @@ export default function ServicesListPage() {
     initialParams.max_price ?? 50000,
   ]);
 
-  const { data: serviceResponse, isLoading: isServicesLoading } =
-    useGetPublicServices(params);
+  const {
+    data: servicePages,
+    isLoading: isServicesLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetPublicServices(params);
+  const serviceResponse = servicePages && {
+    count: servicePages.pages[0].count,
+    results: servicePages.pages.flatMap((page) => page.results),
+  };
 
   const categoriesOptions = useMemo(
     () => mapApiResponseToDropdownOptions(categories ?? [], "id", "name"),
@@ -238,23 +235,52 @@ export default function ServicesListPage() {
     ],
   );
 
+  // Cards get an extra column when the side filter is hidden.
+  const cardSize = isFilterOpen
+    ? { xs: 12, sm: 6, xl: 4 }
+    : { xs: 12, sm: 6, lg: 4, xl: 3 };
+
   return (
     <Grid container width={"100%"}>
-      <Grid size={{ md: 4, lg: 3, xl: 2 }} display={{ xs: "none", md: "flex" }}>
-        <SideFilter
-          filterOptions={filterOptions}
-          onApply={handleApplyFilters}
-          onReset={handleResetFilters}
-          widthPercentage={isXl ? 2 : isLg ? 3 : 4}
-        />
-      </Grid>
+      {isFilterOpen && (
+        <Grid
+          size={{ md: 4, lg: 3, xl: 2 }}
+          display={{ xs: "none", md: "flex" }}
+        >
+          <SideFilter
+            filterOptions={filterOptions}
+            onApply={handleApplyFilters}
+            onReset={handleResetFilters}
+            onClose={() => setIsFilterOpen(false)}
+          />
+        </Grid>
+      )}
 
-      <Grid size={{ md: 8, lg: 9, xl: 10 }} width={"100%"}>
+      <Grid
+        size={
+          isFilterOpen ? { xs: 12, md: 8, lg: 9, xl: 10 } : { xs: 12 }
+        }
+      >
+        <CatalogHeader
+          title="Services"
+          info="Need more than one service for your event? Packages bundle services together at a better price, often with discounts."
+          infoLink={{ label: "Browse packages", href: "/packages" }}
+          searchPlaceholder="Search services"
+          search={search}
+          onSearchChange={setSearch}
+          onSearch={handleSearch}
+          isFilterOpen={isFilterOpen}
+          onToggleFilter={() => setIsFilterOpen((open) => !open)}
+          filterOptions={filterOptions}
+          onApplyFilters={handleApplyFilters}
+          onResetFilters={handleResetFilters}
+        />
+
         <Box>
           {isServicesLoading ? (
             <Grid container spacing={3} px={{ xs: 2, md: 4 }}>
               {Array.from({ length: 6 }).map((_, index) => (
-                <Grid key={index} size={{ xs: 12, sm: 6, xl: 4 }}>
+                <Grid key={index} size={cardSize}>
                   <ServiceCardSkeleton />
                 </Grid>
               ))}
@@ -263,61 +289,19 @@ export default function ServicesListPage() {
             <ApiErrorResponse />
           ) : serviceResponse.count > 0 ? (
             <>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  width: "100%",
-                  px: 4,
-                  pt: 3,
-                  mb: 4,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    flexGrow: 1,
-                    alignItems: "flex-end",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <SearchInput
-                    placeholder="Search services"
-                    onSearch={handleSearch}
-                    maxWidth="500px"
-                    onChange={setSearch}
-                    value={search}
-                  />
-
-                  <Box display={{ xs: "block", md: "none" }}>
-                    <Filter
-                      onApply={handleApplyFilters}
-                      onReset={handleResetFilters}
-                      filterOptions={filterOptions}
-                    />
-                  </Box>
-                </Box>
-
-                <Button
-                  variant="outlined"
-                  sx={{ textTransform: "none", height: 45, borderRadius: "10px" }}
-                  onClick={() => router.push("/packages")}
-                >
-                  Browse packages
-                </Button>
-
-                <Divider />
-              </Box>
-
               <Grid container spacing={3} px={{ xs: 2, md: 4 }} width="100%">
                 {serviceResponse.results.map((service: CompanyServices) => (
-                  <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
+                  <Grid key={service.id} size={cardSize}>
                     <ServiceCardView service={service} isPublic />
                   </Grid>
                 ))}
               </Grid>
+              {hasNextPage && (
+                <LoadMoreButton
+                  onClick={() => fetchNextPage()}
+                  loading={isFetchingNextPage}
+                />
+              )}
             </>
           ) : (
             <Box

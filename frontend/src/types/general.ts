@@ -107,5 +107,5 @@ export type FilterProps = {
 };
 
 export interface SideFilterProps extends FilterProps {
-  widthPercentage: number;
+  onClose?: () => void;
 }

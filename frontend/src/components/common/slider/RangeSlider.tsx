@@ -64,8 +64,9 @@ export default function RangeSlider({
           min={min}
           max={max}
           step={step}
-          valueLabelDisplay="auto"
-          valueLabelFormat={formatValue}
+          // The values are shown live above the track; a floating label at
+          // the max thumb would overflow the filter panel.
+          valueLabelDisplay="off"
           onChange={(_, nextValue) => {
             if (Array.isArray(nextValue)) {
               onChange([nextValue[0], nextValue[1]]);

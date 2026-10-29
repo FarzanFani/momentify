@@ -120,9 +120,13 @@ export const useDeletePackageCover = () => {
 };
 
 export const useGetPublicPackages = (params: PublicPackagesPayload = {}) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["public-packages", params],
-    queryFn: () => getPublicPackages(params),
+    queryFn: ({ pageParam }) =>
+      getPublicPackages({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     refetchOnWindowFocus: false,
   });
 };
@@ -163,9 +167,13 @@ export const useEditServices = () => {
 };
 
 export const useGetPublicServices = (params: PublicServicesPayload = {}) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["public-services", params],
-    queryFn: () => getPublicServices(params),
+    queryFn: ({ pageParam }) =>
+      getPublicServices({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     refetchOnWindowFocus: false,
   });
 };
