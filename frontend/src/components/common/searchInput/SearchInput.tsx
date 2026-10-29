@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { OutlinedInput, InputAdornment, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -28,17 +28,33 @@ const SearchBar = ({
   const [internalValue, setInternalValue] = useState("");
   const inputValue = value ?? internalValue;
 
+  // Keep the latest callback in a ref so a new onSearch on every parent
+  // render doesn't restart the debounce and search again in a loop.
+  const onSearchRef = useRef(onSearch);
   useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+  const lastSearchedRef = useRef(inputValue);
+
+  const search = (nextValue: string) => {
+    lastSearchedRef.current = nextValue;
+    onSearchRef.current?.(nextValue);
+  };
+
+  useEffect(() => {
+    // Only search when the text actually changed since the last search.
+    if (inputValue === lastSearchedRef.current) {
+      return;
+    }
     const handler = setTimeout(() => {
-      if (onSearch) {
-        onSearch(inputValue);
-      }
+      lastSearchedRef.current = inputValue;
+      onSearchRef.current?.(inputValue);
     }, debounce);
 
     return () => {
       clearTimeout(handler);
     };
-  }, [inputValue, debounce, onSearch]);
+  }, [inputValue, debounce]);
 
   const handleChange = (nextValue: string) => {
     setInternalValue(nextValue);
@@ -47,11 +63,11 @@ const SearchBar = ({
 
   const handleClear = () => {
     handleChange("");
-    onSearch?.("");
+    search("");
   };
 
   const handleSearch = () => {
-    if (onSearch) onSearch(inputValue);
+    search(inputValue);
   };
 
   return (
