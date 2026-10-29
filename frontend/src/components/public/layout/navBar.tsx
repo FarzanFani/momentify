@@ -13,10 +13,27 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/authSlice";
+
+const landingNavItems = [
+  "Services",
+  "How It Works",
+  "Testimonials",
+  "Contact",
+].map((label) => ({
+  label,
+  href: `#${label.toLowerCase().replace(/\s/g, "-")}`,
+}));
+
+const pageNavItems = [
+  { label: "Services", href: "/services" },
+  { label: "Contacts", href: "/contact" },
+  { label: "About us", href: "/about" },
+];
 
 export default function NavBar() {
   const router = useRouter();
@@ -26,13 +43,14 @@ export default function NavBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useDispatch();
 
-  const redirectLoginUrl = !isAuthenticated
-    ? "/login"
+  const isLandingPage = pathname === "/";
+  const navItems = isLandingPage
+    ? landingNavItems
     : user?.role === "CUSTOMER"
-      ? "/services"
-      : "/provider/dashboard/";
+      ? [...pageNavItems, { label: "My bookings", href: "/customer/booking" }]
+      : pageNavItems;
 
-  const showLoginButton = pathname === "/" && !isAuthenticated;
+  const showLoginButton = !isAuthenticated && pathname !== "/login";
   const isMenuOpen = Boolean(anchorEl);
 
   const handleMenuClose = () => {
@@ -128,15 +146,19 @@ export default function NavBar() {
             direction="row"
             spacing={4}
           >
-            {["Services", "How It Works", "Testimonials", "Contact"].map(
-              (item) => (
+            {navItems.map((item) => {
+              const isActive =
+                !isLandingPage && pathname.startsWith(item.href);
+              return (
                 <Typography
-                  key={item}
+                  key={item.label}
                   variant="body2"
-                  component="a"
-                  href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
+                  component={Link}
+                  href={item.href}
                   sx={{
-                    color: alpha("#f5f7fa", 0.75),
+                    color: isActive
+                      ? "secondary.main"
+                      : alpha("#f5f7fa", 0.75),
                     textDecoration: "none",
                     fontFamily: "'Lato', sans-serif",
                     fontWeight: 600,
@@ -147,10 +169,10 @@ export default function NavBar() {
                     "&:hover": { color: "secondary.light" },
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Typography>
-              ),
-            )}
+              );
+            })}
           </Stack>
 
           <Box display={"flex"} gap={2} alignItems={"center"}>
@@ -160,11 +182,11 @@ export default function NavBar() {
                 color="secondary"
                 size="small"
                 sx={{ px: 3, py: 1, fontSize: "0.75rem" }}
-                onClick={() => router.push(redirectLoginUrl)}
+                onClick={() => router.push("/login")}
               >
                 Login
               </Button>
-            ) : (
+            ) : !isAuthenticated ? null : (
               <>
                 <Badge badgeContent={10} color="error">
                   <Notifications

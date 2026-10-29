@@ -12,11 +12,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLogin } from "@/hooks/useLogin";
 import { useForm, Controller } from "react-hook-form";
 import { extractApiError } from "@/utils/extractApiError";
+import { useAppSelector } from "@/store/hook";
+import { useEffect } from "react";
 
 interface LoginForm {
   email: string;
   password: string;
 }
+
+const homeRouteByRole = {
+  CUSTOMER: "/customer/booking",
+  PROVIDER: "/provider/dashboard",
+  ADMIN: "/admin/dashboard",
+};
 
 export default function Login() {
   const { showSnackbar } = useSnackbar();
@@ -24,6 +32,21 @@ export default function Login() {
   const router = useRouter();
   const { mutate, isPending } = useLogin();
   const searchParams = useSearchParams();
+  const { user, isAuthInitialized } = useAppSelector((state) => state.auth);
+
+  // Logged-in users never see the form: send them to `next` or their home.
+  useEffect(() => {
+    if (!isAuthInitialized || !user) {
+      return;
+    }
+    const nextRoute = searchParams.get("next");
+    // Only same-site paths, so `next` can't send users to another website.
+    const safeNextRoute =
+      nextRoute?.startsWith("/") && !nextRoute.startsWith("//")
+        ? nextRoute
+        : null;
+    router.replace(safeNextRoute ?? homeRouteByRole[user.role]);
+  }, [isAuthInitialized, user, searchParams, router]);
 
   const {
     control,
@@ -39,32 +62,20 @@ export default function Login() {
   const onSubmit = (data: LoginForm) => {
     mutate(data, {
       onSuccess: ({ user }) => {
+        // The effect above redirects once the user is in the store.
         dispatch(setUser(user));
         showSnackbar("Login successful!", "success");
-
-        const nextRoute = searchParams.get("next");
-        if (nextRoute) {
-          router.push(nextRoute);
-          return;
-        }
-
-        switch (user.role) {
-          case "PROVIDER":
-            router.push("/provider/dashboard");
-            break;
-          case "ADMIN":
-            router.push("/admin/dashboard");
-            break;
-          case "CUSTOMER":
-            router.push("/customer/dashboard");
-            break;
-        }
       },
       onError: (err) => {
         showSnackbar(extractApiError(err, "Login failed"), "error");
       },
     });
   };
+
+  // Avoid flashing the form while auth loads or the redirect is on its way.
+  if (!isAuthInitialized || user) {
+    return null;
+  }
 
   return (
     <Box sx={styles.pageContainer}>
