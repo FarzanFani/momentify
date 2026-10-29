@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { VerifiedUser } from "@mui/icons-material";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const services = [
   {
@@ -169,225 +169,211 @@ function Hero() {
           pointerEvents: "none",
         }}
       />
-      <Grid
-        container
-        spacing={{ xs: 4, md: 4, lg: 4 }}
-        alignItems="center"
-        width="100%"
-        justifyContent="center"
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          display: "flex",
+          flexDirection: { xs: "column", lg: "row" },
+          alignItems: "center",
+          justifyContent: "center",
+          gap: { xs: 6, lg: 5 },
+          px: { xs: 2, sm: 4 },
+          py: { xs: 10, lg: 0 },
+        }}
       >
-        <Grid
-          size={{ xs: 12, lg: 7 }}
+        <Box
           sx={{
-            display: "flex",
-            justifyContent: {
-              xs: "center",
-              md: "center",
-              lg: "flex-end",
-              xl: "flex-end",
+            width: {
+              xs: "100%",
+              sm: "90%",
+              md: "85%",
+              lg: "fit-content",
+              xl: "fit-content",
             },
-            alignItems: "center",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: {
+              xs: "center",
+              md: "flex-start",
+            },
+            textAlign: {
+              xs: "center",
+              md: "left",
+            },
           }}
         >
-          <Box
+          <Chip
+            label="✦ Trusted Event Services"
+            size="small"
             sx={{
-              width: {
-                xs: "100%",
-                sm: "90%",
-                md: "85%",
-                lg: "fit-content",
-                xl: "fit-content",
+              mb: 3,
+              bgcolor: "primary.dark",
+              color: "primary.contrastText",
+              border: `1px solid ${alpha("#0B3D91", 0.3)}`,
+              fontFamily: "'Lato', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              fontSize: "0.7rem",
+            }}
+          />
+
+          <Typography
+            variant="h1"
+            sx={{
+              color: "primary.dark",
+              fontSize: {
+                xs: "3rem",
+                md: "3.8rem",
+                lg: "4rem",
+                xl: "4.4rem",
               },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: {
-                xs: "center",
-                md: "flex-start",
-              },
-              textAlign: {
-                xs: "center",
-                md: "left",
-              },
+              lineHeight: 1.08,
+              mb: 2,
+              whiteSpace: { md: "nowrap" },
             }}
           >
-            <Chip
-              label="✦ Trusted Event Services"
-              size="small"
+            Life's{" "}
+            <Box component="span" sx={{ color: "secondary.main" }}>
+              important
+            </Box>{" "}
+            moments,
+          </Typography>
+          <Typography
+            variant="h2"
+            sx={{
+              color: "primary.dark",
+              fontSize: { xs: "1.5rem", md: "2rem", lg: "2.35rem" },
+              lineHeight: 1.2,
+              mb: 3,
+              fontWeight: 600,
+            }}
+          >
+            Handled with care.
+          </Typography>
+
+          <Typography
+            variant="body1"
+            sx={{
+              color: alpha("#0B3D91", 0.75),
+              fontSize: { xs: "0.95rem", md: "1.05rem" },
+              maxWidth: 620,
+              mb: 5,
+              lineHeight: 1.8,
+            }}
+          >
+            From weddings to baptisms, debuts to farewells — we bring warmth,
+            care, and flawless execution to life's most meaningful events.
+          </Typography>
+
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2.5}
+            alignItems={{ xs: "center", sm: "center" }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => router.push("/services")}
               sx={{
-                mb: 3,
+                px: 5,
+                fontSize: "0.85rem",
                 bgcolor: "primary.dark",
                 color: "primary.contrastText",
-                border: `1px solid ${alpha("#0B3D91", 0.3)}`,
-                fontFamily: "'Lato', sans-serif",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                fontSize: "0.7rem",
-              }}
-            />
+                position: "relative",
+                overflow: "hidden",
+                border: "2px solid transparent",
+                boxShadow: `0 0 18px ${alpha("#C9A227", 0.35)}`,
 
-            <Typography
-              variant="h1"
-              sx={{
-                color: "primary.dark",
-                fontSize: {
-                  xs: "3rem",
-                  md: "3.8rem",
-                  lg: "4rem",
-                  xl: "4.4rem",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "inherit",
+                  padding: "2px",
+                  background:
+                    "linear-gradient(120deg, rgba(166, 137, 40, 0.95) 30%, rgba(255,255,255,1) 50%, rgba(166, 137, 40, 0.95) 70%, transparent 100%)",
+                  backgroundSize: "220% 220%",
+                  WebkitMask:
+                    "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                  WebkitMaskComposite: "xor",
+                  maskComposite: "exclude",
+                  animation: "moveButtonLight 8s linear infinite",
+                  pointerEvents: "none",
                 },
-                lineHeight: 1.08,
-                mb: 2,
-                whiteSpace: { md: "nowrap" },
-              }}
-            >
-              Life's{" "}
-              <Box component="span" sx={{ color: "secondary.main" }}>
-                important
-              </Box>{" "}
-              moments,
-            </Typography>
-            <Typography
-              variant="h2"
-              sx={{
-                color: "primary.dark",
-                fontSize: { xs: "1.5rem", md: "2rem", lg: "2.35rem" },
-                lineHeight: 1.2,
-                mb: 3,
-                fontWeight: 600,
-              }}
-            >
-              Handled with care.
-            </Typography>
 
-            <Typography
-              variant="body1"
-              sx={{
-                color: alpha("#0B3D91", 0.75),
-                fontSize: { xs: "0.95rem", md: "1.05rem" },
-                maxWidth: 620,
-                mb: 5,
-                lineHeight: 1.8,
-              }}
-            >
-              From weddings to baptisms, debuts to farewells — we bring warmth,
-              care, and flawless execution to life's most meaningful events.
-            </Typography>
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  inset: "-2px",
+                  borderRadius: "inherit",
+                  background:
+                    "linear-gradient(120deg, transparent, rgba(201,162,39,0.28), transparent)",
+                  animation: "moveButtonGlow 8s linear infinite",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                },
 
-            <Stack
-              direction={{ xs: "column", sm: "row" }}
-              spacing={2.5}
-              alignItems={{ xs: "center", sm: "center" }}
-            >
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => router.push("/services")}
-                sx={{
-                  px: 5,
-                  fontSize: "0.85rem",
-                  bgcolor: "primary.dark",
-                  color: "primary.contrastText",
+                "& > *": {
                   position: "relative",
-                  overflow: "hidden",
-                  border: "2px solid transparent",
-                  boxShadow: `0 0 18px ${alpha("#C9A227", 0.35)}`,
+                  zIndex: 1,
+                },
 
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "inherit",
-                    padding: "2px",
-                    background:
-                      "linear-gradient(120deg, rgba(166, 137, 40, 0.95) 30%, rgba(255,255,255,1) 50%, rgba(166, 137, 40, 0.95) 70%, transparent 100%)",
-                    backgroundSize: "220% 220%",
-                    WebkitMask:
-                      "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                    WebkitMaskComposite: "xor",
-                    maskComposite: "exclude",
-                    animation: "moveButtonLight 8s linear infinite",
-                    pointerEvents: "none",
+                "@keyframes moveButtonLight": {
+                  "0%": {
+                    backgroundPosition: "220% 50%",
                   },
+                  "100%": {
+                    backgroundPosition: "-220% 50%",
+                  },
+                },
 
-                  "&::after": {
-                    content: '""',
-                    position: "absolute",
-                    inset: "-2px",
-                    borderRadius: "inherit",
-                    background:
-                      "linear-gradient(120deg, transparent, rgba(201,162,39,0.28), transparent)",
-                    animation: "moveButtonGlow 8s linear infinite",
-                    pointerEvents: "none",
-                    zIndex: 0,
+                "@keyframes moveButtonGlow": {
+                  "0%": {
+                    transform: "translateX(-100%)",
                   },
+                  "100%": {
+                    transform: "translateX(100%)",
+                  },
+                },
 
-                  "& > *": {
-                    position: "relative",
-                    zIndex: 1,
-                  },
+                "&:hover": {
+                  bgcolor: alpha("#0B3D91", 0.92),
+                  boxShadow: `0 0 26px ${alpha("#C9A227", 0.5)}`,
+                },
+              }}
+            >
+              Book with Confidence
+            </Button>
 
-                  "@keyframes moveButtonLight": {
-                    "0%": {
-                      backgroundPosition: "220% 50%",
-                    },
-                    "100%": {
-                      backgroundPosition: "-220% 50%",
-                    },
-                  },
-
-                  "@keyframes moveButtonGlow": {
-                    "0%": {
-                      transform: "translateX(-100%)",
-                    },
-                    "100%": {
-                      transform: "translateX(100%)",
-                    },
-                  },
-
-                  "&:hover": {
-                    bgcolor: alpha("#0B3D91", 0.92),
-                    boxShadow: `0 0 26px ${alpha("#C9A227", 0.5)}`,
-                  },
+            <Stack direction="row" spacing={1} alignItems="center">
+              <VerifiedUser
+                sx={{
+                  color: "secondary.main",
+                  fontSize: "1.25rem",
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: alpha("#0B3D91", 0.75),
+                  fontFamily: "'Lato', sans-serif",
+                  fontWeight: 700,
                 }}
               >
-                Book with Confidence
-              </Button>
-
-              <Stack direction="row" spacing={1} alignItems="center">
-                <VerifiedUser
-                  sx={{
-                    color: "secondary.main",
-                    fontSize: "1.25rem",
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: alpha("#0B3D91", 0.75),
-                    fontFamily: "'Lato', sans-serif",
-                    fontWeight: 700,
-                  }}
-                >
-                  Trusted, verified, compassionate.
-                </Typography>
-              </Stack>
+                Trusted, verified, compassionate.
+              </Typography>
             </Stack>
-          </Box>
-        </Grid>
+          </Stack>
+        </Box>
 
-        <Grid
-          size={{ xs: 12, lg: 5 }}
-          px={4}
+        <Box
           sx={{
-            display: "flex",
-            justifyContent: {
-              xs: "center",
-              md: "center",
-              lg: "flex-start",
-              xl: "flex-start",
-            },
-            alignItems: "center",
+            width: { xs: "100%", sm: 560, lg: 480 },
+            maxWidth: "100%",
+            flexShrink: 0,
           }}
         >
           <Grid container spacing={2}>
@@ -435,8 +421,8 @@ function Hero() {
               </Grid>
             ))}
           </Grid>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 }
