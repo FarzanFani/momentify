@@ -108,37 +108,37 @@ class Booking(models.Model):
 
         constraints = [
             models.CheckConstraint(
-                check=models.Q(guest_numbers__gte=1),
+                condition=models.Q(guest_numbers__gte=1),
                 name="booking_guest_numbers_gte_1",
             ),
             models.CheckConstraint(
-                check=models.Q(ends_at__gt=models.F("starts_at")),
+                condition=models.Q(ends_at__gt=models.F("starts_at")),
                 name="booking_ends_at_after_starts_at",
             ),
             models.CheckConstraint(
-                check=models.Q(total_price__gte=0),
+                condition=models.Q(total_price__gte=0),
                 name="booking_total_price_gte_0",
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(deposit_amount__isnull=True)
                     | models.Q(deposit_amount__gte=0)
                 ),
                 name="booking_deposit_null_or_gte_0",
             ),
             models.CheckConstraint(
-                check=models.Q(refund_amount__gte=0),
+                condition=models.Q(refund_amount__gte=0),
                 name="booking_refund_amount_gte_0",
             ),
             models.CheckConstraint(
-                check=(
+                condition=(
                     models.Q(deposit_amount__isnull=True)
                     | models.Q(deposit_amount__lte=models.F("total_price"))
                 ),
                 name="booking_deposit_lte_total_price",
             ),
             models.CheckConstraint(
-                check=models.Q(refund_amount__lte=models.F("total_price")),
+                condition=models.Q(refund_amount__lte=models.F("total_price")),
                 name="booking_refund_lte_total_price",
             ),
         ]
@@ -276,7 +276,7 @@ class PackageBooking(models.Model):
         ordering = ["-created_at"]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(total_price__gte=0),
+                condition=models.Q(total_price__gte=0),
                 name="package_booking_total_price_gte_0",
             ),
         ]

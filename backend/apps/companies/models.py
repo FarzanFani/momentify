@@ -131,7 +131,7 @@ class CompanyWorkingHours(models.Model):
                 name="unique_company_working_hours",
             ),
             models.CheckConstraint(
-                check=models.Q(start_time__lt=models.F("end_time")),
+                condition=models.Q(start_time__lt=models.F("end_time")),
                 name="working_hours_start_before_end",
             ),
         ]
@@ -167,7 +167,7 @@ class CompanyTimeOff(models.Model):
         verbose_name_plural = "Time Off"
         constraints = [
             models.CheckConstraint(
-                check=models.Q(start_datetime__lt=models.F("end_datetime")),
+                condition=models.Q(start_datetime__lt=models.F("end_datetime")),
                 name="time_off_start_before_end",
             ),
         ]
