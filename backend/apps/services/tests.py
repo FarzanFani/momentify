@@ -237,3 +237,63 @@ class PublicPackageTests(PackageTestBase):
             format="json",
         )
         self.assertEqual(response.status_code, 400)
+
+
+class PublicPackagePriceFilterTests(PackageTestBase):
+    def setUp(self):
+        super().setUp()
+        # Required items: Hall 1000 + Camera 2 x 400 = 1800. Drone is an add-on.
+        self.create_package(name="Percentage")  # 10% off -> 1620
+        self.create_package(
+            name="Fixed discount", pricing_method="fixed_discount",
+            fixed_discount="300",
+        )  # 1500
+        self.create_package(
+            name="Fixed price", pricing_method="fixed_price", fixed_price="1000"
+        )  # 1000
+        self.create_package(name="Full price", pricing_method="service_total")  # 1800
+        self.client.force_authenticate(None)
+        self.url = "/api/public/packages/"
+
+    def names(self, params):
+        response = self.client.get(self.url, params)
+        self.assertEqual(response.status_code, 200, response.content)
+        return sorted(p["name"] for p in response.json()["data"]["results"])
+
+    def test_min_and_max_price(self):
+        cases = [
+            ({"min_price": "1500"}, ["Fixed discount", "Full price", "Percentage"]),
+            ({"max_price": "1500"}, ["Fixed discount", "Fixed price"]),
+            ({"min_price": "1100", "max_price": "1700"}, ["Fixed discount", "Percentage"]),
+            ({"min_price": "1620", "max_price": "1620"}, ["Percentage"]),
+            ({"min_price": "2000"}, []),
+        ]
+        for params, expected in cases:
+            with self.subTest(params=params):
+                self.assertEqual(self.names(params), expected)
+
+    def test_filter_matches_displayed_price(self):
+        packages = self.client.get(self.url).json()["data"]["results"]
+
+        for package in packages:
+            with self.subTest(package=package["name"]):
+                price = package["total_price"]
+                matched = self.names({"min_price": price, "max_price": price})
+                self.assertIn(package["name"], matched)
+
+    def test_price_filter_combines_with_other_filters(self):
+        self.assertEqual(
+            self.names({"max_price": "1600", "search": "fixed"}),
+            ["Fixed discount", "Fixed price"],
+        )
+        self.assertEqual(
+            self.names({"max_price": "1600", "category_id": self.photo.id}), []
+        )
+
+    def test_invalid_price(self):
+        for param in ["min_price", "max_price"]:
+            with self.subTest(param=param):
+                response = self.client.get(self.url, {param: "cheap"})
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(param, response.json()["errors"])

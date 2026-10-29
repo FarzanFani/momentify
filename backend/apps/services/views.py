@@ -6,7 +6,18 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsAdmin, IsProvider, IsCustomer
 from apps.companies.models import Company
-from django.db.models import Prefetch, ProtectedError
+from django.db.models import (
+    Case,
+    DecimalField,
+    F,
+    Prefetch,
+    ProtectedError,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, Greatest
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
@@ -38,6 +49,42 @@ def package_queryset():
             ).order_by("-required", "created_at"),
         )
     )
+
+
+def annotate_package_price(queryset):
+    """
+    Annotate `package_price`: the package total before extra guests and
+    add-ons, matching `ServicePackages.calculate_breakdown`.
+    """
+    money = DecimalField(max_digits=12, decimal_places=2)
+    zero = Value(Decimal("0.00"), output_field=money)
+    subtotal = Coalesce(
+        Sum(
+            F("items__price") * F("items__quantity"),
+            filter=Q(items__required=True),
+            output_field=money,
+        ),
+        zero,
+    )
+    method = ServicePackages.PricingMethod
+    total = Case(
+        When(
+            pricing_method=method.FIXED_PRICE,
+            then=Coalesce(F("fixed_price"), zero),
+        ),
+        When(
+            pricing_method=method.PERCENTAGE_DISCOUNT,
+            then=subtotal
+            - subtotal * Coalesce(F("percentage_discount"), zero) / Value(100),
+        ),
+        When(
+            pricing_method=method.FIXED_DISCOUNT,
+            then=subtotal - Coalesce(F("fixed_discount"), zero),
+        ),
+        default=subtotal,
+        output_field=money,
+    )
+    return queryset.annotate(package_price=Greatest(total, zero))
 
 
 class ServiceViewSet(viewsets.ModelViewSet):
@@ -330,6 +377,23 @@ class PublicPackageViewSet(viewsets.ReadOnlyModelViewSet):
             except ValueError:
                 raise ValidationError({"category_id": "Enter a valid category id."})
             queryset = queryset.filter(category_id__in=category_ids)
+
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
+        if min_price or max_price:
+            queryset = annotate_package_price(queryset)
+        if min_price:
+            try:
+                min_price_value = Decimal(min_price)
+            except InvalidOperation:
+                raise ValidationError({"min_price": "Enter a valid price."})
+            queryset = queryset.filter(package_price__gte=min_price_value)
+        if max_price:
+            try:
+                max_price_value = Decimal(max_price)
+            except InvalidOperation:
+                raise ValidationError({"max_price": "Enter a valid price."})
+            queryset = queryset.filter(package_price__lte=max_price_value)
 
         return queryset
 
