@@ -108,6 +108,7 @@ class ServiceSerializer(serializers.ModelSerializer):
             attrs["minimum_billable_guest"] = fixed_guest_count
 
         elif guest_count_policy == Service.GuestCountPolicy.VARIABLE:
+            attrs["fixed_guest_count"] = None
             errors = {}
 
             if max_capacity is None or max_capacity < 1:
@@ -136,7 +137,7 @@ class ServiceSerializer(serializers.ModelSerializer):
         return obj.company.name
 
     def get_category_name(self, obj):
-        return obj.category.name
+        return obj.category.name if obj.category else None
 
     def get_review(self, obj):
         queryset = Review.objects.filter(service=obj)

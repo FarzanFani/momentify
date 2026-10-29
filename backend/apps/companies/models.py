@@ -93,7 +93,7 @@ class CompanyCancellationPolicyRules(models.Model):
         verbose_name_plural = "Cancellation Policy Rules"
 
     def __str__(self):
-        return f"{self.name} - {self.refund_percentage}% refund"
+        return f"{self.rule_description} - {self.refund_precentage}% refund"
 
 
 class CompanyWorkingHours(models.Model):

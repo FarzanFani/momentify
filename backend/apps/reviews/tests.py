@@ -1,4 +1,3 @@
-import unittest
 from datetime import timedelta
 from decimal import Decimal
 
@@ -91,9 +90,7 @@ class CreateReviewTests(ReviewTestBase):
         data.update(overrides)
         return data
 
-    @unittest.expectedFailure
     def test_review_completed_booking(self):
-        # Bug: get_customer_name is nested inside ReviewSerializer.Meta.
         response = self.client.post(self.url, self.payload(), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
@@ -105,9 +102,7 @@ class CreateReviewTests(ReviewTestBase):
         self.assertEqual(review.rating, 5)
         self.assertEqual(response.json()["data"]["customer_name"], "Sam Lee")
 
-    @unittest.expectedFailure
     def test_anonymous_review_hides_name(self):
-        # Bug: get_customer_name is nested inside ReviewSerializer.Meta.
         response = self.client.post(
             self.url, self.payload(is_anonymous=True), format="json"
         )
@@ -219,9 +214,7 @@ class DeleteReviewTests(ReviewTestBase):
         self.review = self.make_review()
         self.url = f"/api/review/{self.review.id}/"
 
-    @unittest.expectedFailure
     def test_customer_deletes_own_review(self):
-        # Bug: the URL passes "review_id" but the view looks up "pk".
         self.client.force_authenticate(self.customer)
 
         response = self.client.delete(self.url)
@@ -229,9 +222,7 @@ class DeleteReviewTests(ReviewTestBase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Review.objects.exists())
 
-    @unittest.expectedFailure
     def test_cannot_delete_other_customers_review(self):
-        # Bug: the URL passes "review_id" but the view looks up "pk".
         self.client.force_authenticate(self.other_customer)
 
         response = self.client.delete(self.url)

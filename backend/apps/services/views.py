@@ -122,18 +122,16 @@ class ProviderServiceViewSet(viewsets.ReadOnlyModelViewSet):
                 except ValueError:
                     raise ValidationError({"company_id": "Enter a valid company UUID."})
 
-                queryset = queryset.filter(company_id__in=companies_ids)
+            queryset = queryset.filter(company_id__in=companies_ids)
 
         category_id = self.request.query_params.get("category_id")
         if category_id:
             category_ids = category_id.split(",")
-            for id in category_ids:
-                try:
-                    pass
-                except:
-                    raise ValidationError({"category": "Enter a valid category id"})
-
-                queryset = queryset.filter(category_id__in=category_ids)
+            try:
+                [int(id) for id in category_ids]
+            except ValueError:
+                raise ValidationError({"category_id": "Enter a valid category id."})
+            queryset = queryset.filter(category_id__in=category_ids)
 
         return queryset
 

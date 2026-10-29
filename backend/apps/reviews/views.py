@@ -47,6 +47,7 @@ class ServiceReviewListView(generics.ListAPIView):
 class ReviewDestroyView(generics.DestroyAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated, IsCustomer]
+    lookup_url_kwarg = "review_id"
 
     def get_queryset(self):
         return Review.objects.filter(customer=self.request.user)

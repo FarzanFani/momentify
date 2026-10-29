@@ -26,12 +26,4 @@ urlpatterns = [
         CreateReviewReplyView.as_view(),
         name="review-reply",
     ),
-    path(
-        "review/<uuid:review_id>/", ReviewDestroyView.as_view(), name="review-deleted"
-    ),
-    path(
-        "review/<uuid:review_id>/reply/",
-        CreateReviewReplyView.as_view(),
-        name="review-reply",
-    ),
 ]

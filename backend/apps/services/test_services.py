@@ -1,4 +1,3 @@
-import unittest
 from datetime import timedelta
 from decimal import Decimal
 
@@ -135,17 +134,30 @@ class CompanyServiceTests(ServiceTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("category", response.json()["errors"])
 
-    @unittest.expectedFailure
-    def test_variable_service_rejects_fixed_count(self):
-        # Bug: the serializer doesn't clear or reject fixed_guest_count for
-        # variable services, so the DB check constraint fails with a 500.
+    def test_variable_service_ignores_fixed_count(self):
         response = self.client.post(
             self.url, self.payload(fixed_guest_count=20), format="json"
         )
 
-        self.assertIn(
-            response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.content)
+        self.assertIsNone(Service.objects.get().fixed_guest_count)
+
+    def test_switching_fixed_service_to_variable_clears_fixed_count(self):
+        service = self.make_service(
+            "Chapel", guest_count_policy="fixed", fixed_guest_count=20,
+            max_capacity=20, minimum_billable_guest=20,
         )
+
+        response = self.client.patch(
+            f"{self.url}{service.id}/",
+            {"guest_count_policy": "variable", "max_capacity": 60},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.content)
+        service.refresh_from_db()
+        self.assertIsNone(service.fixed_guest_count)
+        self.assertEqual(service.max_capacity, 60)
 
     def test_list_search_and_tiny_list(self):
         hall = self.make_service("Hall")
@@ -227,10 +239,7 @@ class CompanyServiceTests(ServiceTestBase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @unittest.expectedFailure
     def test_service_with_reviews_can_be_listed(self):
-        # Bug: ServiceSerializer embeds ReviewSerializer, whose
-        # get_customer_name is nested inside Meta, so this returns 500.
         service = self.make_service("Hall")
         starts_at = timezone.now() - timedelta(days=3)
         booking = Booking.objects.create(
@@ -251,10 +260,7 @@ class CompanyServiceTests(ServiceTestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()["data"]["review"]), 1)
 
-    @unittest.expectedFailure
     def test_service_without_category_can_be_read(self):
-        # Bug: category is SET_NULL when deleted, but get_category_name
-        # assumes it exists and the endpoint returns 500.
         service = self.make_service("Hall")
         Service.objects.filter(pk=service.pk).update(category=None)
 
@@ -309,10 +315,7 @@ class ProviderServiceTests(ServiceTestBase):
 
         self.assertEqual(self.names(response), ["Camera"])
 
-    @unittest.expectedFailure
     def test_invalid_category_id(self):
-        # Bug: the category id check is an empty try/except, so a non-number
-        # reaches the database query and the API returns 500.
         response = self.client.get(self.url, {"category_id": "abc"})
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

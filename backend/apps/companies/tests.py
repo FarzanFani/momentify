@@ -1,4 +1,3 @@
-import unittest
 from datetime import time, timedelta
 
 from django.contrib.auth import get_user_model
@@ -412,10 +411,7 @@ class CompanyWorkingHoursTests(CompanyNestedTestBase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(CompanyWorkingHours.objects.exists())
 
-    @unittest.expectedFailure
     def test_partial_update_checks_against_saved_times(self):
-        # Bug: validate() only compares times sent in the request, so the DB
-        # check constraint fails and the API returns 500.
         hours = CompanyWorkingHours.objects.create(
             company=self.company, weekday=3, start_time=time(9), end_time=time(17)
         )
@@ -506,9 +502,7 @@ class CompanyCancellationPolicyTests(CompanyNestedTestBase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @unittest.expectedFailure
     def test_str(self):
-        # Bug: __str__ uses self.name and self.refund_percentage, which don't exist.
         rule = CompanyCancellationPolicyRules(
             company=self.company, rule_description="Half refund",
             hours_before_event=24, refund_precentage=50,
@@ -573,10 +567,7 @@ class CompanyTimeOffTests(CompanyNestedTestBase):
             status.HTTP_404_NOT_FOUND,
         )
 
-    @unittest.expectedFailure
     def test_partial_update_checks_against_saved_times(self):
-        # Bug: validate() only compares datetimes sent in the request, so the DB
-        # check constraint fails and the API returns 500.
         time_off = CompanyTimeOff.objects.create(
             company=self.company, start_datetime=self.start,
             end_datetime=self.start + timedelta(days=1),

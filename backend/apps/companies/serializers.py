@@ -115,8 +115,8 @@ class CompanyWorkingHoursSerializer(serializers.ModelSerializer):
         return unique_weekdays
 
     def validate(self, attrs):
-        start_time = attrs.get("start_time")
-        end_time = attrs.get("end_time")
+        start_time = attrs.get("start_time", getattr(self.instance, "start_time", None))
+        end_time = attrs.get("end_time", getattr(self.instance, "end_time", None))
         if start_time and end_time and start_time >= end_time:
             raise serializers.ValidationError(
                 {"end_time": "End time must be after start time"}
@@ -194,8 +194,12 @@ class CompanyTimeOffSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "company"]
 
     def validate(self, attrs):
-        start_datetime = attrs.get("start_datetime")
-        end_datetime = attrs.get("end_datetime")
+        start_datetime = attrs.get(
+            "start_datetime", getattr(self.instance, "start_datetime", None)
+        )
+        end_datetime = attrs.get(
+            "end_datetime", getattr(self.instance, "end_datetime", None)
+        )
 
         if start_datetime and end_datetime and start_datetime >= end_datetime:
             raise serializers.ValidationError(
