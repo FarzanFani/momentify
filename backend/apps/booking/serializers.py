@@ -293,10 +293,20 @@ class BookingCancelSerializer(serializers.ModelSerializer):
         )
         return instance
 
-    def validate_cancellation_reason(self, value):
-        if not value:
-            raise serializers.ValidationError("Cancellation reason is required")
-        return value
+    def validate(self, attrs):
+        # Checked here, not per field, so it also runs when the field is omitted.
+        if not attrs.get("cancellation_reason"):
+            raise serializers.ValidationError(
+                {"cancellation_reason": "Cancellation reason is required"}
+            )
+        if self.instance.status not in (
+            Booking.VerificationStatus.PENDING,
+            Booking.VerificationStatus.CONFIRMED,
+        ):
+            raise serializers.ValidationError(
+                {"status": "Only pending or confirmed bookings can be cancelled."}
+            )
+        return attrs
 
 
 class BookingApprovedDeclinedProviderSerializer(serializers.ModelSerializer):

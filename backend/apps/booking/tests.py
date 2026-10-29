@@ -1,4 +1,3 @@
-import unittest
 from datetime import timedelta
 from decimal import Decimal
 
@@ -317,9 +316,7 @@ class CustomerBookingReadTests(BookingTestMixin, APITestCase):
             self.ids(response), {str(cancelled.id), str(rejected.id), str(completed.id)}
         )
 
-    @unittest.expectedFailure
     def test_history_is_paginated(self):
-        # Bug: history_bookings serializes the whole queryset instead of the page.
         for day in range(12):
             self.make_booking(
                 starts_at=self.slot + timedelta(days=day),
@@ -455,25 +452,47 @@ class CustomerBookingCancelTests(BookingTestMixin, APITestCase):
         self.booking.refresh_from_db()
         self.assertEqual(self.booking.status, Booking.VerificationStatus.PENDING)
 
-    @unittest.expectedFailure
     def test_missing_reason_is_rejected(self):
-        # Bug: partial=True skips the reason check when the field is omitted.
         response = self.client.patch(self.url, {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.json()["errors"]["cancellation_reason"],
+            ["Cancellation reason is required"],
+        )
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, Booking.VerificationStatus.PENDING)
 
-    @unittest.expectedFailure
-    def test_cannot_cancel_completed_booking(self):
-        # Bug: cancel does not check the current status.
+    def test_confirmed_booking_can_be_cancelled(self):
         Booking.objects.filter(pk=self.booking.pk).update(
-            status=Booking.VerificationStatus.COMPLETED
+            status=Booking.VerificationStatus.CONFIRMED
         )
 
         response = self.client.patch(
-            self.url, {"cancellation_reason": "Too late"}, format="json"
+            self.url, {"cancellation_reason": "Plans changed"}, format="json"
         )
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_only_active_bookings_can_be_cancelled(self):
+        for booking_status in [
+            Booking.VerificationStatus.COMPLETED,
+            Booking.VerificationStatus.REJECTED,
+            Booking.VerificationStatus.CANCELLED,
+        ]:
+            Booking.objects.filter(pk=self.booking.pk).update(status=booking_status)
+
+            response = self.client.patch(
+                self.url, {"cancellation_reason": "Too late"}, format="json"
+            )
+
+            self.assertEqual(
+                response.status_code, status.HTTP_400_BAD_REQUEST, booking_status
+            )
+            self.assertIn("status", response.json()["errors"])
+            self.booking.refresh_from_db()
+            self.assertEqual(self.booking.status, booking_status)
+            self.assertIsNone(self.booking.cancellation_reason)
 
     def test_cannot_cancel_other_customers_booking(self):
         self.client.force_authenticate(self.other_customer)
