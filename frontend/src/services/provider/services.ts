@@ -40,6 +40,7 @@ export type CompanyServicesPayload = {
   company_id?: string;
   category_id?: string;
   search?: string;
+  page?: number;
 };
 
 export interface CompanyServices extends CompanyServicesFormValues {
@@ -210,10 +211,11 @@ export const postProviderPackage = async (
 
 export const getProviderPackagesList = async (
   companyId: string,
+  page: number = 1,
 ): Promise<GeneralListType<ServicePackage>> => {
   const { data } = await axiosInstance.get<
     ApiResponse<GeneralListType<ServicePackage>>
-  >(`/api/companies/${companyId}/packages/`);
+  >(`/api/companies/${companyId}/packages/`, { params: { page } });
 
   if (!data.success) {
     throw data;

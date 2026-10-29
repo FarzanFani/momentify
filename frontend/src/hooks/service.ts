@@ -26,12 +26,21 @@ import type {
   PublicPackagesPayload,
   PublicServicesPayload,
 } from "@/services/public/public";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 export const useGetProviderServices = (params: CompanyServicesPayload) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["services", params],
-    queryFn: () => getProviderServicesList(params),
+    queryFn: ({ pageParam }) =>
+      getProviderServicesList({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     refetchOnWindowFocus: false,
   });
 };
@@ -66,9 +75,12 @@ export const usePostPackage = () => {
 };
 
 export const useGetProviderPackagesList = (companyId: string) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["packages", companyId],
-    queryFn: () => getProviderPackagesList(companyId),
+    queryFn: ({ pageParam }) => getProviderPackagesList(companyId, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     enabled: companyId !== "",
     refetchOnWindowFocus: false,
   });

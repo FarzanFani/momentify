@@ -27,10 +27,17 @@ export default function ProviderPackages() {
   const company = selectedCompany || companies?.[0]?.id || "";
 
   const {
-    data,
+    data: packagesPages,
     isPending: isPackagesLoading,
     isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useGetProviderPackagesList(company);
+  const data = packagesPages && {
+    count: packagesPages.pages[0].count,
+    results: packagesPages.pages.flatMap((page) => page.results),
+  };
 
   const addPackageButton = (
     <Button
@@ -205,13 +212,34 @@ export default function ProviderPackages() {
         data.count === 0 ? (
           centeredMessage(noPackagesAvailable)
         ) : (
-          <Grid container spacing={3} px={4} width={"100%"}>
-            {data.results.map((servicePackage: ServicePackage) => (
-              <Grid key={servicePackage.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-                <PackageCardView servicePackage={servicePackage} />
-              </Grid>
-            ))}
-          </Grid>
+          <>
+            <Grid container spacing={3} px={4} width={"100%"}>
+              {data.results.map((servicePackage: ServicePackage) => (
+                <Grid key={servicePackage.id} size={{ xs: 12, sm: 6, xl: 4 }}>
+                  <PackageCardView servicePackage={servicePackage} />
+                </Grid>
+              ))}
+            </Grid>
+            {hasNextPage && (
+              <Button
+                variant="outlined"
+                color="primary"
+                loading={isFetchingNextPage}
+                sx={{
+                  mt: 4,
+                  textTransform: "none",
+                  fontSize: "16px",
+                  fontWeight: 200,
+                  borderRadius: "10px",
+                  height: "45px",
+                  minWidth: "160px",
+                }}
+                onClick={() => fetchNextPage()}
+              >
+                Load more
+              </Button>
+            )}
+          </>
         )
       ) : isPackagesLoading ? (
         <Grid container spacing={3} px={4}>

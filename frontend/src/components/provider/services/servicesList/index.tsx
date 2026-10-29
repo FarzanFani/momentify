@@ -21,7 +21,17 @@ export default function ProviderServices() {
   const router = useRouter();
   const [params, setParams] = useState<CompanyServicesPayload>({});
 
-  const { data, isPending: isServicesLoading } = useGetProviderServices(params);
+  const {
+    data: servicesPages,
+    isPending: isServicesLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetProviderServices(params);
+  const data = servicesPages && {
+    count: servicesPages.pages[0].count,
+    results: servicesPages.pages.flatMap((page) => page.results),
+  };
   const { data: categories } = useGetCategoryTinyList();
   const { data: companies } = useGetCompanyTinyList();
   const [search, setSearch] = useState("");
@@ -241,13 +251,34 @@ export default function ProviderServices() {
               <Divider />
             </Box>
             {data.count > 0 ? (
-              <Grid container spacing={3} px={4} width={"100%"}>
-                {data.results.map((service: CompanyServices) => (
-                  <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-                    <ServiceCardView service={service} isPublic={false} />
-                  </Grid>
-                ))}
-              </Grid>
+              <>
+                <Grid container spacing={3} px={4} width={"100%"}>
+                  {data.results.map((service: CompanyServices) => (
+                    <Grid key={service.id} size={{ xs: 12, sm: 6, xl: 4 }}>
+                      <ServiceCardView service={service} isPublic={false} />
+                    </Grid>
+                  ))}
+                </Grid>
+                {hasNextPage && (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    loading={isFetchingNextPage}
+                    sx={{
+                      mt: 4,
+                      textTransform: "none",
+                      fontSize: "16px",
+                      fontWeight: 200,
+                      borderRadius: "10px",
+                      height: "45px",
+                      minWidth: "160px",
+                    }}
+                    onClick={() => fetchNextPage()}
+                  >
+                    Load more
+                  </Button>
+                )}
+              </>
             ) : (
               <Box flexGrow={1} display={"flex"} alignItems={"center"}>
                 <Typography color="primary.main">No result found</Typography>

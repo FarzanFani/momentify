@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   getCustomerBookings,
   getCustomerSingleBooking,
@@ -67,6 +67,21 @@ export const useGetProviderBookingList = (
   return useQuery({
     queryKey: ["provider-booking-list", params],
     queryFn: () => getProviderBookingsList(params),
+    refetchOnReconnect: false,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useGetProviderBookingInfiniteList = (
+  params: Omit<ProviderBookingListParams, "page">,
+) => {
+  return useInfiniteQuery({
+    queryKey: ["provider-booking-list", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      getProviderBookingsList({ ...params, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.next ? allPages.length + 1 : undefined,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
   });
