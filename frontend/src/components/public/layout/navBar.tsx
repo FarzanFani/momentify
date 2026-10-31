@@ -1,9 +1,9 @@
 "use client";
 
 import { useAppSelector } from "@/store/hook";
-import { AccountCircle, Notifications } from "@mui/icons-material";
+import { AccountCircle /* , Notifications */ } from "@mui/icons-material";
 import {
-  Badge,
+  // Badge,
   Box,
   Button,
   IconButton,
@@ -32,8 +32,6 @@ const landingNavItems = [
 const pageNavItems = [
   { label: "Services", href: "/services" },
   { label: "Packages", href: "/packages" },
-  { label: "Contacts", href: "/contact" },
-  { label: "About us", href: "/about" },
 ];
 
 export default function NavBar() {
@@ -189,12 +187,13 @@ export default function NavBar() {
               </Button>
             ) : !isAuthenticated ? null : (
               <>
+                {/* Notifications are hidden until they are implemented.
                 <Badge badgeContent={10} color="error">
                   <Notifications
                     fontSize="large"
                     sx={{ color: "secondary.main" }}
                   />
-                </Badge>
+                </Badge> */}
                 <IconButton
                   size="large"
                   onClick={(e) => setAnchorEl(e.currentTarget)}

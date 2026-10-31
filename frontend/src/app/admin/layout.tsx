@@ -2,7 +2,7 @@
 
 import {
   AppBar,
-  Badge,
+  // Badge,
   Box,
   IconButton,
   Menu,
@@ -12,7 +12,7 @@ import {
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import AdminNavCards from "@/components/admin/adminNavCards/adminNavCards";
-import { AccountCircle, Notifications } from "@mui/icons-material";
+import { AccountCircle /* , Notifications */ } from "@mui/icons-material";
 import { useState } from "react";
 import { logout } from "@/store/authSlice";
 import { useDispatch } from "react-redux";
@@ -101,9 +101,10 @@ export default function AdminLayout({
             justifyContent="end"
             alignItems="center"
           >
+            {/* Notifications are hidden until they are implemented.
             <Badge badgeContent={10} color="error">
               <Notifications fontSize="large" color="primary" />
-            </Badge>
+            </Badge> */}
             <IconButton
               size="large"
               onClick={(e) => setAnchorEl(e.currentTarget)}

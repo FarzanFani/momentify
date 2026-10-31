@@ -2,6 +2,14 @@
 
 import { Box, Container, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import Link from "next/link";
+
+const footerLinks = [
+  { label: "Privacy & Terms", href: "/privacy-terms" },
+  { label: "FAQ", href: "/faq" },
+  { label: "About us", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
 
 export default function Footer() {
   return (
@@ -43,14 +51,16 @@ export default function Footer() {
               variant="h6"
               sx={{ color: "primary.contrastText", fontSize: "1.1rem" }}
             >
-              Celebra
+              Momentify
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={4}>
-            {["Privacy", "Terms", "FAQ", "Contact"].map((item) => (
+          <Stack direction="row" flexWrap="wrap" columnGap={4} rowGap={1}>
+            {footerLinks.map((item) => (
               <Typography
-                key={item}
+                key={item.href}
+                component={Link}
+                href={item.href}
                 variant="body2"
                 sx={{
                   color: alpha("#f5f7fa", 0.5),
@@ -62,7 +72,7 @@ export default function Footer() {
                   transition: "color 0.2s",
                 }}
               >
-                {item}
+                {item.label}
               </Typography>
             ))}
           </Stack>
@@ -75,7 +85,7 @@ export default function Footer() {
               fontSize: "0.75rem",
             }}
           >
-            © {new Date().getFullYear()} Celebra. All rights reserved.
+            © {new Date().getFullYear()} Momentify. All rights reserved.
           </Typography>
         </Stack>
       </Container>

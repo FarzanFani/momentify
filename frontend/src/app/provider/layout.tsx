@@ -2,7 +2,7 @@
 
 import {
   AppBar,
-  Badge,
+  // Badge,
   Box,
   Drawer,
   IconButton,
@@ -15,7 +15,7 @@ import { useDispatch } from "react-redux";
 import { usePathname, useRouter } from "next/navigation";
 import { logout } from "@/store/authSlice";
 import { useEffect, useState } from "react";
-import { AccountCircle, Notifications } from "@mui/icons-material";
+import { AccountCircle /* , Notifications */ } from "@mui/icons-material";
 import ProviderNavCards from "@/components/provider/providerNavCards/providerNavCards";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useAppSelector } from "@/store/hook";
@@ -81,9 +81,10 @@ export default function ProviderLayout({
 
   const icons = (
     <>
+      {/* Notifications are hidden until they are implemented.
       <Badge badgeContent={10} color="error">
         <Notifications fontSize="large" color="primary" />
-      </Badge>
+      </Badge> */}
       <IconButton size="large" onClick={(e) => setAnchorEl(e.currentTarget)}>
         <AccountCircle fontSize="large" color="primary" />
       </IconButton>
