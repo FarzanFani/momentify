@@ -208,16 +208,13 @@ export function PackageBookingServices({
                       .join(" · ")}
                   </Typography>
                 </Box>
-                <Stack direction="row" spacing={1}>
-                  {item.is_addon && (
-                    <Chip
-                      label="Add-on"
-                      size="small"
-                      sx={{ fontWeight: 700, backgroundColor: "rgba(201, 162, 39, 0.18)" }}
-                    />
-                  )}
-                  {item.booking_status && getStatusChip(item.booking_status)}
-                </Stack>
+                {item.is_addon && (
+                  <Chip
+                    label="Add-on"
+                    size="small"
+                    sx={{ fontWeight: 700, backgroundColor: "rgba(201, 162, 39, 0.18)" }}
+                  />
+                )}
               </Box>
 
               {item.starts_at ? (

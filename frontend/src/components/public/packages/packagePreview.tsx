@@ -315,19 +315,22 @@ function PackagePreview({ servicePackage }: { servicePackage: ServicePackage }) 
                       pt={1}
                     >
                       <Typography fontWeight={900}>Total</Typography>
-                      <Typography
-                        variant="h5"
-                        fontWeight={900}
-                        color="primary.main"
-                        sx={{ opacity: isPending ? 0.5 : 1 }}
-                      >
-                        {formatPrice(
-                          Number(
-                            calculation?.total_price ??
-                              servicePackage.total_price,
-                          ),
-                        )}
-                      </Typography>
+                      {isPending ? (
+                        <CircularProgress size={28} />
+                      ) : (
+                        <Typography
+                          variant="h5"
+                          fontWeight={900}
+                          color="primary.main"
+                        >
+                          {formatPrice(
+                            Number(
+                              calculation?.total_price ??
+                                servicePackage.total_price,
+                            ),
+                          )}
+                        </Typography>
+                      )}
                     </Box>
                   </Stack>
                 )}

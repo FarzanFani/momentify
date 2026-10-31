@@ -897,7 +897,7 @@ function PaymentSummaryCard({ booking }: { booking: Booking }) {
   );
 }
 
-function CancelBookingCard({
+export function CancelBookingCard({
   isCancelling,
   onOpen,
 }: {

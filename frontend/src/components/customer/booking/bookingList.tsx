@@ -101,7 +101,8 @@ function BookingsMainView({
   const packageHistory = packageBookings.filter(
     (booking) =>
       booking.status === "COMPLETED" ||
-      booking.status === "REJECTED",
+      booking.status === "REJECTED" ||
+      booking.status === "CANCELLED",
   );
 
   const upcomingBookings = bookings.filter((booking) => {
@@ -326,7 +327,7 @@ function BookingsMainView({
                 <Stack spacing={2.5}>
                   <SectionTitle
                     title="Packages"
-                    subtitle="Completed or rejected package bookings."
+                    subtitle="Completed, cancelled or rejected package bookings."
                   />
 
                   {packageHistory.length > 0 ? (

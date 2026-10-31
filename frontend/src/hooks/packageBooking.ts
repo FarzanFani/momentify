@@ -3,6 +3,7 @@ import {
   getCustomerPackageBookings,
   getProviderPackageBooking,
   getProviderPackageBookings,
+  patchCancelPackageBooking,
   patchProviderPackageBookingStatus,
   postCustomerPackageBooking,
   postSchedulePackageBooking,
@@ -37,6 +38,19 @@ export const useSchedulePackageBooking = () => {
     mutationFn: postSchedulePackageBooking,
     onSuccess: (data) =>
       queryClient.setQueryData(["customer-package-booking", data.id], data),
+  });
+};
+
+export const useCancelPackageBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: patchCancelPackageBooking,
+    onSuccess: (data) => {
+      queryClient.setQueryData(["customer-package-booking", data.id], data);
+      queryClient.invalidateQueries({
+        queryKey: ["customer-package-bookings"],
+      });
+    },
   });
 };
 

@@ -125,6 +125,15 @@ export default function ProviderPackageBookingDetail({ uuid }: { uuid: string })
           including services the customer schedules later.
         </Alert>
       )}
+      {booking.status === "CANCELLED" && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          {`The customer cancelled this package booking${
+            booking.cancellation_reason
+              ? `: "${booking.cancellation_reason}"`
+              : "."
+          }`}
+        </Alert>
+      )}
 
       <Grid container spacing={3} mt={1}>
         <Grid size={{ xs: 12, md: 7 }}>

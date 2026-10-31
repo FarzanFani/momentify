@@ -29,6 +29,7 @@ const STATUS_OPTIONS = [
   { label: "Confirmed", value: "CONFIRMED" },
   { label: "Completed", value: "COMPLETED" },
   { label: "Rejected", value: "REJECTED" },
+  { label: "Cancelled", value: "CANCELLED" },
 ];
 
 export default function ProviderPackageBookingList() {

@@ -6,6 +6,7 @@ export type PackageBookingStatus =
   | "PENDING"
   | "CONFIRMED"
   | "REJECTED"
+  | "CANCELLED"
   | "COMPLETED";
 
 export type PackagePaymentOption = "FULL" | "DEPOSIT" | "INSTALLMENTS";
@@ -73,6 +74,8 @@ export type PackageBooking = {
   contact_detail_email: string;
   contact_detail_phone_number: string;
   special_request: string;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
   items: PackageBookingItem[];
   created_at: string;
   updated_at: string;
@@ -112,6 +115,25 @@ export const getCustomerPackageBooking = async (
 ): Promise<PackageBooking> => {
   const { data } = await axiosInstance.get<ApiResponse<PackageBooking>>(
     `/api/customer/package-bookings/${id}/`,
+  );
+
+  if (!data.success) {
+    throw data;
+  }
+
+  return data.data as PackageBooking;
+};
+
+export const patchCancelPackageBooking = async ({
+  id,
+  cancellation_reason,
+}: {
+  id: string;
+  cancellation_reason: string;
+}): Promise<PackageBooking> => {
+  const { data } = await axiosInstance.patch<ApiResponse<PackageBooking>>(
+    `/api/customer/package-bookings/${id}/cancel/`,
+    { cancellation_reason },
   );
 
   if (!data.success) {
