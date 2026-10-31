@@ -44,7 +44,7 @@ export default function CustomerPackageBookingDetail({
     <Box sx={{ px: { xs: 2, md: 4 }, py: 3 }}>
       <Breadcrumb
         items={[
-          { label: "Package bookings", href: "/customer/package-bookings" },
+          { label: "My bookings", href: "/customer/booking" },
           { label: booking.package_name },
         ]}
       />

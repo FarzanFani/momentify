@@ -27,6 +27,8 @@ import {
   CategoryRounded,
   PaymentRounded,
   RateReviewRounded,
+  Inventory2Rounded,
+  EventNoteRounded,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import {
@@ -39,8 +41,14 @@ import {
   useGetCustomerBookingList,
   useGetCustomerHistoryBookingList,
 } from "@/hooks/booking";
+import { useGetCustomerPackageBookings } from "@/hooks/packageBooking";
 import { Booking } from "@/services/customer/booking";
+import type { PackageBooking } from "@/services/customer/packageBooking";
 import { getStatusChip } from "@/components/common/statusChip/statusChip";
+import {
+  getPackagePaymentLabel,
+  getScheduleLabel,
+} from "@/components/common/packageBooking/packageBookingParts";
 
 export default function CustomerBookingsPage() {
   const { data: bookingsList, isLoading } = useGetCustomerBookingList();
@@ -48,16 +56,28 @@ export default function CustomerBookingsPage() {
   const { data: historyBooking, isLoading: isHistoryBookingLoading } =
     useGetCustomerHistoryBookingList();
 
+  const { data: packageBookingsList, isLoading: isPackageBookingsLoading } =
+    useGetCustomerPackageBookings();
+
   const bookings: Booking[] = bookingsList?.results ?? [];
   const historyBookings: Booking[] = historyBooking?.results ?? [];
+  const packageBookings: PackageBooking[] = packageBookingsList?.results ?? [];
 
-  const isPageLoading = isLoading || isHistoryBookingLoading;
-  const hasAnyBookings = bookings.length > 0 || historyBookings.length > 0;
+  const isPageLoading =
+    isLoading || isHistoryBookingLoading || isPackageBookingsLoading;
+  const hasAnyBookings =
+    bookings.length > 0 ||
+    historyBookings.length > 0 ||
+    packageBookings.length > 0;
 
   return isPageLoading ? (
     <BookingsPageSkeleton />
   ) : hasAnyBookings ? (
-    <BookingsMainView bookings={bookings} historyBookings={historyBookings} />
+    <BookingsMainView
+      bookings={bookings}
+      historyBookings={historyBookings}
+      packageBookings={packageBookings}
+    />
   ) : (
     <EmptyBookingsView />
   );
@@ -66,12 +86,23 @@ export default function CustomerBookingsPage() {
 function BookingsMainView({
   bookings,
   historyBookings,
+  packageBookings,
 }: {
   bookings: Booking[];
   historyBookings: Booking[];
+  packageBookings: PackageBooking[];
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
+
+  const upcomingPackages = packageBookings.filter(
+    (booking) => booking.status === "PENDING" || booking.status === "CONFIRMED",
+  );
+  const packageHistory = packageBookings.filter(
+    (booking) =>
+      booking.status === "COMPLETED" ||
+      booking.status === "REJECTED",
+  );
 
   const upcomingBookings = bookings.filter((booking) => {
     const status = booking.status?.toLowerCase();
@@ -129,13 +160,6 @@ function BookingsMainView({
             gap={1.5}
           >
             <Button
-              variant="outlined"
-              onClick={() => router.push("/customer/package-bookings")}
-              sx={{ textTransform: "none", fontWeight: 800, borderRadius: 3 }}
-            >
-              Package bookings
-            </Button>
-            <Button
               variant="contained"
               startIcon={<ExploreRounded />}
               onClick={() => router.push("/services")}
@@ -165,7 +189,12 @@ function BookingsMainView({
           <Grid size={{ xs: 12, sm: 4 }}>
             <BookingSummaryCard
               label="Total Bookings"
-              value={upcomingBookings.length + completedBookings.length}
+              value={
+                upcomingBookings.length +
+                completedBookings.length +
+                upcomingPackages.length +
+                packageHistory.length
+              }
               helper="All booking requests"
             />
           </Grid>
@@ -173,7 +202,7 @@ function BookingsMainView({
           <Grid size={{ xs: 12, sm: 4 }}>
             <BookingSummaryCard
               label="Upcoming"
-              value={upcomingBookings.length}
+              value={upcomingBookings.length + upcomingPackages.length}
               helper="Pending or confirmed"
             />
           </Grid>
@@ -181,7 +210,7 @@ function BookingsMainView({
           <Grid size={{ xs: 12, sm: 4 }}>
             <BookingSummaryCard
               label="History"
-              value={completedBookings.length}
+              value={completedBookings.length + packageHistory.length}
               helper="Completed or closed bookings"
             />
           </Grid>
@@ -219,53 +248,99 @@ function BookingsMainView({
               },
             }}
           >
-            <Tab label={`Upcoming (${upcomingBookings.length})`} />
-            <Tab label={`History (${completedBookings.length})`} />
+            <Tab
+              label={`Upcoming (${upcomingBookings.length + upcomingPackages.length})`}
+            />
+            <Tab
+              label={`History (${completedBookings.length + packageHistory.length})`}
+            />
           </Tabs>
 
           <Box sx={{ p: { xs: 2, sm: 3 } }}>
             {activeTab === 0 && (
-              <Stack spacing={2.5}>
-                <SectionTitle
-                  title="Upcoming bookings"
-                  subtitle="Pending and confirmed service bookings."
-                />
+              <Stack spacing={4}>
+                <Stack spacing={2.5}>
+                  <SectionTitle
+                    title="Services"
+                    subtitle="Pending and confirmed service bookings."
+                  />
 
-                {upcomingBookings.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {upcomingBookings.map((booking) => (
-                      <Grid key={booking.id} size={{ xs: 12, md: 6, xl: 4 }}>
-                        <BookingCard booking={booking} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <SmallEmptyState message="You do not have any upcoming bookings." />
-                )}
+                  {upcomingBookings.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {upcomingBookings.map((booking) => (
+                        <Grid key={booking.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                          <BookingCard booking={booking} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <SmallEmptyState message="You do not have any upcoming service bookings." />
+                  )}
+                </Stack>
+
+                <Stack spacing={2.5}>
+                  <SectionTitle
+                    title="Packages"
+                    subtitle="Pending and confirmed package bookings."
+                  />
+
+                  {upcomingPackages.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {upcomingPackages.map((booking) => (
+                        <Grid key={booking.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                          <PackageBookingCard booking={booking} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <SmallEmptyState message="You do not have any upcoming package bookings." />
+                  )}
+                </Stack>
               </Stack>
             )}
 
             {activeTab === 1 && (
-              <Stack spacing={2.5}>
-                <SectionTitle
-                  title="Booking history"
-                  subtitle="Completed, cancelled or rejected bookings."
-                />
+              <Stack spacing={4}>
+                <Stack spacing={2.5}>
+                  <SectionTitle
+                    title="Services"
+                    subtitle="Completed, cancelled or rejected service bookings."
+                  />
 
-                {completedBookings.length > 0 ? (
-                  <Grid container spacing={2}>
-                    {completedBookings.map((booking) => (
-                      <Grid key={booking.id} size={{ xs: 12, md: 6, xl: 4 }}>
-                        <BookingCard
-                          booking={booking}
-                          showReviewButton={booking.status === "COMPLETED"}
-                        />
-                      </Grid>
-                    ))}
-                  </Grid>
-                ) : (
-                  <SmallEmptyState message="No booking history yet." />
-                )}
+                  {completedBookings.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {completedBookings.map((booking) => (
+                        <Grid key={booking.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                          <BookingCard
+                            booking={booking}
+                            showReviewButton={booking.status === "COMPLETED"}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <SmallEmptyState message="No service booking history yet." />
+                  )}
+                </Stack>
+
+                <Stack spacing={2.5}>
+                  <SectionTitle
+                    title="Packages"
+                    subtitle="Completed or rejected package bookings."
+                  />
+
+                  {packageHistory.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {packageHistory.map((booking) => (
+                        <Grid key={booking.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                          <PackageBookingCard booking={booking} />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <SmallEmptyState message="No package booking history yet." />
+                  )}
+                </Stack>
               </Stack>
             )}
           </Box>
@@ -403,15 +478,21 @@ function BookingCard({
           >
             <Grid container spacing={1.5}>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontWeight: 700,
-                  }}
-                >
-                  Booking requested
-                </Typography>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <EventNoteRounded
+                    sx={{ fontSize: 18, color: "text.secondary" }}
+                  />
+
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Booking requested
+                  </Typography>
+                </Box>
 
                 <Typography
                   variant="body2"
@@ -505,6 +586,231 @@ function BookingCard({
               </Button>
             )}
           </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function getPackageDateLabel(booking: PackageBooking) {
+  const dates = booking.items
+    .map((item) => item.starts_at)
+    .filter((startsAt): startsAt is string => Boolean(startsAt))
+    .sort();
+
+  if (dates.length === 0) return "Not scheduled yet";
+
+  const first = formatDate(dates[0]);
+  const last = formatDate(dates[dates.length - 1]);
+  return first === last ? first : `${first} - ${last}`;
+}
+
+function PackageBookingCard({ booking }: { booking: PackageBooking }) {
+  const router = useRouter();
+
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        borderRadius: 4,
+        border: "1px solid rgba(11, 61, 145, 0.12)",
+        boxShadow: "0 12px 32px rgba(7, 42, 99, 0.08)",
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          height: 8,
+          background:
+            "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
+        }}
+      />
+
+      <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+        <Stack spacing={2}>
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            gap={2}
+          >
+            <Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
+                  color: "#072a63",
+                  lineHeight: 1.3,
+                }}
+              >
+                {booking.package_name}
+              </Typography>
+
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ mt: 0.8, color: "text.secondary" }}
+              >
+                <BusinessRounded sx={{ fontSize: 18 }} />
+                <Typography variant="body2">{booking.company_name}</Typography>
+              </Stack>
+            </Box>
+
+            {getStatusChip(booking.status)}
+          </Stack>
+
+          <Divider />
+
+          <Grid container spacing={1.5}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<CalendarMonthRounded />}
+                label="Event date"
+                value={getPackageDateLabel(booking)}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<AccessTimeRounded />}
+                label="Schedule"
+                value={getScheduleLabel(booking)}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<LocationOnRounded />}
+                label="Location"
+                value={booking.location || "Not provided"}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<GroupsRounded />}
+                label="Guests"
+                value={`${booking.guest_numbers} guest${
+                  booking.guest_numbers === 1 ? "" : "s"
+                }`}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<Inventory2Rounded />}
+                label="Services"
+                value={`${booking.items.length} service${
+                  booking.items.length === 1 ? "" : "s"
+                }`}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <BookingInfoItem
+                icon={<ReceiptLongRounded />}
+                label="Total"
+                value={formatPrice(Number(booking.total_price))}
+              />
+            </Grid>
+          </Grid>
+
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              background:
+                "linear-gradient(135deg, rgba(11, 61, 145, 0.05) 0%, rgba(201, 162, 39, 0.1) 100%)",
+              border: "1px solid rgba(11, 61, 145, 0.1)",
+            }}
+          >
+            <Grid container spacing={1.5}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <EventNoteRounded
+                    sx={{ fontSize: 18, color: "text.secondary" }}
+                  />
+
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Booking requested
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#1f2937",
+                    fontWeight: 800,
+                    mt: 0.3,
+                  }}
+                >
+                  {formatDate(booking.created_at)}
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Box display="flex" flexDirection="column">
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <PaymentRounded
+                      sx={{ fontSize: 18, color: "text.secondary" }}
+                    />
+
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Payment option
+                    </Typography>
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "#1f2937",
+                      fontWeight: 800,
+                      mt: 0.3,
+                    }}
+                  >
+                    {getPackagePaymentLabel(booking)}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<VisibilityRounded />}
+            onClick={() =>
+              router.push(`/customer/package-bookings/${booking.id}`)
+            }
+            sx={{
+              borderRadius: 3,
+              py: 1.15,
+              fontWeight: 800,
+              textTransform: "none",
+              color: "#0B3D91",
+              borderColor: "rgba(11, 61, 145, 0.28)",
+              backgroundColor: "rgba(11, 61, 145, 0.04)",
+              "&:hover": {
+                borderColor: "#0B3D91",
+                backgroundColor: "rgba(11, 61, 145, 0.08)",
+              },
+            }}
+          >
+            View Package
+          </Button>
         </Stack>
       </CardContent>
     </Card>
@@ -806,7 +1112,7 @@ function BookingsPageSkeleton() {
 
           <Grid container spacing={2}>
             {Array.from({ length: 4 }).map((_, index) => (
-              <Grid key={index} size={{ xs: 12, md: 6 }}>
+              <Grid key={index} size={{ xs: 12, md: 6, lg: 4 }}>
                 <Skeleton
                   variant="rounded"
                   height={360}
