@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from .models import PackageBooking, PackageBookingItem
 from .package_serializers import (
+    PackageBookingCancelSerializer,
     PackageBookingCreateSerializer,
     PackageBookingScheduleSerializer,
     PackageBookingSerializer,
@@ -33,7 +34,7 @@ class CustomerPackageBookingViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Customers book packages and schedule them; they cannot cancel or edit."""
+    """Customers book, schedule and cancel packages; they cannot edit them."""
 
     permission_classes = [IsAuthenticated, IsCustomer]
     serializer_class = PackageBookingSerializer
@@ -60,6 +61,21 @@ class CustomerPackageBookingViewSet(
         package_booking = self.get_object()
         serializer = PackageBookingScheduleSerializer(
             data=request.data, context={"package_booking": package_booking}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            PackageBookingSerializer(
+                self.get_queryset().get(pk=package_booking.pk),
+                context=self.get_serializer_context(),
+            ).data
+        )
+
+    @action(detail=True, methods=["patch"])
+    def cancel(self, request, *args, **kwargs):
+        package_booking = self.get_object()
+        serializer = PackageBookingCancelSerializer(
+            package_booking, data=request.data
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()

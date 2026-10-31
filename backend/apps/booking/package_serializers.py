@@ -195,6 +195,8 @@ class PackageBookingSerializer(serializers.ModelSerializer):
             "contact_detail_email",
             "contact_detail_phone_number",
             "special_request",
+            "cancelled_at",
+            "cancellation_reason",
             "items",
             "created_at",
             "updated_at",
@@ -369,6 +371,7 @@ class PackageBookingScheduleSerializer(serializers.Serializer):
 
         if package_booking.status in (
             PackageBooking.Status.REJECTED,
+            PackageBooking.Status.CANCELLED,
             PackageBooking.Status.COMPLETED,
         ):
             raise serializers.ValidationError(
@@ -425,5 +428,50 @@ class PackageBookingStatusSerializer(serializers.Serializer):
         instance.save(update_fields=["status", "updated_at"])
         instance.bookings.update(
             status=instance.booking_status, updated_at=timezone.now()
+        )
+        return instance
+
+
+class PackageBookingCancelSerializer(serializers.Serializer):
+    """Cancelling is the only change a customer can make to a package booking."""
+
+    cancellation_reason = serializers.CharField(
+        error_messages={
+            "required": "Cancellation reason is required",
+            "blank": "Cancellation reason is required",
+        }
+    )
+
+    def validate(self, attrs):
+        if self.instance.status not in (
+            PackageBooking.Status.PENDING,
+            PackageBooking.Status.CONFIRMED,
+        ):
+            raise serializers.ValidationError(
+                {
+                    "status": "Only pending or confirmed package bookings can be cancelled."
+                }
+            )
+        return attrs
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        now = timezone.now()
+        instance.status = PackageBooking.Status.CANCELLED
+        instance.cancelled_at = now
+        instance.cancellation_reason = validated_data["cancellation_reason"]
+        instance.save(
+            update_fields=[
+                "status",
+                "cancelled_at",
+                "cancellation_reason",
+                "updated_at",
+            ]
+        )
+        instance.bookings.update(
+            status=Booking.VerificationStatus.CANCELLED,
+            cancelled_at=now,
+            cancellation_reason=instance.cancellation_reason,
+            updated_at=now,
         )
         return instance

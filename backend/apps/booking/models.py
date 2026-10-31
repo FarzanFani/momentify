@@ -205,6 +205,7 @@ class PackageBooking(models.Model):
         PENDING = "PENDING", "Pending"
         CONFIRMED = "CONFIRMED", "Confirmed"
         REJECTED = "REJECTED", "Rejected"
+        CANCELLED = "CANCELLED", "Cancelled"
         COMPLETED = "COMPLETED", "Completed"
 
     class PaymentOption(models.TextChoices):
@@ -268,6 +269,9 @@ class PackageBooking(models.Model):
     contact_detail_email = models.EmailField()
     contact_detail_phone_number = models.CharField(max_length=32)
     special_request = models.TextField(blank=True)
+
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

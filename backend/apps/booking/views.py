@@ -30,6 +30,10 @@ class BookingViewSet(ModelViewSet):
     def get_queryset(self):
         quesyset = Booking.objects.filter(customer=self.request.user)
 
+        # Services booked through a package are listed under their package.
+        if self.action in ("list", "history_bookings"):
+            quesyset = quesyset.filter(package_booking__isnull=True)
+
         if self.action == "list":
             quesyset = quesyset.filter(
                 status__in=[
@@ -199,7 +203,9 @@ class ProviderBookingViewSet(ModelViewSet):
         # Package revenue is stored on the package booking, not its services.
         package_revenue = PackageBooking.objects.filter(
             company__owner=request.user
-        ).exclude(status=PackageBooking.Status.REJECTED).aggregate(
+        ).exclude(
+            status__in=[PackageBooking.Status.REJECTED, PackageBooking.Status.CANCELLED]
+        ).aggregate(
             total=Coalesce(Sum("total_price"), Value(0), output_field=IntegerField())
         )["total"]
         summary["total_price"] += package_revenue

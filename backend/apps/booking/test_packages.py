@@ -244,3 +244,85 @@ class PackageBookingTests(APITestCase):
         self.client.force_authenticate(self.provider)
         response = self.client.get("/api/provider/bookings/summary/")
         self.assertEqual(response.json()["data"]["total_price"], 1350)
+
+    def test_customer_cancels_package_and_its_services(self):
+        data = self.book()
+        response = self.client.patch(
+            f"{self.url}{data['id']}/cancel/",
+            {"cancellation_reason": "Plans changed"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()["data"]["status"], "CANCELLED")
+        self.assertEqual(
+            response.json()["data"]["cancellation_reason"], "Plans changed"
+        )
+
+        booking = Booking.objects.get(package_booking_id=data["id"])
+        self.assertEqual(booking.status, "CANCELLED")
+        self.assertIsNotNone(booking.cancelled_at)
+
+    def test_cancel_package_requires_reason(self):
+        data = self.book()
+        response = self.client.patch(
+            f"{self.url}{data['id']}/cancel/", {}, format="json"
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("cancellation_reason", response.json()["errors"])
+
+    def test_only_active_packages_can_be_cancelled(self):
+        data = self.book()
+        PackageBooking.objects.filter(id=data["id"]).update(status="REJECTED")
+        response = self.client.patch(
+            f"{self.url}{data['id']}/cancel/",
+            {"cancellation_reason": "Plans changed"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_customer_cannot_edit_package_booking(self):
+        data = self.book()
+        response = self.client.patch(
+            f"{self.url}{data['id']}/", {"guest_numbers": 5}, format="json"
+        )
+        self.assertEqual(response.status_code, 405)
+
+    def test_cancelled_package_cannot_be_scheduled_or_approved(self):
+        data = self.book()
+        self.client.patch(
+            f"{self.url}{data['id']}/cancel/",
+            {"cancellation_reason": "Plans changed"},
+            format="json",
+        )
+        schedule = self.client.post(
+            f"{self.url}{data['id']}/schedule/",
+            {
+                "schedule": [
+                    {
+                        "item": str(self.camera_item.id),
+                        "starts_at": (self.slot + timedelta(days=1)).isoformat(),
+                    }
+                ]
+            },
+            format="json",
+        )
+        self.assertEqual(schedule.status_code, 400)
+
+        self.client.force_authenticate(self.provider)
+        approve = self.client.patch(
+            f"/api/provider/package-bookings/{data['id']}/",
+            {"status": "CONFIRMED"},
+            format="json",
+        )
+        self.assertEqual(approve.status_code, 400)
+
+    def test_provider_summary_excludes_cancelled_packages(self):
+        data = self.book()
+        self.client.patch(
+            f"{self.url}{data['id']}/cancel/",
+            {"cancellation_reason": "Plans changed"},
+            format="json",
+        )
+        self.client.force_authenticate(self.provider)
+        response = self.client.get("/api/provider/bookings/summary/")
+        self.assertEqual(response.json()["data"]["total_price"], 0)
