@@ -448,7 +448,6 @@ export function CustomerBookingPageLayout({
               <ServiceSummaryCard service={service} />
 
               <PriceSummaryCard
-                service={service}
                 price={price}
                 isPriceLoading={isPriceLoading}
               />
@@ -633,7 +632,11 @@ function ServiceSummaryCard({ service }: { service: CompanyServices }) {
 
           <SummaryRow
             icon={<GroupsRounded />}
-            label="Capacity (Fixed)"
+            label={
+              service.guest_count_policy === "fixed"
+                ? "Capacity (Fixed)"
+                : "Capacity"
+            }
             value={
               service.guest_count_policy === "fixed"
                 ? `${service.fixed_guest_count} guests`
@@ -653,11 +656,9 @@ function ServiceSummaryCard({ service }: { service: CompanyServices }) {
 }
 
 function PriceSummaryCard({
-  service,
   price,
   isPriceLoading,
 }: {
-  service: CompanyServices;
   price: number;
   isPriceLoading: boolean;
 }) {
@@ -711,7 +712,7 @@ function PriceSummaryCard({
             <Stack direction="row" justifyContent="space-between" spacing={2}>
               <Typography color="text.secondary">Service price</Typography>
               {isPriceLoading ? (
-                <CircularProgress />
+                <CircularProgress size={20} />
               ) : (
                 <Typography fontWeight={900}>{formatPrice(price)}</Typography>
               )}
@@ -737,15 +738,19 @@ function PriceSummaryCard({
               Starting total
             </Typography>
 
-            <Typography
-              variant="h5"
-              sx={{
-                color: "primary.main",
-                fontWeight: 900,
-              }}
-            >
-              {formatPrice(service.price)}
-            </Typography>
+            {isPriceLoading ? (
+              <CircularProgress size={28} />
+            ) : (
+              <Typography
+                variant="h5"
+                sx={{
+                  color: "primary.main",
+                  fontWeight: 900,
+                }}
+              >
+                {formatPrice(price)}
+              </Typography>
+            )}
           </Stack>
         </Stack>
       </CardContent>

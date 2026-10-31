@@ -89,6 +89,8 @@ export default function PackageCardView({
           width: "100%",
           borderRadius: 4,
           minHeight: 430,
+          display: "flex",
+          flexDirection: "column",
           overflow: "hidden",
           background: "linear-gradient(180deg, #ffffff 0%, #faf7ff 100%)",
           boxShadow: "0 14px 40px rgba(35, 25, 66, 0.12)",
@@ -107,6 +109,7 @@ export default function PackageCardView({
               ? `linear-gradient(180deg, rgba(7, 42, 99, 0.15) 0%, rgba(7, 42, 99, 0.55) 100%), url(${servicePackage.cover_image}) center / cover`
               : "linear-gradient(135deg, #072a63 0%, #0B3D91 45%, #2F5FB3 72%, #C9A227 100%)",
             position: "relative",
+            flexShrink: 0,
           }}
         >
           {!servicePackage.is_active && (
@@ -154,8 +157,15 @@ export default function PackageCardView({
           />
         </Box>
 
-        <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-          <Stack spacing={1.5}>
+        <CardContent
+          sx={{
+            p: { xs: 2.5, sm: 3 },
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <Stack spacing={1.5} useFlexGap sx={{ flexGrow: 1 }}>
             <Typography
               variant="h6"
               sx={{
@@ -231,7 +241,7 @@ export default function PackageCardView({
 
             <Box
               sx={{
-                mt: 1,
+                mt: "auto",
                 p: 2,
                 borderRadius: 3,
                 background:

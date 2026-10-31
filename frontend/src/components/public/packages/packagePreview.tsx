@@ -170,7 +170,7 @@ function PackagePreview({ servicePackage }: { servicePackage: ServicePackage }) 
                     alignItems="center"
                   >
                     <CheckCircle sx={{ color: "success.main" }} />
-                    <Typography fontWeight={700}>
+                    <Typography fontWeight={700} color="text.primary">
                       {item.quantity > 1
                         ? `${item.quantity} × ${item.service_name}`
                         : item.service_name}

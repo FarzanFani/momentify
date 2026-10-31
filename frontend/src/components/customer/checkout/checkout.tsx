@@ -95,24 +95,27 @@ function CustomerCheckoutForm({ serviceId }: { serviceId: string }) {
   };
 
   useEffect(() => {
-    if (useRegisterContactInfo) {
-      setValue("contact_detail_email", user?.email ?? "");
-      clearErrors("contact_detail_email");
-      setValue(
-        "contact_detail_full_name",
-        `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim(),
-      );
-      clearErrors("contact_detail_full_name");
-      setValue("contact_detail_phone_number", user?.phone_number ?? "");
-      clearErrors("contact_detail_phone_number");
-    } else {
-      setValue("contact_detail_email", "");
-      clearErrors("contact_detail_email");
-      setValue("contact_detail_full_name", "");
-      clearErrors("contact_detail_full_name");
-      setValue("contact_detail_phone_number", "");
-      clearErrors("contact_detail_phone_number");
-    }
+    const contactDetails = useRegisterContactInfo
+      ? {
+          contact_detail_email: user?.email ?? "",
+          contact_detail_full_name:
+            `${user?.first_name ?? ""} ${user?.last_name ?? ""}`.trim(),
+          contact_detail_phone_number: user?.phone_number ?? "",
+        }
+      : {
+          contact_detail_email: "",
+          contact_detail_full_name: "",
+          contact_detail_phone_number: "",
+        };
+
+    // shouldValidate keeps formState.isValid in sync; clearErrors only hides
+    // the messages so emptied fields don't turn red when unchecking.
+    (Object.keys(contactDetails) as (keyof typeof contactDetails)[]).forEach(
+      (name) => {
+        setValue(name, contactDetails[name], { shouldValidate: true });
+        if (!useRegisterContactInfo) clearErrors(name);
+      },
+    );
   }, [
     useRegisterContactInfo,
     user?.email,
